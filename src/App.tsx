@@ -46,6 +46,13 @@ import {
   ArrowRightLeft,
   LayoutDashboard,
   Zap,
+  LineChart,
+  Bot,
+  Compass,
+  History,
+  Target,
+  Shield,
+  Grid,
 } from 'lucide-react';
 
 export default function App() {
@@ -125,17 +132,17 @@ export default function App() {
   };
 
   const COCKPIT_DOCK_ITEMS = [
-    { id: 'CHART', name: 'Real-Time Chart', symbol: '📈', desc: 'Live Green Spike & Red Dip' },
-    { id: 'AUTOPILOT', name: 'Autopilot Loop', symbol: '🤖', desc: 'Autonomous Execution' },
-    { id: 'COUNCIL', name: 'Council Debate', symbol: '⚖️', desc: 'Tri-Persona Quorum' },
-    { id: 'PULSE', name: 'Pulse Radar', symbol: '📡', desc: 'Sentiment & Whales' },
-    { id: 'DEPTH', name: 'Liquidity Depth', symbol: '🌊', desc: 'Order Book Heatmap' },
-    { id: 'STATARB', name: 'StatArb Matrix', symbol: '🔄', desc: 'Cross-Asset Pairs' },
-    { id: 'ALGO', name: 'Algo Studio', symbol: '⚡', desc: 'Visual Flowchart' },
-    { id: 'BACKTEST', name: 'Quant Backtest', symbol: '📊', desc: 'Scenario Replay' },
-    { id: 'SANDBOX', name: 'Shock Sandbox', symbol: '🎯', desc: 'Market Stress Tests' },
-    { id: 'KILLSWITCH', name: 'Kill-Switch', symbol: '🛡️', desc: 'Circuit Telemetry' },
-    { id: 'ALL', name: 'All-In-One Grid', symbol: '🔲', desc: 'Complete Matrix' },
+    { id: 'CHART', name: 'Real-Time Chart', icon: LineChart, desc: 'Live Green Spike & Red Dip' },
+    { id: 'AUTOPILOT', name: 'Autopilot Loop', icon: Bot, desc: 'Autonomous Execution' },
+    { id: 'COUNCIL', name: 'Council Debate', icon: Scale, desc: 'Tri-Persona Quorum' },
+    { id: 'PULSE', name: 'Pulse Radar', icon: Radio, desc: 'Sentiment & Whales' },
+    { id: 'DEPTH', name: 'Liquidity Depth', icon: Layers, desc: 'Order Book Heatmap' },
+    { id: 'STATARB', name: 'StatArb Matrix', icon: ArrowRightLeft, desc: 'Cross-Asset Pairs' },
+    { id: 'ALGO', name: 'Algo Studio', icon: Zap, desc: 'Visual Flowchart' },
+    { id: 'BACKTEST', name: 'Quant Backtest', icon: History, desc: 'Scenario Replay' },
+    { id: 'SANDBOX', name: 'Shock Sandbox', icon: Target, desc: 'Market Stress Tests' },
+    { id: 'KILLSWITCH', name: 'Kill-Switch', icon: Shield, desc: 'Circuit Telemetry' },
+    { id: 'ALL', name: 'All-In-One Grid', icon: Grid, desc: 'Complete Matrix' },
   ] as const;
 
   return (
@@ -375,6 +382,7 @@ export default function App() {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 {COCKPIT_DOCK_ITEMS.map((item) => {
                   const isActive = cockpitModule === item.id;
+                  const IconComp = item.icon;
                   return (
                     <button
                       key={item.id}
@@ -388,7 +396,7 @@ export default function App() {
                           : 'bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 border border-white/5'
                       }`}
                     >
-                      <span className="text-sm">{item.symbol}</span>
+                      <IconComp className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-gray-400'}`} />
                       <span>{item.name}</span>
                     </button>
                   );

@@ -1,36 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  /* LUNARIS Brand Palette */
-  --lunaris-bg: #070709;
-  --lunaris-panel-bg: #0d0d10;
+  /* LUNARIS Brand Palette - Calibrated with Taste-Skill & Anti-Slop principles */
+  --lunaris-bg: #090a0f;
+  --lunaris-panel-bg: #0e1118;
   --lunaris-panel-border: rgba(255, 255, 255, 0.08);
   
-  /* Action & Focus Accents */
+  /* Action & Focus Accents - Singular High-Precision Accents */
   --lunaris-accent-cyan: #00f0ff;    /* AI reasoning / Active processing */
   --lunaris-accent-purple: #a855f7;  /* User interaction / Ready actions */
-  --lunaris-accent-gold: #facc15;    /* Moonberg / Institutional Gold */
+  --lunaris-accent-gold: #facc15;    /* Institutional Gold */
   
-  /* Status & Financial Indicators */
-  --lunaris-profit: #22c55e;
-  --lunaris-loss: #ef4444;
+  /* Status & Financial Indicators - High-legibility AA contrast */
+  --lunaris-profit: #10b981;
+  --lunaris-loss: #f43f5e;
   --lunaris-warn: #f59e0b;           /* Reserved for Risk-Veto events */
   --lunaris-sim: #64748b;            /* Muted indicator for simulated ticks */
 
   /* Asset Class Tokens */
-  --lunaris-class-crypto: #3b82f6;   /* Crypto tag (CX) */
-  --lunaris-class-equity: #ec4899;   /* Tokenized Equity tag (EQ) */
+  --lunaris-class-crypto: #38bdf8;   /* Crypto tag (CX) */
+  --lunaris-class-equity: #f472b6;   /* Tokenized Equity tag (EQ) */
 }
 
 body {
   background-color: var(--lunaris-bg);
-  color: #e2e8f0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: #f1f5f9;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   overflow-x: hidden;
+  letter-spacing: -0.01em;
   background-image: 
-    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(7, 7, 9, 0.95), rgba(7, 7, 9, 1));
+    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(9, 10, 15, 0.96), rgba(9, 10, 15, 1));
   background-size: 24px 24px, 100% 100%;
+}
+
+.font-sans-taste {
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-mono-taste {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
 /* Custom terminal scrollbars */

@@ -75,7 +75,7 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder }: Command
 
       {/* Hero Headline & Typewriter */}
       <div className="max-w-4xl mx-auto text-center relative z-20 mt-2">
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-tight">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-white leading-none font-sans-taste">
           We build AI-Native
           <br />
           Infrastructure for{' '}
@@ -84,9 +84,9 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder }: Command
           </span>
         </h1>
 
-        <p className="mt-5 text-sm sm:text-base text-gray-400 max-w-2xl mx-auto font-sans font-light tracking-wide leading-relaxed">
+        <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-[65ch] mx-auto font-sans-taste font-normal tracking-normal leading-relaxed">
           Build, test, and deploy quantitative cross-asset agentic strategies without code.
-          Integrated with <span className="text-cyan-300 font-mono font-medium">Bitget simulated paper liquidity</span> and deterministic risk circuit breakers.
+          Integrated with <span className="text-cyan-300 font-mono-taste font-medium">Bitget simulated paper liquidity</span> and deterministic risk circuit breakers.
         </p>
 
         {/* Action Buttons (Pill shape matching reference video) */}

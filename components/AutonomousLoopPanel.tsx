@@ -749,7 +749,7 @@ export function AutonomousLoopPanel({
             <span>Portfolio Net Value</span>
             {isExecuting ? (
               <span className="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
-                ● LIVE
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> LIVE
               </span>
             ) : (
               <span className="text-[9px] text-amber-400 font-bold flex items-center gap-1 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/20">

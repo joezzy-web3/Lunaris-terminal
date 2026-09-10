@@ -130,7 +130,7 @@ export function CrossAssetMatrix({ onRoutePairSignal }: CrossAssetMatrixProps) {
               <div className="flex items-center justify-between text-xs font-bold mb-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-cyan-300">{pair.cryptoTicker} (CX)</span>
-                  <span className="text-gray-500">↔</span>
+                  <ArrowRightLeft className="w-3 h-3 text-gray-500" />
                   <span className="text-pink-400">{pair.equityTicker} (EQ)</span>
                 </div>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-300">

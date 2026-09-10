@@ -396,7 +396,8 @@ export function ThreePillarBento({
               className="flex items-center gap-1 text-[10px] text-yellow-400 hover:text-yellow-300 font-bold cursor-pointer"
             >
               {deploySuccess ? <Check className="w-3 h-3 text-emerald-400" /> : <Play className="w-2.5 h-2.5 fill-yellow-400" />}
-              <span>{deploySuccess ? 'Pushed to Autopilot' : 'Deploy Rule ➔'}</span>
+              <span>{deploySuccess ? 'Pushed to Autopilot' : 'Deploy Rule'}</span>
+              {!deploySuccess && <ArrowRight className="w-3 h-3 text-yellow-400" />}
             </button>
           </div>
         </div>
