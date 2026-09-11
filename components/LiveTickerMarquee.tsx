@@ -111,39 +111,43 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
                 playCyberClick();
                 if (onSelectAsset) onSelectAsset(asset.ticker);
               }}
-              className={`flex items-center gap-2.5 px-3 py-1 rounded-lg border transition-all text-xs cursor-pointer ${
+              className={`flex items-center gap-2.5 px-3 py-1 rounded-md border transition-all text-xs cursor-pointer ${
                 isSelected
-                  ? 'bg-yellow-400/20 border-yellow-400/60 shadow-[0_0_12px_rgba(250,204,21,0.3)]'
+                  ? 'bg-white text-black border-white font-bold shadow-sm'
                   : isSpiking
                   ? isUp
-                    ? 'bg-emerald-950/60 border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
-                    : 'bg-red-950/60 border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
-                  : 'bg-white/[0.03] border-white/5 hover:border-white/20 hover:bg-white/[0.08]'
+                    ? 'bg-emerald-950/40 border-emerald-500/50'
+                    : 'bg-rose-950/40 border-rose-500/50'
+                  : 'bg-white/[0.02] border-white/8 hover:border-white/20 hover:bg-white/[0.06]'
               }`}
             >
               {/* Asset Class Badge */}
               <span
-                className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                  asset.class === 'CX'
-                    ? 'bg-cyan-950 text-cyan-400 border border-cyan-500/30'
-                    : 'bg-purple-950 text-purple-300 border border-purple-500/30'
+                className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                  isSelected
+                    ? 'bg-black/15 text-black'
+                    : 'bg-white/10 text-zinc-300 border border-white/10'
                 }`}
               >
                 {asset.class === 'CX' ? 'CRYPTO' : 'EQUITY'}
               </span>
 
               {/* Ticker Name */}
-              <span className="font-bold text-white tracking-wider">{asset.ticker}</span>
+              <span className={`font-bold tracking-wider ${isSelected ? 'text-black' : 'text-white'}`}>
+                {asset.ticker}
+              </span>
 
               {/* Live Price */}
-              <span className="font-mono text-gray-200 font-semibold">
+              <span className={`font-mono font-medium ${isSelected ? 'text-zinc-900' : 'text-zinc-200'}`}>
                 ${asset.price > 1000 ? asset.price.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : asset.price.toFixed(2)}
               </span>
 
               {/* Spike/Dip indicator */}
               <span
                 className={`flex items-center gap-0.5 text-[11px] font-mono font-bold ${
-                  isUp ? 'text-emerald-400' : 'text-red-400'
+                  isSelected
+                    ? isUp ? 'text-emerald-700' : 'text-rose-700'
+                    : isUp ? 'text-emerald-400' : 'text-rose-400'
                 }`}
               >
                 {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -154,7 +158,7 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
               {/* Animated pulse dot */}
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  isUp ? 'bg-emerald-400 animate-ping' : 'bg-red-500 animate-pulse'
+                  isUp ? 'bg-emerald-400 animate-ping' : 'bg-rose-500 animate-pulse'
                 }`}
               />
             </button>

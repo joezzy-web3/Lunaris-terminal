@@ -135,7 +135,11 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_8px_#3b82f6]" />
+          {/* Signature Lunaris Multi-Color Diamond Emblem */}
+          <div className="relative flex items-center justify-center shrink-0">
+            <div className="w-3.5 h-3.5 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-[#FACC15] to-[#D946EF] rotate-45 shadow-[0_0_10px_rgba(0,240,255,0.65)]" />
+            <div className="absolute w-1 h-1 rounded-full bg-[#0c0e14]" />
+          </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold tracking-wider text-white">LUNARIS PULSE</h2>

@@ -12,11 +12,11 @@ interface CommandDeckHeroProps {
 }
 
 const ROTATING_TARGETS = [
-  'Cross-Asset Traders_',
+  'Agents_',
   'QuantFi_',
-  'Autonomous Agents_',
-  'Bitget Execution_',
-  'Multi-Asset Quorum_',
+  'Traders_',
+  'Execution_',
+  'Consensus_',
 ];
 
 export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder }: CommandDeckHeroProps) {
@@ -47,24 +47,14 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder }: Command
 
   return (
     <div className="relative w-full pt-2 pb-6 px-4 font-mono select-none overflow-hidden">
-      {/* Background Cybernetic Ambient Glows */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-32 right-1/4 w-[350px] h-[250px] bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+      {/* Background Subtle Vignette */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-white/[0.02] rounded-full blur-3xl pointer-events-none" />
 
       {/* Top telemetry ticker tags */}
-      <div className="max-w-5xl mx-auto flex items-center justify-between text-[10px] text-gray-500 mb-3 border-b border-white/5 pb-2.5">
-        <div className="flex items-center gap-2 text-cyan-400 font-semibold">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          <span>SERIES: 852 // EPT: -0.00</span>
-        </div>
-        <div className="hidden md:flex items-center gap-2 text-gray-400 font-mono text-[10px]">
+      <div className="max-w-5xl mx-auto flex items-center justify-center text-[10px] text-zinc-400 mb-3 border-b border-white/8 pb-2.5">
+        <div className="flex items-center gap-2 text-zinc-400 font-mono text-[10px]">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           <span>BITGET SIMULATED LIQUIDITY POOL ONLINE</span>
-        </div>
-        <div className="flex items-center gap-3 font-mono">
-          <span className="text-gray-400">LATENCY: <b className="text-emerald-400">4ms</b></span>
-          <span className="text-gray-700">|</span>
-          <span className="text-emerald-400">FPS: 60</span>
         </div>
       </div>
 
@@ -75,28 +65,30 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder }: Command
 
       {/* Hero Headline & Typewriter */}
       <div className="max-w-4xl mx-auto text-center relative z-20 mt-2">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-white leading-none font-sans-taste">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-none font-sans-taste">
           We build AI-Native
           <br />
           Infrastructure for{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-yellow-300 to-amber-400 underline decoration-yellow-400 decoration-4 underline-offset-8">
-            {displayText}
+          <span className="text-white">Autonomous</span>
+          <br className="sm:hidden" />{' '}
+          <span className="text-yellow-400 border-b-4 border-yellow-400 pb-1">
+            {displayText || 'Agents_'}
           </span>
         </h1>
 
-        <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-[65ch] mx-auto font-sans-taste font-normal tracking-normal leading-relaxed">
+        <p className="mt-5 text-base sm:text-lg text-zinc-300 max-w-[65ch] mx-auto font-sans-taste font-normal tracking-normal leading-relaxed">
           Build, test, and deploy quantitative cross-asset agentic strategies without code.
-          Integrated with <span className="text-cyan-300 font-mono-taste font-medium">Bitget simulated paper liquidity</span> and deterministic risk circuit breakers.
+          Integrated with <span className="text-[#00F0FF] font-mono-taste font-bold">Bitget simulated paper liquidity</span> and deterministic risk circuit breakers.
         </p>
 
-        {/* Action Buttons (Pill shape matching reference video) */}
+        {/* Action Buttons (Clean high-contrast monochrome pills) */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <button
             onClick={() => {
               playCyberClick();
               onLaunchTerminal();
             }}
-            className="group relative inline-flex items-center gap-2.5 px-7 py-3 rounded-full font-bold text-xs uppercase tracking-widest text-black bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 hover:from-yellow-300 hover:to-amber-300 shadow-[0_0_25px_rgba(250,204,21,0.5)] transition-all cursor-pointer transform hover:-translate-y-0.5"
+            className="group relative inline-flex items-center gap-2.5 px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer transform hover:-translate-y-0.5 shadow-sm"
           >
             <Terminal className="w-4 h-4 text-black group-hover:scale-110 transition-transform" />
             <span>Launch Trading Terminal</span>
@@ -108,21 +100,21 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder }: Command
               playCyberClick();
               if (onOpenAlgoBuilder) onOpenAlgoBuilder();
             }}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/15 hover:border-white/30 transition-all cursor-pointer shadow-sm"
+            className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-bold text-xs uppercase tracking-wider text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all cursor-pointer"
           >
-            <Cpu className="w-4 h-4 text-cyan-400" />
+            <Cpu className="w-4 h-4 text-zinc-400" />
             <span>Explore Architecture</span>
           </button>
         </div>
 
-        {/* Institutional As Seen On Bar (as in video) */}
-        <div className="mt-12 pt-6 border-t border-white/5 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-gray-500 uppercase tracking-wider">
-          <span className="text-[10px] text-gray-600 font-bold tracking-widest">AS SEEN ON:</span>
-          <span className="hover:text-cyan-400 transition-colors font-bold text-gray-400">BITGET AI</span>
+        {/* Institutional As Seen On Bar */}
+        <div className="mt-12 pt-6 border-t border-white/8 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-zinc-500 uppercase tracking-wider">
+          <span className="text-[10px] text-zinc-600 font-bold tracking-widest">AS SEEN ON:</span>
+          <span className="hover:text-zinc-300 transition-colors font-bold text-zinc-400">BITGET AI</span>
           <span className="hover:text-white transition-colors">DECRYPT</span>
-          <span className="hover:text-yellow-400 transition-colors">YAHOO! FINANCE</span>
-          <span className="hover:text-amber-400 transition-colors">BINANCE SQUARE</span>
-          <span className="hover:text-blue-400 transition-colors">FINANCIAL TIMES</span>
+          <span className="hover:text-zinc-300 transition-colors">YAHOO! FINANCE</span>
+          <span className="hover:text-zinc-300 transition-colors">BINANCE SQUARE</span>
+          <span className="hover:text-zinc-300 transition-colors">FINANCIAL TIMES</span>
         </div>
       </div>
     </div>

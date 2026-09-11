@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  /* LUNARIS Brand Palette - Calibrated with Taste-Skill & Anti-Slop principles */
-  --lunaris-bg: #090a0f;
-  --lunaris-panel-bg: #0e1118;
+  /* LUNARIS Brand Palette - Ultra-Monochrome Taste-Skill Principles */
+  --lunaris-bg: #07080c;
+  --lunaris-panel-bg: #0c0e14;
   --lunaris-panel-border: rgba(255, 255, 255, 0.08);
   
-  /* Action & Focus Accents - Singular High-Precision Accents */
-  --lunaris-accent-cyan: #00f0ff;    /* AI reasoning / Active processing */
-  --lunaris-accent-purple: #a855f7;  /* User interaction / Ready actions */
-  --lunaris-accent-gold: #facc15;    /* Institutional Gold */
+  /* Action & Focus Accents - Clean Monochrome & High-Contrast White */
+  --lunaris-accent-cyan: #f1f5f9;    /* Clean White/Slate */
+  --lunaris-accent-purple: #ffffff;  /* Pure White Primary Action */
+  --lunaris-accent-gold: #e2e8f0;    /* Silver/White */
   
   /* Status & Financial Indicators - High-legibility AA contrast */
-  --lunaris-profit: #10b981;
-  --lunaris-loss: #f43f5e;
-  --lunaris-warn: #f59e0b;           /* Reserved for Risk-Veto events */
-  --lunaris-sim: #64748b;            /* Muted indicator for simulated ticks */
+  --lunaris-profit: #10b981;         /* Emerald */
+  --lunaris-loss: #f43f5e;           /* Rose */
+  --lunaris-warn: #fbbf24;           /* Warning amber */
+  --lunaris-sim: #71717a;            /* Muted zinc */
 
   /* Asset Class Tokens */
-  --lunaris-class-crypto: #38bdf8;   /* Crypto tag (CX) */
-  --lunaris-class-equity: #f472b6;   /* Tokenized Equity tag (EQ) */
+  --lunaris-class-crypto: #94a3b8;   /* Clean Slate (CX) */
+  --lunaris-class-equity: #cbd5e1;   /* Light Slate (EQ) */
 }
 
 body {
@@ -58,15 +58,13 @@ body {
   background: rgba(0, 240, 255, 0.5);
 }
 
-/* Cyber Terminal Glows */
-.glow-cyan {
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+/* Taste-Skill Hairline Reticle & Card Styles */
+.card-monochrome {
+  background-color: var(--lunaris-panel-bg);
+  border: 1px solid var(--lunaris-panel-border);
 }
-.glow-gold {
-  box-shadow: 0 0 20px rgba(250, 204, 21, 0.25);
-}
-.glow-purple {
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+.card-monochrome:hover {
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 /* Tactical Corner reticle styles */

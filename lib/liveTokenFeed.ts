@@ -51,8 +51,19 @@ export const priceTickHistory: Record<string, number[]> = {};
  * with a 15% delta deviation safeguard and graceful fallback to demoSeedData.
  */
 export async function fetchPriceSnapshot(ticker: string): Promise<PriceSnapshot> {
-  const asset = ASSET_REGISTRY[ticker];
-  if (!asset) throw new Error(`Unknown ticker: ${ticker}`);
+  const sym = ticker.toUpperCase().trim();
+  let asset = ASSET_REGISTRY[sym];
+  
+  if (!asset) {
+    const isCrypto = ['BTC', 'ETH', 'SOL', 'SUI', 'DOGE', 'XRP', 'AVAX', 'ADA', 'LINK', 'NEAR', 'PEPE', 'SHIB', 'RENDER', 'TAO', 'DOT', 'APT', 'TIA', 'HBAR'].includes(sym) || sym.endsWith('USDT') || sym.endsWith('PERP');
+    asset = {
+      name: sym,
+      class: isCrypto ? 'CX' : 'EQ',
+      yahooSymbol: isCrypto ? undefined : sym,
+      geckoId: isCrypto ? sym.toLowerCase() : undefined,
+    };
+    ASSET_REGISTRY[sym] = asset;
+  }
 
   try {
     let rawPrice: number | null = null;

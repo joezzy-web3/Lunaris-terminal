@@ -159,15 +159,17 @@ export default function App() {
               }}
               className="flex items-center gap-2.5 text-left group cursor-pointer"
             >
+              {/* Restored Signature Vibrant Multi-Color Diamond Glyph */}
               <div className="relative flex items-center justify-center">
-                <div className="w-4 h-4 rounded-sm bg-gradient-to-tr from-cyan-400 via-yellow-300 to-purple-500 rotate-45 shadow-[0_0_15px_rgba(0,240,255,0.7)] group-hover:rotate-90 transition-transform duration-300" />
-                <div className="absolute w-1.5 h-1.5 rounded-full bg-black" />
+                <div className="w-4 h-4 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-[#FACC15] to-[#D946EF] rotate-45 shadow-[0_0_12px_rgba(0,240,255,0.7)] group-hover:rotate-90 transition-transform duration-300" />
+                <div className="absolute w-1.5 h-1.5 rounded-full bg-[#070709]" />
               </div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base font-black tracking-wider text-white">
                   LUNARIS
                 </h1>
-                <span className="text-[10px] font-bold text-yellow-400 border border-yellow-400/40 px-1.5 py-0.2 rounded bg-yellow-400/10 uppercase hidden sm:inline-block">
+                {/* Bitget Brand Blue/Cyan Themed Edition Badge */}
+                <span className="text-[10px] font-extrabold text-[#00F0FF] border border-[#00F0FF]/40 px-2 py-0.5 rounded bg-[#00F0FF]/10 uppercase hidden sm:inline-block shadow-[0_0_8px_rgba(0,240,255,0.25)] tracking-wider">
                   Bitget AI Edition
                 </span>
               </div>
@@ -181,10 +183,10 @@ export default function App() {
                 playCyberClick();
                 setActiveTab('DECK');
               }}
-              className={`px-3 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'DECK'
-                  ? 'bg-yellow-400/20 text-yellow-300 border border-yellow-400/40 shadow-[0_0_12px_rgba(250,204,21,0.25)]'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-white text-black font-bold shadow-sm'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" /> COMMAND DECK
@@ -195,10 +197,10 @@ export default function App() {
                 playCyberClick();
                 setActiveTab('TERMINAL');
               }}
-              className={`px-3 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'TERMINAL'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-white text-black font-bold shadow-sm'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Terminal className="w-3.5 h-3.5" /> PRO COCKPIT
@@ -209,10 +211,10 @@ export default function App() {
                 playCyberClick();
                 setActiveTab('AUTOPILOT');
               }}
-              className={`px-3 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'AUTOPILOT'
-                  ? 'bg-purple-500/20 text-purple-300 border border-purple-400/40'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-white text-black font-bold shadow-sm'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Cpu className="w-3.5 h-3.5" /> AUTOPILOT
@@ -223,10 +225,10 @@ export default function App() {
                 playCyberClick();
                 setActiveTab('COUNCIL');
               }}
-              className={`px-3 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'COUNCIL'
-                  ? 'bg-purple-950/40 text-purple-300 border border-purple-400/30'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-white text-black font-bold shadow-sm'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Scale className="w-3.5 h-3.5" /> COUNCIL
@@ -237,10 +239,10 @@ export default function App() {
                 playCyberClick();
                 setActiveTab('PULSE');
               }}
-              className={`px-3 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'PULSE'
-                  ? 'bg-blue-950/40 text-blue-300 border border-blue-400/30'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-white text-black font-bold shadow-sm'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Radio className="w-3.5 h-3.5" /> PULSE
@@ -263,9 +265,9 @@ export default function App() {
             </button>
 
             {/* Bitget Latency */}
-            <div className="hidden lg:flex items-center gap-1 text-emerald-400 text-[11px] font-semibold border border-emerald-500/30 bg-emerald-950/30 px-2 py-1 rounded-full">
-              <Wifi className="w-3 h-3" />
-              <span>Bitget: 4ms</span>
+            <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold border border-white/15 bg-white/5 px-2.5 py-1.5 rounded-full whitespace-nowrap">
+              <Wifi className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+              <span className="text-gray-300">Bitget: 4ms</span>
             </div>
 
             {/* Handbook trigger */}
@@ -274,13 +276,13 @@ export default function App() {
                 playCyberClick();
                 setIsCreditsModalOpen(true);
               }}
-              className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 px-2.5 py-1.5 rounded-full text-xs transition-colors font-semibold cursor-pointer"
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 px-3 py-1.5 rounded-full text-xs transition-colors font-semibold cursor-pointer"
             >
               <Award className="w-3.5 h-3.5 text-yellow-400" />
               <span className="hidden sm:inline">Handbook</span>
             </button>
 
-            {/* Launch Terminal Pill Toggle */}
+            {/* Action Pill / Live Telemetry Badge */}
             {activeTab === 'DECK' ? (
               <button
                 onClick={() => {
@@ -293,16 +295,10 @@ export default function App() {
                 <span>Launch Terminal</span>
               </button>
             ) : (
-              <button
-                onClick={() => {
-                  playCyberClick();
-                  setActiveTab('DECK');
-                }}
-                className="flex items-center gap-1.5 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 font-bold px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer uppercase tracking-wider shadow-[0_0_12px_rgba(0,240,255,0.2)]"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Command Deck</span>
-              </button>
+              <div className="flex items-center gap-1.5 border border-white/15 bg-white/5 text-gray-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Quorum Active</span>
+              </div>
             )}
           </div>
         </div>
@@ -617,8 +613,11 @@ export default function App() {
       <footer className="border-t border-[var(--lunaris-panel-border)] bg-[#070709] py-6 mt-12 text-xs text-gray-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-2.5 h-2.5 rounded-sm bg-cyan-400 rotate-45" />
-            <span className="text-gray-300 font-bold">LUNARIS Terminal</span>
+            <div className="relative flex items-center justify-center">
+              <div className="w-3.5 h-3.5 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-[#FACC15] to-[#D946EF] rotate-45 shadow-[0_0_10px_rgba(0,240,255,0.7)]" />
+              <div className="absolute w-1.5 h-1.5 rounded-full bg-[#070709]" />
+            </div>
+            <span className="text-white font-black tracking-wider">LUNARIS Terminal</span>
             <span className="text-gray-600">|</span>
             <span>Cross-Asset Execution Agent (Phase 2 Expansion)</span>
           </div>

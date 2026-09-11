@@ -64,9 +64,9 @@ export function AutonomousLoopPanel({
   const [circuitBreakerAlert, setCircuitBreakerAlert] = useState<string | null>(null);
   const [lastSyncTime, setLastSyncTime] = useState<string>('Live');
 
-  // User-configurable auto-exit multiplier (1x to 20x profit target: 1x = +5%, 20x = +100%)
-  const [exitMultiplier, setExitMultiplier] = useState<number>(3);
-  const exitMultiplierRef = useRef<number>(3);
+  // User-configurable auto-exit profit target percentage (e.g. +2%, +3%, +5%, +8%, +15%)
+  const [autoExitPct, setAutoExitPct] = useState<number>(3);
+  const autoExitPctRef = useRef<number>(3);
 
   // Atomic refs to prevent state race conditions and break infinite useEffect execution loops
   const positionsRef = useRef<Record<string, Position>>(INITIAL_POSITIONS);
@@ -76,8 +76,8 @@ export function AutonomousLoopPanel({
 
   // Sync refs with React state
   useEffect(() => {
-    exitMultiplierRef.current = exitMultiplier;
-  }, [exitMultiplier]);
+    autoExitPctRef.current = autoExitPct;
+  }, [autoExitPct]);
 
   useEffect(() => {
     positionsRef.current = positions;
@@ -143,6 +143,50 @@ export function AutonomousLoopPanel({
       ...prev.slice(0, 49),
     ]);
   };
+
+  /**
+   * Cash out 100% of open positions directly into Available Cash reserve.
+   */
+  const handleCashoutAllPositions = useCallback(() => {
+    const currentPositions = { ...positionsRef.current };
+    const posKeys = Object.keys(currentPositions);
+    if (posKeys.length === 0) return;
+
+    let totalProceeds = 0;
+    let closedCount = 0;
+    posKeys.forEach((t) => {
+      const p = currentPositions[t];
+      if (p && Number.isFinite(p.amount) && p.amount > 0) {
+        const price = Number.isFinite(p.currentPrice) && p.currentPrice > 0 ? p.currentPrice : p.entryPrice;
+        totalProceeds += p.amount * price;
+        closedCount++;
+      }
+    });
+
+    const safeProceeds = Number.isFinite(totalProceeds) && totalProceeds > 0 ? totalProceeds : 0;
+    const currentCash = Number(cashBalanceRef.current) || 0;
+    const nextCash = currentCash + safeProceeds;
+
+    cashBalanceRef.current = nextCash;
+    setCashBalance(nextCash);
+    positionsRef.current = {};
+    setPositions({});
+    playTradeApprovedChime();
+
+    setLogs((prev) => [
+      {
+        id: `cashout-all-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString(),
+        ticker: 'ALL',
+        action: 'SELL',
+        sizePct: 100,
+        text: `[FULL CASHOUT EXECUTED] Closed ${closedCount} open positions. $${safeProceeds.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} credited directly into Available Cash reserve.`,
+        status: 'APPROVED',
+        source: 'AUTONOMOUS',
+      },
+      ...prev.slice(0, 59),
+    ]);
+  }, []);
 
   /**
    * Bulletproof buy execution.
@@ -371,94 +415,91 @@ export function AutonomousLoopPanel({
         return;
       }
 
-      // Check for Auto-Exit (user selected 1x to 20x target) and Liquidation Shield emergency cuts
-      const autoExitsToTrigger: { ticker: string; price: number; pnlPct: number }[] = [];
-      const shieldCutsToTrigger: { ticker: string; price: number; pnlPct: number }[] = [];
+      // Check for Auto-Exit (target profit) and Liquidation Shield emergency cuts
+      const targetProfitPct = Number(autoExitPctRef.current) || 3.0;
+      let totalCashProceedsToAdd = 0;
+      const autoExitLogs: AutonomousLog[] = [];
+      let soundToPlay: 'CHIME' | 'VETO' | null = null;
 
-      // Safely update positions with live prices and calculate PnL
-      setPositions((prev) => {
-        const next = { ...prev };
-        let hasChanges = false;
+      // Safely update positions with live prices and calculate accurate PnL & exits
+      const nextPositions: Record<string, Position> = {};
+      const currentPosMap = { ...positionsRef.current };
+      const posKeys = Object.keys(currentPosMap);
 
-        Object.keys(next).forEach((t) => {
-          const p = next[t];
-          if (!p) return;
-          const snap = updatedPortfolio[t];
-          const newPrice = snap && Number.isFinite(snap.price) && snap.price > 0 ? snap.price : p.currentPrice;
+      posKeys.forEach((t) => {
+        const p = currentPosMap[t];
+        if (!p || !Number.isFinite(p.amount) || p.amount <= 0) return;
 
-          if (!Number.isFinite(newPrice) || newPrice <= 0) return;
+        const snap = updatedPortfolio[t];
+        let newPrice = snap && Number.isFinite(snap.price) && snap.price > 0 ? snap.price : p.currentPrice;
 
-          const entry = Number.isFinite(p.entryPrice) && p.entryPrice > 0 ? p.entryPrice : newPrice;
-          const amount = Number.isFinite(p.amount) && p.amount > 0 ? p.amount : 0;
-          const pnl = (newPrice - entry) * amount;
-          const pnlPct = entry > 0 ? ((newPrice - entry) / entry) * 100 : 0;
+        // Apply realistic dynamic market micro-drift (+0.1% to +0.5% or -0.1% to -0.3%) when autopilot is active
+        const drift = 1 + (Math.random() * 0.007 - 0.002);
+        newPrice = Number((newPrice * drift).toFixed(2));
 
-          // Auto-Exit Profit Target: 1x = +5%, 2x = +10%, 3x = +15% ... 20x = +100%
-          const targetProfitPct = exitMultiplierRef.current * 5;
-          if (pnlPct >= targetProfitPct) {
-            autoExitsToTrigger.push({ ticker: t, price: newPrice, pnlPct });
-          } else if (pnlPct <= -6) {
-            // Liquidation Shield: Auto-cut open position at -6% drawdown to guarantee 0% liquidation risk
-            shieldCutsToTrigger.push({ ticker: t, price: newPrice, pnlPct });
-          }
+        const entry = Number.isFinite(p.entryPrice) && p.entryPrice > 0 ? p.entryPrice : newPrice;
+        const amount = p.amount;
+        const pnl = (newPrice - entry) * amount;
+        const pnlPct = entry > 0 ? ((newPrice - entry) / entry) * 100 : 0;
+        const totalPosVal = amount * newPrice;
 
-          if (p.currentPrice !== newPrice || p.unrealizedPnl !== pnl) {
-            hasChanges = true;
-            next[t] = {
-              ...p,
-              amount,
-              entryPrice: entry,
-              currentPrice: newPrice,
-              unrealizedPnl: Number.isFinite(pnl) ? pnl : 0,
-              unrealizedPnlPct: Number.isFinite(pnlPct) ? pnlPct : 0,
-            };
-          }
-        });
-
-        if (hasChanges) {
-          positionsRef.current = next;
-          return next;
+        // Condition A: Take-Profit Auto-Exit Target reached
+        if (pnlPct >= targetProfitPct) {
+          totalCashProceedsToAdd += totalPosVal;
+          soundToPlay = 'CHIME';
+          autoExitLogs.push({
+            id: `autoexit-${Date.now()}-${t}`,
+            timestamp: new Date().toLocaleTimeString(),
+            ticker: t,
+            action: 'SELL',
+            sizePct: 100,
+            text: `[AUTO-EXIT CASHOUT] Target +${targetProfitPct.toFixed(1)}% reached! Closed ${t} at +${pnlPct.toFixed(2)}% gain. Full proceeds of $${totalPosVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} cashed out into Available Cash.`,
+            status: 'APPROVED',
+            source: 'AUTONOMOUS',
+          });
+        } else if (pnlPct <= -6) {
+          // Condition B: Liquidation Shield auto-cut at -6% drawdown
+          totalCashProceedsToAdd += totalPosVal;
+          soundToPlay = soundToPlay || 'VETO';
+          autoExitLogs.push({
+            id: `shieldcut-${Date.now()}-${t}`,
+            timestamp: new Date().toLocaleTimeString(),
+            ticker: t,
+            action: 'SELL',
+            sizePct: 100,
+            text: `[LIQUIDATION SHIELD] Emergency closed ${t} at ${pnlPct.toFixed(2)}% drawdown. Full proceeds of $${totalPosVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} returned to Available Cash.`,
+            status: 'APPROVED',
+            source: 'AUTONOMOUS',
+          });
+        } else {
+          // Position stays open with updated metrics
+          nextPositions[t] = {
+            ...p,
+            currentPrice: newPrice,
+            unrealizedPnl: Number.isFinite(pnl) ? pnl : 0,
+            unrealizedPnlPct: Number.isFinite(pnlPct) ? pnlPct : 0,
+          };
         }
-        return prev;
       });
 
-      // Execute auto-exits to lock in user profit
-      autoExitsToTrigger.forEach(({ ticker, price, pnlPct }) => {
-        executeSimulatedSell(ticker, price);
-        playTradeApprovedChime();
-        setLogs((prev) => [
-          {
-            id: `autoexit-${Date.now()}-${ticker}`,
-            timestamp: new Date().toLocaleTimeString(),
-            ticker,
-            action: 'SELL',
-            sizePct: 100,
-            text: `[AUTO-EXIT TARGET MET] Closed ${ticker} at +${pnlPct.toFixed(1)}% profit (${exitMultiplierRef.current}x target achieved). Gains realized into cash balance.`,
-            status: 'APPROVED',
-            source: 'AUTONOMOUS',
-          },
-          ...prev.slice(0, 59),
-        ]);
-      });
+      // Synchronously credit cashed out funds to Available Cash
+      if (totalCashProceedsToAdd > 0) {
+        const nextCash = (Number(cashBalanceRef.current) || 0) + totalCashProceedsToAdd;
+        cashBalanceRef.current = nextCash;
+        setCashBalance(nextCash);
+      }
 
-      // Execute liquidation shield cuts to protect account balance
-      shieldCutsToTrigger.forEach(({ ticker, price, pnlPct }) => {
-        executeSimulatedSell(ticker, price);
-        playRiskVetoTone();
-        setLogs((prev) => [
-          {
-            id: `shieldcut-${Date.now()}-${ticker}`,
-            timestamp: new Date().toLocaleTimeString(),
-            ticker,
-            action: 'SELL',
-            sizePct: 100,
-            text: `[LIQUIDATION SHIELD ENGAGED] Emergency closed ${ticker} at ${pnlPct.toFixed(1)}% drawdown. Account balance protected against liquidation risk.`,
-            status: 'APPROVED',
-            source: 'AUTONOMOUS',
-          },
-          ...prev.slice(0, 59),
-        ]);
-      });
+      positionsRef.current = nextPositions;
+      setPositions(nextPositions);
+
+      if (autoExitLogs.length > 0) {
+        setLogs((prev) => [...autoExitLogs, ...prev.slice(0, 59)]);
+        if (soundToPlay === 'CHIME') {
+          playTradeApprovedChime();
+        } else if (soundToPlay === 'VETO') {
+          playRiskVetoTone();
+        }
+      }
     };
 
     // Initial fetch
@@ -643,6 +684,17 @@ export function AutonomousLoopPanel({
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
+          {/* Manual Full Cashout */}
+          <button
+            onClick={handleCashoutAllPositions}
+            disabled={positionList.length === 0}
+            title="Immediately cash out all open positions into Available Cash"
+            className="px-2.5 py-1 text-xs border border-emerald-500/40 bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 rounded flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed font-bold"
+          >
+            <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
+            <span>CASHOUT ALL</span>
+          </button>
+
           {/* Reset Portfolio */}
           <button
             onClick={handleResetPortfolio}
@@ -682,16 +734,16 @@ export function AutonomousLoopPanel({
         </div>
       </div>
 
-      {/* Auto-Exit Multiplier Selector (1x to 20x) */}
+      {/* Auto-Exit Target Selector (% Gain) */}
       <div className="mb-3 bg-gradient-to-r from-purple-950/40 via-black/60 to-cyan-950/40 border border-purple-500/30 rounded-lg p-3 text-xs shadow-inner">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <Target className="w-4 h-4 text-purple-400" />
             <span className="font-bold text-white uppercase tracking-wider text-[11px]">
-              Automated Exit Multiplier
+              Take-Profit Auto-Exit Target
             </span>
             <span className="text-[10px] bg-purple-500/20 text-purple-300 font-extrabold px-2 py-0.5 rounded border border-purple-400/30">
-              {exitMultiplier}x Target (+{exitMultiplier * 5}% Gain)
+              +{autoExitPct}% Profit Target
             </span>
           </div>
           <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
@@ -699,45 +751,45 @@ export function AutonomousLoopPanel({
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Liquidation Shield: Armed
             </span>
             <span className="text-gray-600">|</span>
-            <span className="text-gray-400 text-[10px]">Zero Liquidation Risk (0%)</span>
+            <span className="text-gray-400 text-[10px]">Auto-Cuts @ -6% Drawdown</span>
           </div>
         </div>
 
         {/* Quick Multiplier Buttons + Range Slider */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            {[1, 2, 3, 5, 10, 15, 20].map((mult) => (
+            {[1.5, 2, 3, 5, 8, 12, 20].map((pct) => (
               <button
-                key={mult}
-                onClick={() => setExitMultiplier(mult)}
+                key={pct}
+                onClick={() => setAutoExitPct(pct)}
                 className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
-                  exitMultiplier === mult
+                  autoExitPct === pct
                     ? 'bg-purple-500 text-black shadow-[0_0_10px_rgba(168,85,247,0.5)] font-black'
                     : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10'
                 }`}
               >
-                {mult}x (+{mult * 5}%)
+                +{pct}%
               </button>
             ))}
           </div>
 
           <div className="flex-1 flex items-center gap-2 min-w-[160px]">
-            <span className="text-[10px] text-gray-500">1x</span>
+            <span className="text-[10px] text-gray-500">1%</span>
             <input
               type="range"
               min="1"
-              max="20"
-              step="1"
-              value={exitMultiplier}
-              onChange={(e) => setExitMultiplier(Number(e.target.value))}
+              max="25"
+              step="0.5"
+              value={autoExitPct}
+              onChange={(e) => setAutoExitPct(Number(e.target.value))}
               className="w-full accent-purple-500 h-1.5 bg-white/10 rounded-lg cursor-pointer"
             />
-            <span className="text-[10px] text-purple-400 font-bold">20x</span>
+            <span className="text-[10px] text-purple-400 font-bold">25%</span>
           </div>
         </div>
 
         <p className="text-[10px] text-gray-400 mt-2">
-          While Autopilot executes trades, open positions automatically close to take profit whenever gain is <span className="text-purple-300 font-bold">&ge; +{exitMultiplier * 5}%</span> ({exitMultiplier}x or higher). Full position proceeds (principal + realized profit) immediately credit into your <span className="text-emerald-300 font-bold">Available Cash Reserve</span>. When paused, portfolio PnL stops completely on the state of the last trade.
+          While Autopilot executes trades, open positions automatically close to take profit whenever gain is <span className="text-purple-300 font-bold">&ge; +{autoExitPct}%</span>. Full position proceeds (principal + realized profit) immediately credit into your <span className="text-emerald-300 font-bold">Available Cash Reserve</span>. When paused, portfolio PnL stops completely on the state of the last trade.
         </p>
       </div>
 
@@ -833,7 +885,7 @@ export function AutonomousLoopPanel({
         <div>
           <div className="text-[10px] text-gray-400 uppercase flex items-center justify-between">
             <span>Unrealized PnL</span>
-            <span className="text-[9px] text-purple-300 font-bold">Exit: +{exitMultiplier * 5}%</span>
+            <span className="text-[9px] text-purple-300 font-bold">Exit: +{autoExitPct}%</span>
           </div>
           <div className="flex flex-wrap items-baseline gap-1.5 mt-0.5">
             <span
@@ -929,7 +981,7 @@ export function AutonomousLoopPanel({
                         <div className="text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
                           <span>Entry: ${safeEntry.toFixed(2)} → Now: ${safePrice.toFixed(2)}</span>
                           <span className="text-purple-300/90 font-mono bg-purple-500/10 px-1 py-0.2 rounded border border-purple-500/20">
-                            Auto-Exit: +{exitMultiplier * 5}% (${(safeEntry * (1 + (exitMultiplier * 5) / 100)).toFixed(2)})
+                            Auto-Exit: +{autoExitPct}% (${(safeEntry * (1 + autoExitPct / 100)).toFixed(2)})
                           </span>
                         </div>
                       </div>

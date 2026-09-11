@@ -199,30 +199,30 @@ export function WireframeSphere({ onInteract }: WireframeSphereProps) {
           const scale = fov / distance;
           const px = p.x * scale + centerX;
           const py = p.y * scale + centerY;
-          ctx.fillStyle = `rgba(0, 240, 255, ${p.alpha * 0.4})`;
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.35})`;
           ctx.beginPath();
-          ctx.arc(px, py, p.size * scale * 0.6, 0, Math.PI * 2);
+          ctx.arc(px, py, p.size * scale * 0.5, 0, Math.PI * 2);
           ctx.fill();
         }
       });
 
-      // Draw Left Sphere: Crypto (CX) Cyan-Gold Tone
+      // Draw Left Sphere: Primary Crypto Mesh (Cyan orbital rings with Golden-Yellow nodes)
       drawSphere(leftGlobePoints, -sphereSpacing, 1.0, '0, 240, 255', '250, 204, 21');
 
-      // Draw Right Sphere: Tokenized Equities (EQ) Purple-Pink Tone (if desktop)
+      // Draw Right Sphere: Tokenized Equities Mesh (Deep Indigo/Purple rings with Magenta/Pink nodes)
       if (!isMobile) {
-        drawSphere(rightGlobePoints, sphereSpacing, -0.9, '168, 85, 247', '236, 72, 153');
+        drawSphere(rightGlobePoints, sphereSpacing, -0.9, '129, 140, 248', '244, 114, 182');
 
         // Draw cross-asset synthetic entanglement beam between the two globes
-        const beamAlpha = 0.25 + 0.15 * Math.sin(time * 3);
+        const beamAlpha = 0.25 + 0.1 * Math.sin(time * 3);
         const grad = ctx.createLinearGradient(centerX - sphereSpacing, centerY, centerX + sphereSpacing, centerY);
         grad.addColorStop(0, `rgba(0, 240, 255, ${beamAlpha})`);
-        grad.addColorStop(0.5, `rgba(250, 204, 21, ${beamAlpha * 1.5})`);
-        grad.addColorStop(1, `rgba(168, 85, 247, ${beamAlpha})`);
+        grad.addColorStop(0.5, `rgba(250, 204, 21, ${beamAlpha * 1.2})`);
+        grad.addColorStop(1, `rgba(236, 72, 153, ${beamAlpha})`);
 
         ctx.strokeStyle = grad;
-        ctx.setLineDash([4, 6]);
-        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 5]);
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(centerX - sphereSpacing + 60, centerY);
         ctx.lineTo(centerX + sphereSpacing - 60, centerY);
@@ -252,24 +252,13 @@ export function WireframeSphere({ onInteract }: WireframeSphereProps) {
     >
       <canvas
         ref={canvasRef}
-        className="w-full block filter drop-shadow-[0_0_24px_rgba(0,240,255,0.15)]"
+        className="w-full block"
       />
 
-      {/* Cybernetic HUD Overlay Badges on the sphere */}
-      <div className="absolute top-2 left-6 text-[10px] font-mono tracking-widest text-cyan-400/70 border border-cyan-500/20 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm flex items-center gap-1.5 pointer-events-none">
-        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-        <span>CX/EQ DUAL MESH [3D ORBIT]</span>
-      </div>
-
-      <div className="absolute top-2 right-6 text-[10px] font-mono tracking-widest text-yellow-400/70 border border-yellow-500/20 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm flex items-center gap-1.5 pointer-events-none">
-        <span>FPS: 60</span>
-        <span className="text-gray-500">|</span>
-        <span>LATENCY: 4ms</span>
-      </div>
 
       {isHovered && (
-        <div className="absolute bottom-4 text-[11px] font-mono text-cyan-300 bg-black/80 border border-cyan-500/40 px-3 py-1 rounded-full backdrop-blur-md shadow-[0_0_12px_rgba(0,240,255,0.3)] transition-all animate-bounce">
-          Hover to Tilt • Click to Trigger Quorum Pulse
+        <div className="absolute bottom-4 text-[11px] font-mono text-zinc-200 bg-zinc-900/90 border border-white/20 px-3.5 py-1 rounded-full backdrop-blur-md transition-all">
+          Tilt Cursor • Click to Launch Terminal
         </div>
       )}
     </div>
