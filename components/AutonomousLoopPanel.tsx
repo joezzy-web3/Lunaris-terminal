@@ -5,12 +5,9 @@ import { getSeededPrice, SEEDED_ASSETS } from '@/lib/demoSeedData';
 import { evaluateTradeRisk, TradeProposal } from '@/lib/riskVeto';
 import { recordNewPaperTrade } from '@/lib/paperTradingAudit';
 import { Play, Square, Zap, ShieldAlert, RotateCcw, ArrowUpRight, ArrowDownRight, RefreshCw, Target, ShieldCheck, Lock, Sliders, BookOpen, Activity } from 'lucide-react';
-import { playTradeApprovedChime, playRiskVetoTone, playCyberClick } from '@/lib/soundSynth';
+import { playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
 import { AutopilotResetPasscodeModal } from '@/components/AutopilotResetPasscodeModal';
 import { AutopilotLedgerView, AutopilotLedgerEntry } from '@/components/AutopilotLedgerView';
-import { SpectatorModeBadge } from '@/components/SpectatorModeBadge';
-import { AdminAuthModal } from '@/components/AdminAuthModal';
-import { useAdminAuth } from '@/lib/adminAuth';
 
 export interface AutonomousLog {
   id: string;
@@ -87,79 +84,10 @@ export function AutonomousLoopPanel({
   onClearExternalProposal,
   demoShockActive,
 }: AutonomousLoopPanelProps) {
-  const [isExecuting, setIsExecuting] = useState(() => {
-    const p = loadPersistedAutopilotState();
-    if (typeof p?.isExecuting === 'boolean') return p.isExecuting;
-    return true; // Autopilot daemon is active 24/7 by default
-  });
+  const [isExecuting, setIsExecuting] = useState(false);
   const [isTurbo, setIsTurbo] = useState(false);
   const [subTab, setSubTab] = useState<'COCKPIT' | 'LEDGER'>('COCKPIT');
   const [isResetPasscodeModalOpen, setIsResetPasscodeModalOpen] = useState(false);
-
-  // Administrative Passcode Authentication
-  const { isAuthenticated, storedPasscode } = useAdminAuth();
-  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
-  const [adminModalTitle, setAdminModalTitle] = useState('AUTOPILOT ENGINE AUTHORIZATION');
-  const [adminModalDesc, setAdminModalDesc] = useState('Enter administrative passcode to modify 24/7 engine state.');
-  const [pendingAuthAction, setPendingAuthAction] = useState<'TOGGLE_AUTOPILOT' | 'RESET_PORTFOLIO' | null>(null);
-
-  const executeToggleAutopilot = async (passcode: string) => {
-    const nextState = !isExecuting;
-    setIsExecuting(nextState);
-    try {
-      const res = await fetch('/api/autopilot/toggle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passcode }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setIsExecuting(!nextState); // rollback
-        playRiskVetoTone();
-      } else {
-        if (nextState) playTradeApprovedChime();
-      }
-    } catch {
-      // rollback on error
-      setIsExecuting(!nextState);
-    }
-  };
-
-  const handleToggleAutopilotClick = () => {
-    playCyberClick();
-    if (!isAuthenticated) {
-      setAdminModalTitle('AUTOPILOT ENGINE AUTHORIZATION');
-      setAdminModalDesc('Modifying or halting the 24/7 autonomous loop requires administrator authorization. General visitors are in Read-Only Spectator Mode.');
-      setPendingAuthAction('TOGGLE_AUTOPILOT');
-      setIsAdminAuthModalOpen(true);
-      return;
-    }
-    executeToggleAutopilot(storedPasscode || '');
-  };
-
-  // Synchronize Autopilot active state with server 24/7 daemon
-  useEffect(() => {
-    let isMounted = true;
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch('/api/autopilot/status');
-        if (res.ok) {
-          const data = await res.json();
-          if (data && typeof data.isRunning === 'boolean' && isMounted) {
-            setIsExecuting(data.isRunning);
-          }
-        }
-      } catch (err) {
-        console.warn('Could not sync autopilot status with server:', err);
-      }
-    };
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 4000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, []);
 
   const [logs, setLogs] = useState<AutonomousLog[]>([
     {
@@ -289,13 +217,12 @@ export function AutonomousLoopPanel({
         ledger: ledger.slice(0, 300),
         autoExitPct,
         maxOpenPositions,
-        isExecuting,
       };
       localStorage.setItem(AUTOPILOT_PERSISTENCE_KEY, JSON.stringify(stateToSave));
     } catch (err) {
       console.warn('Failed to persist autopilot state:', err);
     }
-  }, [cashBalance, positions, ledger, autoExitPct, maxOpenPositions, isExecuting]);
+  }, [cashBalance, positions, ledger, autoExitPct, maxOpenPositions]);
 
   const monitoredTickers = ['BTC', 'ETH', 'SOL', 'NVDA', 'TSLA', 'MSTR', 'COIN', 'AAPL'];
 
@@ -327,15 +254,7 @@ export function AutonomousLoopPanel({
    * Reset the portfolio back to factory initial state - Protected by Passcode Verification
    */
   const handleResetPortfolio = () => {
-    playCyberClick();
-    if (!isAuthenticated) {
-      setAdminModalTitle('RESET PORTFOLIO AUTHORIZATION');
-      setAdminModalDesc('Restoring the portfolio baseline to $100,000 cash reserve requires administrator authorization.');
-      setPendingAuthAction('RESET_PORTFOLIO');
-      setIsAdminAuthModalOpen(true);
-      return;
-    }
-    handleConfirmPasscodeReset();
+    setIsResetPasscodeModalOpen(true);
   };
 
   /**
@@ -1413,9 +1332,6 @@ export function AutonomousLoopPanel({
             </button>
           </div>
 
-          {/* Spectator Mode Indicator Badge */}
-          <SpectatorModeBadge className="mr-1" />
-
           {/* Manual Full Cashout */}
           <button
             onClick={handleCashoutAllPositions}
@@ -1451,17 +1367,15 @@ export function AutonomousLoopPanel({
             <span>{isTurbo ? 'TURBO 2s' : 'NORMAL 7s'}</span>
           </button>
 
-          {/* Autopilot Master Switch (Protected by Passcode) */}
+          {/* Autopilot Master Switch */}
           <button
-            onClick={handleToggleAutopilotClick}
-            title={!isAuthenticated ? 'Spectator Mode: Admin passcode required to toggle 24/7 engine' : (isExecuting ? 'Halt 24/7 Autopilot' : 'Engage 24/7 Autopilot')}
+            onClick={() => setIsExecuting(!isExecuting)}
             className={`px-3.5 py-1 text-xs font-bold rounded flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
               isExecuting
                 ? 'bg-red-500/20 border border-red-500 text-red-400 hover:bg-red-500/30'
                 : 'bg-emerald-500/20 border border-emerald-500 text-emerald-400 hover:bg-emerald-500/30'
             }`}
           >
-            {!isAuthenticated && <Lock className="w-3 h-3 text-amber-400 mr-0.5" />}
             {isExecuting ? <Square className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
             <span>{isExecuting ? 'HALT AUTOPILOT' : 'ENGAGE AUTOPILOT'}</span>
           </button>
@@ -1602,23 +1516,7 @@ export function AutonomousLoopPanel({
           </div>
 
       {/* Portfolio Telemetry Bar - Always Safe Real-Time Values */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4 bg-black/50 p-2.5 rounded border border-white/5 text-xs">
-        {/* Initial Portfolio Balance */}
-        <div className="border-r border-white/5 pr-2">
-          <div className="text-[10px] text-[#00F0FF] uppercase flex items-center justify-between font-mono font-bold">
-            <span>INITIAL BALANCE</span>
-            <span className="text-[9px] text-[#00F0FF]/80">GENESIS</span>
-          </div>
-          <div className="flex flex-wrap items-baseline gap-1.5 mt-0.5">
-            <span className="text-sm font-bold text-white tracking-wide font-mono">
-              $100,000.00
-            </span>
-          </div>
-          <div className="text-[9px] text-gray-400 mt-0.5">
-            Initial Capital (USDT)
-          </div>
-        </div>
-
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 bg-black/50 p-2.5 rounded border border-white/5 text-xs">
         {/* Portfolio Net Value */}
         <div>
           <div className="text-[10px] text-gray-400 uppercase flex items-center justify-between">
@@ -1984,26 +1882,6 @@ export function AutonomousLoopPanel({
         isOpen={isResetPasscodeModalOpen}
         onClose={() => setIsResetPasscodeModalOpen(false)}
         onConfirmReset={handleConfirmPasscodeReset}
-      />
-
-      {/* Cybernetic Administrative Authorization Modal */}
-      <AdminAuthModal
-        isOpen={isAdminAuthModalOpen}
-        onClose={() => {
-          setIsAdminAuthModalOpen(false);
-          setPendingAuthAction(null);
-        }}
-        onSuccess={(passcode) => {
-          setIsAdminAuthModalOpen(false);
-          if (pendingAuthAction === 'TOGGLE_AUTOPILOT') {
-            executeToggleAutopilot(passcode);
-          } else if (pendingAuthAction === 'RESET_PORTFOLIO') {
-            handleConfirmPasscodeReset();
-          }
-          setPendingAuthAction(null);
-        }}
-        actionTitle={adminModalTitle}
-        actionDescription={adminModalDesc}
       />
     </div>
   );

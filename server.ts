@@ -345,14 +345,10 @@ app.get('/api/bitget/orderbook', async (req, res) => {
 });
 
 // ==========================================
-// OFFICIAL BITGET S2 AUDIT LEDGER PERSISTENCE & 24/7 AUTONOMOUS DAEMON
+// OFFICIAL BITGET S2 AUDIT LEDGER PERSISTENCE
 // ==========================================
 const AUDIT_DATA_DIR = path.join(process.cwd(), 'data');
 const AUDIT_FILE_PATH = path.join(AUDIT_DATA_DIR, 'audit_trades.json');
-
-let auditTradesCache: any[] | null = null;
-let isAutopilotDaemonActive = true;
-let autopilotDaemonTimer: NodeJS.Timeout | null = null;
 
 function ensureAuditFile() {
   try {
@@ -369,28 +365,22 @@ function ensureAuditFile() {
 ensureAuditFile();
 
 function getAuditTrades(): any[] {
-  if (auditTradesCache && auditTradesCache.length > 0) {
-    return auditTradesCache;
-  }
   try {
     ensureAuditFile();
     if (fs.existsSync(AUDIT_FILE_PATH)) {
       const data = fs.readFileSync(AUDIT_FILE_PATH, 'utf8');
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        auditTradesCache = parsed;
         return parsed;
       }
     }
   } catch (err) {
     console.error('Error reading audit trades:', err);
   }
-  auditTradesCache = [...SEED_PAPER_TRADES];
-  return auditTradesCache;
+  return SEED_PAPER_TRADES;
 }
 
 function saveAuditTrades(trades: any[]) {
-  auditTradesCache = trades;
   try {
     ensureAuditFile();
     fs.writeFileSync(AUDIT_FILE_PATH, JSON.stringify(trades, null, 2), 'utf8');
@@ -399,214 +389,11 @@ function saveAuditTrades(trades: any[]) {
   }
 }
 
-// 24/7 Server Autonomous Execution Daemon
-const DAEMON_ASSETS = [
-  { instrument: 'BTC/USDT', ticker: 'BTC', defaultPrice: 77250, leverage: 5 },
-  { instrument: 'ETH/USDT', ticker: 'ETH', defaultPrice: 2512, leverage: 4 },
-  { instrument: 'SOL/USDT', ticker: 'SOL', defaultPrice: 101.5, leverage: 4 },
-  { instrument: 'NVDAon/USDT', ticker: 'NVDAon', defaultPrice: 182.5, leverage: 2 },
-  { instrument: 'TSLAon/USDT', ticker: 'TSLAon', defaultPrice: 242.0, leverage: 2 },
-  { instrument: 'SUI/USDT', ticker: 'SUI', defaultPrice: 3.14, leverage: 4 },
-];
-
-const DAEMON_RATIONALES = [
-  'Council Quorum: Quant-Omega Breakout + Atlas-Macro correlation confirm (93% Conf)',
-  'Autopilot Pulse: Social Velocity Spike (>84) + Quant Orderbook bid absorption',
-  'Quant-Omega: VWAP bounce confirmation on high institutional volume profile',
-  'Atlas-Macro: Tokenized 7x24 rToken liquidity influx on Bitget gateway',
-  'Council Quorum: Unanimous consensus (Alpha Hunter + Macro Oracle ratified)',
-  'Autopilot Daemon: Liquidity sweep absorption at local demand support zone',
-];
-
-function executeServerAutopilotTrade() {
-  if (!isAutopilotDaemonActive) return;
-
-  try {
-    const trades = getAuditTrades();
-    const lastBalance = trades.length > 0 ? Number(trades[trades.length - 1].accountBalance) : 100000;
-
-    const asset = DAEMON_ASSETS[Math.floor(Math.random() * DAEMON_ASSETS.length)];
-    const cachedPrice = bitgetMarketCache?.data?.[asset.ticker]?.price;
-    const executionPrice = typeof cachedPrice === 'number' && cachedPrice > 0 ? cachedPrice : asset.defaultPrice;
-
-    // Sizing between $5,000 and $15,000 USDT
-    const quantity = Math.floor(Math.random() * 9000 + 5000);
-    const direction: 'LONG' | 'SHORT' = Math.random() > 0.42 ? 'LONG' : 'SHORT';
-
-    // 80% win rate with positive edge, controlled stop-losses for risk safety
-    const isWin = Math.random() > 0.20;
-    let balanceChangePct = 0;
-    let balanceChange = 0;
-    let status: 'TAKE_PROFIT' | 'STOP_LOSS' = 'TAKE_PROFIT';
-    let trigger = '';
-
-    if (isWin) {
-      balanceChangePct = Number((Math.random() * 5.2 + 3.1).toFixed(2));
-      balanceChange = Number(((quantity * (balanceChangePct / 100))).toFixed(2));
-      status = 'TAKE_PROFIT';
-      trigger = DAEMON_RATIONALES[Math.floor(Math.random() * DAEMON_RATIONALES.length)];
-    } else {
-      balanceChangePct = -Number((Math.random() * 2.5 + 1.2).toFixed(2));
-      balanceChange = -Number(((quantity * (Math.abs(balanceChangePct) / 100))).toFixed(2));
-      status = 'STOP_LOSS';
-      trigger = 'Guardian-01 Risk Veto: Volatility limit reached, dynamic stop-loss executed to protect capital';
-    }
-
-    const newBalance = Number((lastBalance + balanceChange).toFixed(2));
-    const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const id = `PT-${dateStr}-${(trades.length + 1).toString().padStart(2, '0')}`;
-
-    const newTrade = {
-      id,
-      timestamp: now.toISOString(),
-      instrument: asset.instrument,
-      direction,
-      price: executionPrice,
-      quantity,
-      leverage: asset.leverage,
-      balanceChange,
-      balanceChangePct,
-      accountBalance: newBalance,
-      trigger,
-      status,
-    };
-
-    trades.push(newTrade);
-    saveAuditTrades(trades);
-    console.log(`[AUTOPILOT 24/7] Trade ${id} executed: ${direction} ${asset.instrument} at $${executionPrice} -> ${status} (${balanceChange > 0 ? '+' : ''}$${balanceChange}) | Balance: $${newBalance.toLocaleString()}`);
-  } catch (err) {
-    console.error('[AUTOPILOT 24/7] Error executing trade:', err);
-  }
-}
-
-// Start continuous 24/7 autonomous loop ticking every 15 seconds
-function startAutopilotDaemon() {
-  if (autopilotDaemonTimer) clearInterval(autopilotDaemonTimer);
-  autopilotDaemonTimer = setInterval(executeServerAutopilotTrade, 15000);
-  console.log('[AUTOPILOT 24/7] Daemon initialized. Trades running continuously in background.');
-}
-startAutopilotDaemon();
-
-// GET /api/autopilot/status - Real-time status for 24/7 autonomous engine
-app.get('/api/autopilot/status', (req, res) => {
-  const trades = getAuditTrades();
-  const lastBalance = trades.length > 0 ? Number(trades[trades.length - 1].accountBalance) : 100000;
-  res.json({
-    success: true,
-    isRunning: isAutopilotDaemonActive,
-    initialBalance: 100000,
-    currentBalance: lastBalance,
-    totalPnl: Number((lastBalance - 100000).toFixed(2)),
-    totalPnlPct: Number((((lastBalance - 100000) / 100000) * 100).toFixed(2)),
-    totalTrades: trades.length,
-    lastTrade: trades.length > 0 ? trades[trades.length - 1] : null,
-    timestamp: Date.now(),
-  });
-});
-
-// Rate Limiting Tracker for Administrative Passcode Protection
-const failedAuthAttempts = new Map<string, { count: number; lockedUntil: number }>();
-
-function checkRateLimit(ip: string): { allowed: boolean; remainingSeconds: number } {
-  const now = Date.now();
-  const record = failedAuthAttempts.get(ip);
-  if (record && record.lockedUntil > now) {
-    return { allowed: false, remainingSeconds: Math.ceil((record.lockedUntil - now) / 1000) };
-  }
-  return { allowed: true, remainingSeconds: 0 };
-}
-
-function recordFailedAttempt(ip: string) {
-  const now = Date.now();
-  const record = failedAuthAttempts.get(ip) || { count: 0, lockedUntil: 0 };
-  record.count += 1;
-  if (record.count >= 5) {
-    record.lockedUntil = now + 60000; // 60s lockout after 5 consecutive failed attempts
-    record.count = 0;
-  }
-  failedAuthAttempts.set(ip, record);
-}
-
-function resetFailedAttempts(ip: string) {
-  failedAuthAttempts.delete(ip);
-}
-
-// POST /api/admin/verify - Verify administrative passcode and establish session
-app.post('/api/admin/verify', (req, res) => {
-  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown');
-  const rateLimit = checkRateLimit(ip);
-  if (!rateLimit.allowed) {
-    return res.status(429).json({
-      success: false,
-      error: `Security Lockout: Too many failed authorization attempts. Please wait ${rateLimit.remainingSeconds}s before retrying.`,
-      remainingSeconds: rateLimit.remainingSeconds,
-    });
-  }
-
-  const clientPasscode = String(req.body?.passcode || '').trim();
-  const adminPass = String(process.env.ADMIN_PASSCODE || 'chllap5803').trim();
-
-  if (clientPasscode === 'chllap5803' || clientPasscode === adminPass) {
-    resetFailedAttempts(ip);
-    return res.json({
-      success: true,
-      message: 'Admin authorization granted.',
-      timestamp: Date.now(),
-    });
-  } else {
-    recordFailedAttempt(ip);
-    const updated = checkRateLimit(ip);
-    return res.status(401).json({
-      success: false,
-      error: updated.allowed
-        ? 'Invalid Passcode: Unauthorized access attempt recorded.'
-        : `Security Lockout Triggered: Too many failed attempts. Locked for ${updated.remainingSeconds}s.`,
-      remainingSeconds: updated.remainingSeconds,
-    });
-  }
-});
-
-// POST /api/autopilot/toggle - Pause or resume 24/7 autonomous engine (Protected by Passcode)
-app.post('/api/autopilot/toggle', (req, res) => {
-  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown');
-  const rateLimit = checkRateLimit(ip);
-  if (!rateLimit.allowed) {
-    return res.status(429).json({
-      success: false,
-      error: `Security Lockout: Rate limit exceeded. Try again in ${rateLimit.remainingSeconds}s.`,
-      remainingSeconds: rateLimit.remainingSeconds,
-    });
-  }
-
-  const clientPasscode = String(req.body?.passcode || '').trim();
-  const adminPass = String(process.env.ADMIN_PASSCODE || 'chllap5803').trim();
-
-  if (clientPasscode !== 'chllap5803' && clientPasscode !== adminPass) {
-    recordFailedAttempt(ip);
-    const updated = checkRateLimit(ip);
-    return res.status(401).json({
-      success: false,
-      error: 'ACCESS DENIED: Unauthorized passcode. Admin rights required to toggle 24/7 engine.',
-      remainingSeconds: updated.remainingSeconds,
-    });
-  }
-
-  resetFailedAttempts(ip);
-  isAutopilotDaemonActive = !isAutopilotDaemonActive;
-  res.json({
-    success: true,
-    isRunning: isAutopilotDaemonActive,
-    message: isAutopilotDaemonActive ? 'Autopilot 24/7 engine resumed' : 'Autopilot 24/7 engine paused',
-  });
-});
-
 // GET /api/audit/trades - Global read for all judges and clients
 app.get('/api/audit/trades', (req, res) => {
   const trades = getAuditTrades();
   res.json({
     success: true,
-    initialBalance: 100000,
     trades,
     count: trades.length,
     timestamp: Date.now(),
@@ -617,25 +404,11 @@ app.get('/api/audit/trades', (req, res) => {
 app.post('/api/audit/trade', (req, res) => {
   try {
     const trade = req.body?.trade;
-    if (!trade || !trade.instrument) {
+    if (!trade || !trade.id || !trade.instrument) {
       return res.status(400).json({ success: false, error: 'Invalid trade payload' });
     }
 
     const trades = getAuditTrades();
-    const lastBalance = trades.length > 0 ? Number(trades[trades.length - 1].accountBalance) : 100000;
-
-    if (!trade.id) {
-      const now = new Date();
-      const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-      trade.id = `PT-${dateStr}-${(trades.length + 1).toString().padStart(2, '0')}`;
-    }
-    if (!trade.timestamp) {
-      trade.timestamp = new Date().toISOString();
-    }
-    if (typeof trade.accountBalance !== 'number') {
-      trade.accountBalance = Number((lastBalance + (trade.balanceChange || 0)).toFixed(2));
-    }
-
     const existingIndex = trades.findIndex((t) => t.id === trade.id);
     if (existingIndex >= 0) {
       trades[existingIndex] = trade;
@@ -647,9 +420,7 @@ app.post('/api/audit/trade', (req, res) => {
     return res.json({
       success: true,
       tradeId: trade.id,
-      trade,
       count: trades.length,
-      currentBalance: trade.accountBalance,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
@@ -659,37 +430,21 @@ app.post('/api/audit/trade', (req, res) => {
 // POST /api/audit/reset - Reset to official seed data with administrative authorization
 app.post('/api/audit/reset', (req, res) => {
   try {
-    const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown');
-    const rateLimit = checkRateLimit(ip);
-    if (!rateLimit.allowed) {
-      return res.status(429).json({
-        success: false,
-        error: `Security Lockout: Rate limit exceeded. Try again in ${rateLimit.remainingSeconds}s.`,
-        remainingSeconds: rateLimit.remainingSeconds,
-      });
-    }
-
     const passcode = String(req.body?.passcode || '').trim().toLowerCase();
     const adminPass = String(process.env.ADMIN_PASSCODE || 'chllap5803').trim().toLowerCase();
     if (passcode !== 'chllap5803' && passcode !== adminPass) {
-      recordFailedAttempt(ip);
-      const updated = checkRateLimit(ip);
-      return res.status(401).json({
+      return res.status(403).json({
         success: false,
         error: 'ACCESS DENIED: Unauthorized auditor access code.',
-        remainingSeconds: updated.remainingSeconds,
       });
     }
 
-    resetFailedAttempts(ip);
-    auditTradesCache = [...SEED_PAPER_TRADES];
     saveAuditTrades(SEED_PAPER_TRADES);
     return res.json({
       success: true,
-      message: 'Audit log successfully restored to official Bitget S2 genesis seed (100,000 USDT baseline).',
+      message: 'Audit log successfully restored to official Bitget S2 genesis seed.',
       trades: SEED_PAPER_TRADES,
       count: SEED_PAPER_TRADES.length,
-      initialBalance: 100000,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });

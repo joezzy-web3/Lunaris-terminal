@@ -24,7 +24,6 @@ import { PaperTradingAuditView } from '@/components/PaperTradingAuditView';
 import { CommandPaletteModal } from '@/components/CommandPaletteModal';
 import { BitgetApiKeyModal } from '@/components/BitgetApiKeyModal';
 import { BlackSwanDrillModal } from '@/components/BlackSwanDrillModal';
-import { SpectatorModeBadge } from '@/components/SpectatorModeBadge';
 import { TradeProposal } from '@/lib/riskVeto';
 import { clearAssetShocks } from '@/lib/demoSeedData';
 import { PulseContext } from '@/lib/councilDebateEngine';
@@ -71,7 +70,7 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'DECK' | 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'ALGO' | 'AUDIT'>('DECK');
-  const [cockpitModule, setCockpitModule] = useState<'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'KILLSWITCH' | 'AUDIT' | 'ALL'>('CHART');
+  const [cockpitModule, setCockpitModule] = useState<'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'SANDBOX' | 'KILLSWITCH' | 'AUDIT' | 'ALL'>('CHART');
   const [councilSelectedTicker, setCouncilSelectedTicker] = useState<string>('BTC');
   const [incomingPulseContext, setIncomingPulseContext] = useState<(PulseContext & { ticker: string }) | null>(null);
   const [incomingProposal, setIncomingProposal] = useState<TradeProposal | null>(null);
@@ -183,6 +182,7 @@ export default function App() {
     { id: 'DEPTH', name: 'Liquidity Depth', icon: Layers, desc: 'Order Book Heatmap' },
     { id: 'STATARB', name: 'StatArb Matrix', icon: ArrowRightLeft, desc: 'Cross-Asset Pairs' },
     { id: 'AUDIT', name: 'Audit Ledger', icon: ScrollText, desc: 'Bitget S2 Paper Logs' },
+    { id: 'SANDBOX', name: 'Shock Sandbox', icon: Target, desc: 'Market Stress Tests' },
     { id: 'KILLSWITCH', name: 'Kill-Switch', icon: Shield, desc: 'Circuit Telemetry' },
     { id: 'ALL', name: 'All-In-One Grid', icon: Grid, desc: 'Complete Matrix' },
   ] as const;
@@ -216,9 +216,6 @@ export default function App() {
                 </span>
               </div>
             </button>
-
-            {/* Spectator Mode Badge - In matching Blue Theme, right next to Bitget AI Edition & close to Command Deck */}
-            <SpectatorModeBadge className="hidden sm:inline-flex" />
           </div>
 
           {/* Center: Navigation Links */}
@@ -605,7 +602,17 @@ export default function App() {
               </div>
             )}
 
-            {/* 7. DETERMINISTIC KILL-SWITCH & CIRCUIT SAFETY */}
+            {/* 7. SHOCK SANDBOX & STRESS TEST */}
+            {cockpitModule === 'SANDBOX' && (
+              <div className="space-y-4 animate-fadeIn">
+                <DemoModeController
+                  onTriggerDirectProposal={handleSendToAutopilot}
+                  onResetBalances={handleResetPaperAccount}
+                />
+              </div>
+            )}
+
+            {/* 10. DETERMINISTIC KILL-SWITCH & CIRCUIT SAFETY */}
             {cockpitModule === 'KILLSWITCH' && (
               <div className="space-y-4 animate-fadeIn">
                 <DeterministicKillSwitch
