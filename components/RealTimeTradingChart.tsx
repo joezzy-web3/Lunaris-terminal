@@ -1,18 +1,13 @@
 // components/RealTimeTradingChart.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { AssetQuote, INITIAL_ASSET_QUOTES } from '@/lib/livePrices';
+import { AssetQuote, useLiveMarketQuotes } from '@/lib/livePrices';
 import {
   TrendingUp,
   TrendingDown,
   Activity,
-  Maximize2,
   Zap,
-  ShieldAlert,
   ArrowUpRight,
   ArrowDownRight,
-  RefreshCw,
-  Clock,
-  Layers,
 } from 'lucide-react';
 import { TradeProposal } from '@/lib/riskVeto';
 import { playCyberClick } from '@/lib/soundSynth';
@@ -43,41 +38,44 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
   const [chartType, setChartType] = useState<'AREA' | 'CANDLES'>('AREA');
   const [orderAmount, setOrderAmount] = useState<number>(1000);
   const [candles, setCandles] = useState<PriceCandle[]>([]);
-  const [currentPrice, setCurrentPrice] = useState<number>(INITIAL_ASSET_QUOTES[selectedTicker]?.price || 88420);
-  const [lastDirection, setLastDirection] = useState<'UP' | 'DOWN'>('UP');
+
+  const { quotes, getQuote } = useLiveMarketQuotes();
+  const liveQuote = getQuote(ticker);
+
+  const [currentPrice, setCurrentPrice] = useState<number>(liveQuote.price);
+  const [lastDirection, setLastDirection] = useState<'UP' | 'DOWN'>(liveQuote.change24h >= 0 ? 'UP' : 'DOWN');
   const [spikeIntensity, setSpikeIntensity] = useState<number>(0);
-  const [hoveredPoint, setHoveredPoint] = useState<PriceCandle | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Sync when prop changes
+  // Sync internal ticker when external prop changes
   useEffect(() => {
     if (selectedTicker && selectedTicker !== ticker) {
       setTicker(selectedTicker);
     }
   }, [selectedTicker]);
 
-  // Seed baseline historical candles on ticker change
+  // Seed baseline historical candles when ticker or timeframe changes, strictly anchored to the live price
   useEffect(() => {
-    const baseQuote = INITIAL_ASSET_QUOTES[ticker] || INITIAL_ASSET_QUOTES.BTC;
-    const basePrice = baseQuote.price;
-    setCurrentPrice(basePrice);
+    const targetPrice = liveQuote.price;
+    setCurrentPrice(targetPrice);
+    setLastDirection(liveQuote.lastTickDirection === 'NEUTRAL' ? (liveQuote.change24h >= 0 ? 'UP' : 'DOWN') : liveQuote.lastTickDirection);
 
     const now = Date.now();
     const intervalMs = timeframe === '1s' ? 1000 : timeframe === '1m' ? 60000 : 300000;
     const count = 50;
 
     const initialCandles: PriceCandle[] = [];
-    let p = basePrice * 0.985;
+    let p = targetPrice * (1 - (liveQuote.change24h / 100) * 0.3);
 
-    for (let i = count; i >= 0; i--) {
-      const delta = (Math.random() - 0.48) * (basePrice * 0.004);
+    for (let i = count; i >= 1; i--) {
+      const delta = (Math.random() - 0.49) * (targetPrice * 0.003);
       const open = p;
-      p = Math.max(basePrice * 0.8, p + delta);
-      const high = Math.max(open, p) + Math.random() * (basePrice * 0.002);
-      const low = Math.min(open, p) - Math.random() * (basePrice * 0.002);
+      p = p + delta;
+      const high = Math.max(open, p) + Math.random() * (targetPrice * 0.0015);
+      const low = Math.min(open, p) - Math.random() * (targetPrice * 0.0015);
       const close = p;
-      const dir = close >= open ? 'UP' : 'DOWN';
+      const dir: 'UP' | 'DOWN' = close >= open ? 'UP' : 'DOWN';
 
       initialCandles.push({
         timestamp: now - i * intervalMs,
@@ -90,61 +88,72 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
       });
     }
 
+    // Anchor the very last candle to the exact current live price
+    const lastOpen = initialCandles[initialCandles.length - 1]?.close || targetPrice;
+    initialCandles.push({
+      timestamp: now,
+      open: lastOpen,
+      high: Math.max(lastOpen, targetPrice),
+      low: Math.min(lastOpen, targetPrice),
+      close: targetPrice,
+      volume: Math.floor(Math.random() * 600) + 200,
+      direction: targetPrice >= lastOpen ? 'UP' : 'DOWN',
+    });
+
     setCandles(initialCandles);
   }, [ticker, timeframe]);
 
-  // Real-Time High Frequency Tick Engine
+  // React directly to live market quotes feed (Bitget / Yahoo / Binance)
   useEffect(() => {
-    const tickSpeed = timeframe === '1s' ? 800 : 2200;
-    const interval = setInterval(() => {
-      setCandles((prev) => {
-        if (prev.length === 0) return prev;
-        const last = prev[prev.length - 1];
+    if (!liveQuote || typeof liveQuote.price !== 'number') return;
+    const latestPrice = liveQuote.price;
 
-        // Random price impulse with slight momentum
-        const volatility = ticker === 'BTC' || ticker === 'ETH' ? 0.0025 : 0.004;
-        const isSpikeTick = Math.random() > 0.82;
-        const deltaPct = (Math.random() * 2 - 0.98) * volatility * (isSpikeTick ? 2.5 : 1);
-        const nextPrice = Number((last.close * (1 + deltaPct)).toFixed(last.close > 1000 ? 1 : 2));
+    setCurrentPrice(latestPrice);
+    const dir: 'UP' | 'DOWN' = liveQuote.lastTickDirection === 'NEUTRAL'
+      ? (latestPrice >= currentPrice ? 'UP' : 'DOWN')
+      : liveQuote.lastTickDirection;
+    setLastDirection(dir);
 
-        const dir: 'UP' | 'DOWN' = nextPrice >= last.close ? 'UP' : 'DOWN';
-        setLastDirection(dir);
-        setCurrentPrice(nextPrice);
+    // Apply live tick to the candles
+    setCandles((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
 
-        if (isSpikeTick) {
-          setSpikeIntensity(dir === 'UP' ? 1 : -1);
-          setTimeout(() => setSpikeIntensity(0), 1000);
-        }
+      // Check if price moved enough for spike effect
+      const priceDiffRatio = Math.abs(latestPrice - last.close) / last.close;
+      if (priceDiffRatio > 0.0008) {
+        setSpikeIntensity(dir === 'UP' ? 1 : -1);
+        setTimeout(() => setSpikeIntensity(0), 1000);
+      }
 
-        const updatedLast: PriceCandle = {
-          ...last,
-          high: Math.max(last.high, nextPrice),
-          low: Math.min(last.low, nextPrice),
-          close: nextPrice,
-          volume: last.volume + Math.floor(Math.random() * 20),
+      const updatedLast: PriceCandle = {
+        ...last,
+        high: Math.max(last.high, latestPrice),
+        low: Math.min(last.low, latestPrice),
+        close: latestPrice,
+        volume: last.volume + Math.floor(Math.random() * 15) + 2,
+        direction: dir,
+      };
+
+      // If time interval elapsed, create a new candle
+      const now = Date.now();
+      const intervalMs = timeframe === '1s' ? 1500 : timeframe === '1m' ? 60000 : 300000;
+      if (now - last.timestamp > intervalMs) {
+        const newCandle: PriceCandle = {
+          timestamp: now,
+          open: latestPrice,
+          high: latestPrice,
+          low: latestPrice,
+          close: latestPrice,
+          volume: Math.floor(Math.random() * 40) + 10,
           direction: dir,
         };
+        return [...prev.slice(-60), newCandle];
+      }
 
-        // Every 6 ticks, push a new candle
-        if (Math.random() > 0.6) {
-          const newCandle: PriceCandle = {
-            timestamp: Date.now(),
-            open: nextPrice,
-            high: nextPrice,
-            low: nextPrice,
-            close: nextPrice,
-            volume: Math.floor(Math.random() * 50) + 10,
-            direction: dir,
-          };
-          return [...prev.slice(-60), newCandle];
-        }
-
-        return [...prev.slice(0, -1), updatedLast];
-      });
-    }, tickSpeed);
-
-    return () => clearInterval(interval);
-  }, [ticker, timeframe]);
+      return [...prev.slice(0, -1), updatedLast];
+    });
+  }, [liveQuote.price, liveQuote.lastUpdated]);
 
   // Canvas Drawing for High-Performance Cinematic Aesthetics
   useEffect(() => {
@@ -168,14 +177,15 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
     // Padding & dimensions
     const padTop = 30;
     const padBottom = 55;
-    const padRight = 75;
+    const padRight = 85;
     const chartW = width - padRight;
     const chartH = height - padTop - padBottom;
 
     // Calculate Price Bounds
-    const prices = candles.map((c) => c.close);
-    const minP = Math.min(...candles.map((c) => c.low)) * 0.999;
-    const maxP = Math.max(...candles.map((c) => c.high)) * 1.001;
+    const allLows = candles.map((c) => c.low).concat(currentPrice);
+    const allHighs = candles.map((c) => c.high).concat(currentPrice);
+    const minP = Math.min(...allLows) * 0.999;
+    const maxP = Math.max(...allHighs) * 1.001;
     const rangeP = maxP - minP || 1;
 
     const maxVol = Math.max(...candles.map((c) => c.volume)) || 1;
@@ -317,7 +327,6 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
     ctx.fillText(`$${currentPrice.toFixed(currentPrice > 1000 ? 1 : 2)}`, chartW + 6, lastY + 3.5);
   }, [candles, currentPrice, chartType, lastDirection, spikeIntensity]);
 
-  const activeQuote = INITIAL_ASSET_QUOTES[ticker] || INITIAL_ASSET_QUOTES.BTC;
   const isUp = lastDirection === 'UP';
 
   // Handle Quick Trade Handoff
@@ -336,7 +345,7 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
     onExecuteTrade(proposal);
   };
 
-  const assetKeys = Object.keys(INITIAL_ASSET_QUOTES);
+  const assetKeys = Object.keys(quotes);
 
   return (
     <div className="bg-[#0a0a0e] border border-white/10 rounded-xl overflow-hidden shadow-2xl">
@@ -345,7 +354,7 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
         {/* Left: Asset Selectors */}
         <div className="flex flex-wrap items-center gap-1.5">
           {assetKeys.map((key) => {
-            const item = INITIAL_ASSET_QUOTES[key];
+            const item = quotes[key];
             const isSelected = ticker === key;
             return (
               <button
@@ -363,10 +372,10 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
               >
                 <span
                   className={`text-[9px] px-1 py-0.2 rounded ${
-                    item.class === 'CX' ? 'bg-cyan-900/60 text-cyan-300' : 'bg-purple-900/60 text-purple-300'
+                    item?.class === 'CX' ? 'bg-cyan-900/60 text-cyan-300' : 'bg-purple-900/60 text-purple-300'
                   }`}
                 >
-                  {item.class}
+                  {item?.class || 'CX'}
                 </span>
                 <span>{key}</span>
               </button>
@@ -385,11 +394,11 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
           >
             <span className="text-xs font-bold text-gray-400 uppercase">Live:</span>
             <span className="text-base font-black font-mono tracking-wide">
-              ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: currentPrice > 1000 ? 1 : 2 })}
+              ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: currentPrice > 1000 ? 1 : 2, maximumFractionDigits: currentPrice > 1000 ? 1 : 2 })}
             </span>
             <span className="flex items-center gap-0.5 text-xs font-bold font-mono">
               {isUp ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
-              {isUp ? '+SPIKE' : '-DIP'}
+              {liveQuote.change24h > 0 ? '+' : ''}{liveQuote.change24h.toFixed(2)}%
             </span>
           </div>
 
@@ -446,7 +455,7 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
         {/* Subtle Watermark */}
         <div className="absolute top-4 left-4 pointer-events-none flex items-center gap-2 text-white/10 font-black text-3xl font-mono select-none">
           <span>{ticker}</span>
-          <span className="text-sm border border-white/10 px-1 rounded">BITGET LUNARIS FEED</span>
+          <span className="text-sm border border-white/10 px-1 rounded">LIVE FEED</span>
         </div>
 
         <canvas ref={canvasRef} className="w-full block" />

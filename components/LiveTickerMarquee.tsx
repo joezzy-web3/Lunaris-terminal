@@ -1,7 +1,7 @@
 // components/LiveTickerMarquee.tsx
-import React, { useEffect, useState } from 'react';
-import { AssetQuote, INITIAL_ASSET_QUOTES, fetchLiveCryptoPrices } from '@/lib/livePrices';
-import { TrendingUp, TrendingDown, Activity, Sparkles } from 'lucide-react';
+import React from 'react';
+import { AssetQuote, useLiveMarketQuotes } from '@/lib/livePrices';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { playCyberClick } from '@/lib/soundSynth';
 
 interface LiveTickerMarqueeProps {
@@ -13,79 +13,7 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
   onSelectAsset,
   activeTicker,
 }) => {
-  const [quotes, setQuotes] = useState<Record<string, AssetQuote>>(INITIAL_ASSET_QUOTES);
-  const [lastSpikedTicker, setLastSpikedTicker] = useState<string | null>(null);
-
-  // Periodic real public API sync
-  useEffect(() => {
-    let isMounted = true;
-    const syncRealCrypto = async () => {
-      const realPrices = await fetchLiveCryptoPrices();
-      if (!isMounted) return;
-      if (Object.keys(realPrices).length > 0) {
-        setQuotes((prev) => {
-          const next = { ...prev };
-          Object.entries(realPrices).forEach(([ticker, data]) => {
-            if (next[ticker] && data) {
-              const oldPrice = next[ticker].price;
-              const dir = data.price >= oldPrice ? 'UP' : 'DOWN';
-              next[ticker] = {
-                ...next[ticker],
-                price: data.price,
-                change24h: data.change24h,
-                lastTickDirection: dir,
-                lastUpdated: Date.now(),
-              };
-            }
-          });
-          return next;
-        });
-      }
-    };
-
-    syncRealCrypto();
-    const interval = setInterval(syncRealCrypto, 10000); // sync every 10s
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, []);
-
-  // High-frequency micro-tick simulation for active live feel
-  useEffect(() => {
-    const tickInterval = setInterval(() => {
-      const tickers = Object.keys(quotes);
-      const randomTicker = tickers[Math.floor(Math.random() * tickers.length)];
-
-      setQuotes((prev) => {
-        const item = prev[randomTicker];
-        if (!item) return prev;
-
-        // Micro-jitter: -0.15% to +0.18%
-        const deltaPercent = (Math.random() * 0.33 - 0.15) / 100;
-        const newPrice = Number((item.price * (1 + deltaPercent)).toFixed(item.price > 1000 ? 1 : 2));
-        const dir = newPrice >= item.price ? 'UP' : 'DOWN';
-
-        if (Math.abs(deltaPercent) > 0.001) {
-          setLastSpikedTicker(randomTicker);
-          setTimeout(() => setLastSpikedTicker(null), 1200);
-        }
-
-        return {
-          ...prev,
-          [randomTicker]: {
-            ...item,
-            price: newPrice,
-            change24h: Number((item.change24h + (dir === 'UP' ? 0.02 : -0.02)).toFixed(2)),
-            lastTickDirection: dir,
-            lastUpdated: Date.now(),
-          },
-        };
-      });
-    }, 1800);
-
-    return () => clearInterval(tickInterval);
-  }, [quotes]);
+  const { quotes } = useLiveMarketQuotes();
 
   const assetList: AssetQuote[] = Object.values(quotes);
   // Duplicate for seamless infinite marquee scroll
@@ -102,7 +30,6 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
         {displayList.map((asset: AssetQuote, idx: number) => {
           const isUp = asset.change24h >= 0;
           const isSelected = activeTicker === asset.ticker;
-          const isSpiking = lastSpikedTicker === asset.ticker;
 
           return (
             <button
@@ -114,10 +41,6 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
               className={`flex items-center gap-2.5 px-3 py-1 rounded-md border transition-all text-xs cursor-pointer ${
                 isSelected
                   ? 'bg-white text-black border-white font-bold shadow-sm'
-                  : isSpiking
-                  ? isUp
-                    ? 'bg-emerald-950/40 border-emerald-500/50'
-                    : 'bg-rose-950/40 border-rose-500/50'
                   : 'bg-white/[0.02] border-white/8 hover:border-white/20 hover:bg-white/[0.06]'
               }`}
             >
@@ -142,7 +65,7 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
                 ${asset.price > 1000 ? asset.price.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : asset.price.toFixed(2)}
               </span>
 
-              {/* Spike/Dip indicator */}
+              {/* Spike/Dip indicator with strictly 2 decimal places */}
               <span
                 className={`flex items-center gap-0.5 text-[11px] font-mono font-bold ${
                   isSelected
@@ -152,7 +75,7 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
               >
                 {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                 {isUp ? '+' : ''}
-                {asset.change24h}%
+                {asset.change24h.toFixed(2)}%
               </span>
 
               {/* Animated pulse dot */}

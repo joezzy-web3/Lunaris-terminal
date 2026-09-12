@@ -19,13 +19,21 @@ import { ThreePillarBento } from '@/components/ThreePillarBento';
 import { LiveTickerMarquee } from '@/components/LiveTickerMarquee';
 import { RealTimeTradingChart } from '@/components/RealTimeTradingChart';
 import { LiquidityDepthHeatmap } from '@/components/LiquidityDepthHeatmap';
-import { QuantBacktestEngine } from '@/components/QuantBacktestEngine';
 import { DeterministicKillSwitch } from '@/components/DeterministicKillSwitch';
 import { PaperTradingAuditView } from '@/components/PaperTradingAuditView';
+import { CommandPaletteModal } from '@/components/CommandPaletteModal';
+import { BitgetApiKeyModal } from '@/components/BitgetApiKeyModal';
+import { BlackSwanDrillModal } from '@/components/BlackSwanDrillModal';
 import { TradeProposal } from '@/lib/riskVeto';
 import { clearAssetShocks } from '@/lib/demoSeedData';
 import { PulseContext } from '@/lib/councilDebateEngine';
-import { toggleTerminalSound, getTerminalSoundState, playCyberClick } from '@/lib/soundSynth';
+import {
+  toggleTerminalSound,
+  getTerminalSoundState,
+  playCyberClick,
+  toggleTradingFloorAmbience,
+  getTradingFloorAmbienceState,
+} from '@/lib/soundSynth';
 import {
   Activity,
   Cpu,
@@ -55,11 +63,14 @@ import {
   Shield,
   Grid,
   ScrollText,
+  Key,
+  Command,
+  Headphones,
 } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'DECK' | 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'ALGO' | 'AUDIT'>('DECK');
-  const [cockpitModule, setCockpitModule] = useState<'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'ALGO' | 'BACKTEST' | 'SANDBOX' | 'KILLSWITCH' | 'AUDIT' | 'ALL'>('CHART');
+  const [cockpitModule, setCockpitModule] = useState<'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'SANDBOX' | 'KILLSWITCH' | 'AUDIT' | 'ALL'>('CHART');
   const [councilSelectedTicker, setCouncilSelectedTicker] = useState<string>('BTC');
   const [incomingPulseContext, setIncomingPulseContext] = useState<(PulseContext & { ticker: string }) | null>(null);
   const [incomingProposal, setIncomingProposal] = useState<TradeProposal | null>(null);
@@ -67,6 +78,30 @@ export default function App() {
   const [resetKey, setResetKey] = useState<number>(0);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
   const [utcTime, setUtcTime] = useState<string>('');
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
+  const [isBlackSwanDrillOpen, setIsBlackSwanDrillOpen] = useState<boolean>(false);
+  const [tradingFloorAudio, setTradingFloorAudio] = useState<boolean>(false);
+  const [isBitgetConnected, setIsBitgetConnected] = useState<boolean>(() => {
+    try {
+      return !!localStorage.getItem('LUNARIS_BITGET_BYOK_CREDENTIALS_V1');
+    } catch {
+      return false;
+    }
+  });
+
+  // Global Cmd+K / Ctrl+K keyboard shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        playCyberClick();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Live UTC Clock
   useEffect(() => {
@@ -85,6 +120,12 @@ export default function App() {
     if (nextState) {
       playCyberClick();
     }
+  };
+
+  const handleToggleTradingFloor = () => {
+    playCyberClick();
+    const nextAmbience = toggleTradingFloorAmbience();
+    setTradingFloorAudio(nextAmbience);
   };
 
   // Dispatch signal from Council, Algo Builder, or Demo Scenario directly into Autopilot
@@ -140,8 +181,6 @@ export default function App() {
     { id: 'PULSE', name: 'Pulse Radar', icon: Radio, desc: 'Sentiment & Whales' },
     { id: 'DEPTH', name: 'Liquidity Depth', icon: Layers, desc: 'Order Book Heatmap' },
     { id: 'STATARB', name: 'StatArb Matrix', icon: ArrowRightLeft, desc: 'Cross-Asset Pairs' },
-    { id: 'ALGO', name: 'Algo Studio', icon: Zap, desc: 'Visual Flowchart' },
-    { id: 'BACKTEST', name: 'Quant Backtest', icon: History, desc: 'Scenario Replay' },
     { id: 'AUDIT', name: 'Audit Ledger', icon: ScrollText, desc: 'Bitget S2 Paper Logs' },
     { id: 'SANDBOX', name: 'Shock Sandbox', icon: Target, desc: 'Market Stress Tests' },
     { id: 'KILLSWITCH', name: 'Kill-Switch', icon: Shield, desc: 'Circuit Telemetry' },
@@ -260,35 +299,82 @@ export default function App() {
               }}
               className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'AUDIT'
-                  ? 'bg-yellow-400 text-black font-extrabold shadow-[0_0_15px_rgba(250,204,21,0.5)]'
-                  : 'text-yellow-300 hover:text-white hover:bg-yellow-400/10 border border-yellow-400/30'
+                  ? 'bg-white text-black font-bold shadow-sm'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
-              <ScrollText className="w-3.5 h-3.5 text-yellow-400" />
+              <ScrollText className="w-3.5 h-3.5" />
               <span>AUDIT LOG</span>
-              <span className="text-[9px] bg-yellow-400/20 text-yellow-300 px-1.5 py-0.2 rounded-full font-mono">S2</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono ${
+                activeTab === 'AUDIT'
+                  ? 'bg-black/15 text-black font-bold'
+                  : 'bg-white/10 text-zinc-400'
+              }`}>S2</span>
             </button>
           </nav>
 
           {/* Right: Quick Telemetry & Action Buttons */}
-          <div className="flex items-center gap-2 text-xs">
-            {/* Audio Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs">
+            {/* Cmd + K Quick Agentic Command Bar Pill */}
+            <button
+              onClick={() => {
+                playCyberClick();
+                setIsCommandPaletteOpen(true);
+              }}
+              title="Open Quick Agent Command Palette (Cmd + K / Ctrl + K)"
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/15 hover:border-[#00F0FF]/40 px-2.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer"
+            >
+              <Command className="w-3.5 h-3.5 text-[#00F0FF]" />
+              <span className="hidden md:inline font-bold">⌘K</span>
+            </button>
+
+            {/* Bitget BYOK Read-Only API Key Trigger */}
+            <button
+              onClick={() => {
+                playCyberClick();
+                setIsApiKeyModalOpen(true);
+              }}
+              title={isBitgetConnected ? 'Bitget Read-Only Key Paired' : 'Pair Read-Only Bitget API Key'}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-mono transition-colors border cursor-pointer ${
+                isBitgetConnected
+                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                  : 'bg-white/5 border-white/15 text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Key className={`w-3.5 h-3.5 ${isBitgetConnected ? 'text-emerald-400' : 'text-[#00F0FF]'}`} />
+              <span className="hidden lg:inline">{isBitgetConnected ? 'BYOK: Paired' : 'BYOK'}</span>
+            </button>
+
+            {/* Trading Floor Ambient Synthesizer Toggle */}
+            <button
+              onClick={handleToggleTradingFloor}
+              title={tradingFloorAudio ? 'Mute Trading Floor Ambience' : 'Enable Bloomberg Ambient Floor Audio'}
+              className={`p-1.5 rounded-full border transition-colors cursor-pointer flex items-center gap-1 text-[11px] ${
+                tradingFloorAudio
+                  ? 'bg-[#00F0FF]/15 border-[#00F0FF]/40 text-[#00F0FF]'
+                  : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Headphones className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Master Sound Effects Toggle */}
             <button
               onClick={handleToggleSound}
               title={soundEnabled ? 'Disable Terminal Audio' : 'Enable Terminal Audio'}
               className={`p-1.5 rounded-full border transition-colors cursor-pointer flex items-center gap-1 text-[11px] ${
                 soundEnabled
-                  ? 'bg-yellow-400/15 border-yellow-400/40 text-yellow-300'
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                  ? 'bg-[#00F0FF]/15 border-[#00F0FF]/40 text-[#00F0FF]'
+                  : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
               }`}
             >
-              {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-yellow-400" /> : <VolumeX className="w-3.5 h-3.5" />}
+              {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-[#00F0FF]" /> : <VolumeX className="w-3.5 h-3.5" />}
             </button>
 
             {/* Bitget Latency */}
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-semibold border border-white/15 bg-white/5 px-2.5 py-1.5 rounded-full whitespace-nowrap">
-              <Wifi className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-              <span className="text-gray-300">Bitget: 4ms</span>
+            <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-semibold border border-white/15 bg-white/5 px-2.5 py-1.5 rounded-full whitespace-nowrap">
+              <Wifi className="w-3.5 h-3.5 text-[#00F0FF] shrink-0" />
+              <span className="text-zinc-300">Bitget: 4ms</span>
             </div>
 
             {/* Handbook trigger */}
@@ -297,50 +383,11 @@ export default function App() {
                 playCyberClick();
                 setIsCreditsModalOpen(true);
               }}
-              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 px-2.5 py-1.5 rounded-full text-xs transition-colors font-semibold cursor-pointer"
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/15 px-2.5 py-1.5 rounded-full text-xs transition-colors font-semibold cursor-pointer"
             >
-              <Award className="w-3.5 h-3.5 text-yellow-400" />
+              <Award className="w-3.5 h-3.5 text-[#00F0FF]" />
               <span className="hidden sm:inline">Handbook</span>
             </button>
-
-            {/* Direct Audit Log Pill in Header */}
-            <button
-              id="header-btn-audit-log"
-              onClick={() => {
-                playCyberClick();
-                setActiveTab('AUDIT');
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
-                activeTab === 'AUDIT'
-                  ? 'bg-yellow-400 text-black border-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.5)]'
-                  : 'bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-300 border-yellow-400/30'
-              }`}
-              title="View Bitget S2 Paper-Trading Audit Log (Track 2 Verification)"
-            >
-              <ScrollText className="w-3.5 h-3.5 text-yellow-400" />
-              <span>Audit Log</span>
-            </button>
-
-            {/* Action Pill / Live Telemetry Badge */}
-            {activeTab === 'DECK' ? (
-              <button
-                onClick={() => {
-                  playCyberClick();
-                  setActiveTab('TERMINAL');
-                }}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-black font-extrabold px-3 py-1.5 rounded-full text-xs transition-all shadow-[0_0_15px_rgba(250,204,21,0.4)] cursor-pointer uppercase tracking-wider"
-              >
-                <Terminal className="w-3.5 h-3.5 fill-black" />
-                <span className="hidden sm:inline">Launch Terminal</span>
-                <span className="sm:hidden">Terminal</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-1.5 border border-white/15 bg-white/5 text-gray-300 px-2.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="hidden sm:inline">Quorum Active</span>
-                <span className="sm:hidden">Active</span>
-              </div>
-            )}
           </div>
         </div>
       </header>
@@ -372,14 +419,14 @@ export default function App() {
             />
 
             {/* Official Bitget AI Base Camp S2 Audit Ledger Callout Banner */}
-            <div className="bg-gradient-to-r from-yellow-500/10 via-[#0e1017] to-cyan-500/10 border border-yellow-400/30 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[0_0_25px_rgba(250,204,21,0.08)]">
+            <div className="bg-gradient-to-r from-[#00F0FF]/10 via-[#0e1017] to-cyan-500/5 border border-[#00F0FF]/30 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[0_0_25px_rgba(0,240,255,0.08)]">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="w-2 h-2 rounded-full bg-yellow-400 animate-ping" />
-                  <span className="text-xs font-mono font-bold text-yellow-300 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-ping" />
+                  <span className="text-xs font-mono font-bold text-[#00F0FF] uppercase tracking-wider">
                     Bitget AI Base Camp S2 // Track 2: Agentic Trading Submission
                   </span>
-                  <span className="text-[10px] bg-yellow-400/20 text-yellow-300 border border-yellow-400/40 px-2 py-0.5 rounded font-mono font-bold">
+                  <span className="text-[10px] bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/40 px-2 py-0.5 rounded font-mono font-bold">
                     MANDATORY LOG VERIFICATION
                   </span>
                 </div>
@@ -397,7 +444,7 @@ export default function App() {
                     playCyberClick();
                     setActiveTab('AUDIT');
                   }}
-                  className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all shadow-[0_0_15px_rgba(250,204,21,0.3)] hover:scale-102 cursor-pointer whitespace-nowrap"
+                  className="flex items-center gap-2 bg-[#00F0FF] hover:bg-[#38f6ff] text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all shadow-[0_0_15px_rgba(0,240,255,0.25)] hover:scale-102 cursor-pointer whitespace-nowrap"
                 >
                   <ScrollText className="w-4 h-4" />
                   <span>OPEN AUDIT LEDGER</span>
@@ -426,7 +473,7 @@ export default function App() {
                 onSelectNode={(ticker) => handlePulseTickerSelect(ticker)}
                 onOpenStudio={() => {
                   setActiveTab('TERMINAL');
-                  setCockpitModule('ALGO');
+                  setCockpitModule('CHART');
                 }}
               />
             </div>
@@ -555,21 +602,7 @@ export default function App() {
               </div>
             )}
 
-            {/* 7. VISUAL ALGO BUILDER */}
-            {cockpitModule === 'ALGO' && (
-              <div className="space-y-4 animate-fadeIn">
-                <VisualAlgoBuilder onDeployToAutopilot={handleSendToAutopilot} />
-              </div>
-            )}
-
-            {/* 8. QUANT BACKTEST ENGINE & SCENARIO REPLAY */}
-            {cockpitModule === 'BACKTEST' && (
-              <div className="space-y-4 animate-fadeIn">
-                <QuantBacktestEngine onDeployCalibratedStrategy={handleSendToAutopilot} />
-              </div>
-            )}
-
-            {/* 9. SHOCK SANDBOX & STRESS TEST */}
+            {/* 7. SHOCK SANDBOX & STRESS TEST */}
             {cockpitModule === 'SANDBOX' && (
               <div className="space-y-4 animate-fadeIn">
                 <DemoModeController
@@ -744,6 +777,43 @@ export default function App() {
       <HackathonCreditsModal
         isOpen={isCreditsModalOpen}
         onClose={() => setIsCreditsModalOpen(false)}
+      />
+
+      {/* Quick Agentic Command Palette (Cmd + K / Ctrl + K) */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigateTab={(tab) => {
+          setActiveTab(tab);
+        }}
+        onNavigateCockpitModule={(mod) => {
+          setCockpitModule(mod);
+        }}
+        onConveneCouncil={(ticker, prompt) => {
+          setCouncilSelectedTicker(ticker);
+          setActiveTab('COUNCIL');
+        }}
+        onOpenFlashCrashDrill={() => {
+          setIsBlackSwanDrillOpen(true);
+        }}
+        onOpenAuditLedger={() => {
+          setActiveTab('AUDIT');
+        }}
+      />
+
+      {/* Bitget Institutional Read-Only API (BYOK) Modal */}
+      <BitgetApiKeyModal
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+        onConnectionStatusChange={(connected) => {
+          setIsBitgetConnected(connected);
+        }}
+      />
+
+      {/* Black Swan / Flash Crash Emergency Drill Modal */}
+      <BlackSwanDrillModal
+        isOpen={isBlackSwanDrillOpen}
+        onClose={() => setIsBlackSwanDrillOpen(false)}
       />
     </div>
   );

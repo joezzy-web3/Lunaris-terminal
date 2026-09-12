@@ -103,3 +103,120 @@ export function playRiskVetoTone() {
     // Graceful fallback
   }
 }
+
+/** Defcon-1 Black Swan Emergency Alarm */
+export function playBlackSwanAlarm() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    // Two urgent alternating alert sweeps
+    [0, 0.18, 0.36].forEach((offset) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, now + offset);
+      osc.frequency.exponentialRampToValueAtTime(440, now + offset + 0.14);
+
+      gain.gain.setValueAtTime(0.08, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.14);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.14);
+    });
+  } catch {
+    // Graceful fallback
+  }
+}
+
+/** Heavy mechanical slam when emergency killswitch is hit */
+export function playEmergencyButtonSlam() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    // Low frequency sub-thud
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.25);
+
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.25);
+
+    // High frequency metal switch click
+    const clickOsc = ctx.createOscillator();
+    const clickGain = ctx.createGain();
+    clickOsc.type = 'square';
+    clickOsc.frequency.setValueAtTime(2200, now);
+    clickOsc.frequency.exponentialRampToValueAtTime(600, now + 0.04);
+    clickGain.gain.setValueAtTime(0.06, now);
+    clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    clickOsc.connect(clickGain);
+    clickGain.connect(ctx.destination);
+    clickOsc.start(now);
+    clickOsc.stop(now + 0.04);
+  } catch {
+    // Graceful fallback
+  }
+}
+
+/** Soft teletype Bloomberg ticker acoustic chirp */
+export function playTradingFloorTick() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1800 + Math.random() * 400, now);
+
+    gain.gain.setValueAtTime(0.015, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.015);
+  } catch {
+    // Graceful fallback
+  }
+}
+
+let ambientIntervalId: number | null = null;
+let ambientFloorEnabled = false;
+
+/** Enable or disable subtle Bloomberg ambient floor ticker feedback */
+export function toggleTradingFloorAmbience(): boolean {
+  ambientFloorEnabled = !ambientFloorEnabled;
+
+  if (ambientFloorEnabled) {
+    if (typeof window !== 'undefined' && !ambientIntervalId) {
+      ambientIntervalId = window.setInterval(() => {
+        if (ambientFloorEnabled && isSoundEnabled) {
+          playTradingFloorTick();
+        }
+      }, 3800);
+    }
+  } else {
+    if (ambientIntervalId) {
+      clearInterval(ambientIntervalId);
+      ambientIntervalId = null;
+    }
+  }
+
+  return ambientFloorEnabled;
+}
+
+export function getTradingFloorAmbienceState(): boolean {
+  return ambientFloorEnabled;
+}

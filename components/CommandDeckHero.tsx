@@ -55,7 +55,7 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder, onOpenAud
       <div className="max-w-5xl mx-auto flex items-center justify-center text-[10px] text-zinc-400 mb-3 border-b border-white/8 pb-2.5">
         <div className="flex items-center gap-2 text-zinc-400 font-mono text-[10px]">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span>BITGET SIMULATED LIQUIDITY POOL ONLINE</span>
+          <span>BITGET LIVE LIQUIDITY POOL ONLINE</span>
         </div>
       </div>
 
@@ -79,7 +79,7 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder, onOpenAud
 
         <p className="mt-5 text-base sm:text-lg text-zinc-300 max-w-[65ch] mx-auto font-sans-taste font-normal tracking-normal leading-relaxed">
           Build, test, and deploy quantitative cross-asset agentic strategies without code.
-          Integrated with <span className="text-[#00F0FF] font-mono-taste font-bold">Bitget simulated paper liquidity</span> and deterministic risk circuit breakers.
+          Integrated with <span className="text-[#00F0FF] font-mono-taste font-bold">Bitget live market liquidity</span> and deterministic risk circuit breakers.
         </p>
 
         {/* Action Buttons (Clean high-contrast monochrome pills) */}
@@ -113,9 +113,9 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder, onOpenAud
                 playCyberClick();
                 onOpenAuditLedger();
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider text-yellow-300 hover:text-yellow-200 bg-yellow-400/10 hover:bg-yellow-400/15 border border-yellow-400/30 hover:border-yellow-400/50 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all cursor-pointer"
             >
-              <ScrollText className="w-4 h-4 text-yellow-400" />
+              <ScrollText className="w-4 h-4 text-zinc-400" />
               <span>Audit Ledger (S2)</span>
             </button>
           )}

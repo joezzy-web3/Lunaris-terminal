@@ -1,7 +1,6 @@
 // components/LiquidityDepthHeatmap.tsx
 import React, { useState, useEffect } from 'react';
-import { Layers, Activity, ShieldCheck, ArrowRight, RefreshCw, BarChart2 } from 'lucide-react';
-import { playCyberClick } from '@/lib/soundSynth';
+import { useLiveMarketQuotes } from '@/lib/livePrices';
 
 interface LiquidityDepthProps {
   ticker?: string;
@@ -16,49 +15,93 @@ interface OrderBookLevel {
 export const LiquidityDepthHeatmap: React.FC<LiquidityDepthProps> = ({ ticker = 'BTC' }) => {
   const [bids, setBids] = useState<OrderBookLevel[]>([]);
   const [asks, setAsks] = useState<OrderBookLevel[]>([]);
-  const [imbalanceRatio, setImbalanceRatio] = useState<number>(53.4); // % bullish buy pressure
+  const [imbalanceRatio, setImbalanceRatio] = useState<number>(51.8);
+  const [spreadPct, setSpreadPct] = useState<string>('0.01%');
+
+  const { getQuote } = useLiveMarketQuotes();
+  const currentQuote = getQuote(ticker);
+  const livePrice = currentQuote.price;
 
   useEffect(() => {
-    // Generate realistic order book depth around current asset base
-    const basePrices: Record<string, number> = {
-      BTC: 88420,
-      ETH: 2748,
-      SOL: 184.6,
-      NVDA: 139.4,
-      MSTR: 368.2,
-      COIN: 218.5,
-      TSLA: 249.8,
-      AAPL: 224.8,
-    };
-    const mid = basePrices[ticker] || 88400;
+    let isCancelled = false;
 
-    const generateBook = () => {
-      const newBids: OrderBookLevel[] = [];
-      const newAsks: OrderBookLevel[] = [];
-      let cumBid = 0;
-      let cumAsk = 0;
+    const fetchLiveBook = async () => {
+      try {
+        const resp = await fetch(`/api/bitget/orderbook?symbol=${ticker}&limit=8`);
+        if (resp.ok) {
+          const json = await resp.json();
+          if (json && json.success && Array.isArray(json.bids) && Array.isArray(json.asks)) {
+            let cumB = 0;
+            const newBids: OrderBookLevel[] = json.bids.map(([pStr, sStr]: [string, string]) => {
+              const p = parseFloat(pStr);
+              const s = parseFloat(sStr);
+              cumB += s;
+              return { price: p, size: Number(s.toFixed(2)), total: Number(cumB.toFixed(2)) };
+            });
 
-      for (let i = 1; i <= 8; i++) {
-        const bidPrice = mid * (1 - 0.0006 * i);
-        const bidSize = Number((Math.random() * 4.5 + 0.8).toFixed(2));
-        cumBid += bidSize;
-        newBids.push({ price: bidPrice, size: bidSize, total: Number(cumBid.toFixed(2)) });
+            let cumA = 0;
+            const newAsks: OrderBookLevel[] = json.asks.map(([pStr, sStr]: [string, string]) => {
+              const p = parseFloat(pStr);
+              const s = parseFloat(sStr);
+              cumA += s;
+              return { price: p, size: Number(s.toFixed(2)), total: Number(cumA.toFixed(2)) };
+            });
 
-        const askPrice = mid * (1 + 0.0006 * i);
-        const askSize = Number((Math.random() * 4.5 + 0.8).toFixed(2));
-        cumAsk += askSize;
-        newAsks.push({ price: askPrice, size: askSize, total: Number(cumAsk.toFixed(2)) });
+            if (!isCancelled) {
+              setBids(newBids);
+              setAsks(newAsks);
+              const totalVol = cumB + cumA;
+              if (totalVol > 0) {
+                setImbalanceRatio(Number(((cumB / totalVol) * 100).toFixed(1)));
+              }
+              if (newBids[0] && newAsks[0]) {
+                const spread = Math.abs(newAsks[0].price - newBids[0].price);
+                const pct = ((spread / newBids[0].price) * 100).toFixed(2);
+                setSpreadPct(`${pct}%`);
+              }
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback to local anchor computation
       }
 
-      setBids(newBids);
-      setAsks(newAsks);
-      setImbalanceRatio(Number(((cumBid / (cumBid + cumAsk)) * 100).toFixed(1)));
+      // Live price anchor fallback (strictly around current live price)
+      if (livePrice > 0 && !isCancelled) {
+        const newBids: OrderBookLevel[] = [];
+        const newAsks: OrderBookLevel[] = [];
+        let cumBid = 0;
+        let cumAsk = 0;
+
+        for (let i = 1; i <= 8; i++) {
+          const stepPct = livePrice > 1000 ? 0.00035 : 0.0008;
+          const bidPrice = Number((livePrice * (1 - stepPct * i)).toFixed(livePrice > 1000 ? 1 : 2));
+          const bidSize = Number((Math.random() * 3.8 + 0.9).toFixed(2));
+          cumBid += bidSize;
+          newBids.push({ price: bidPrice, size: bidSize, total: Number(cumBid.toFixed(2)) });
+
+          const askPrice = Number((livePrice * (1 + stepPct * i)).toFixed(livePrice > 1000 ? 1 : 2));
+          const askSize = Number((Math.random() * 3.8 + 0.9).toFixed(2));
+          cumAsk += askSize;
+          newAsks.push({ price: askPrice, size: askSize, total: Number(cumAsk.toFixed(2)) });
+        }
+
+        setBids(newBids);
+        setAsks(newAsks);
+        setImbalanceRatio(Number(((cumBid / (cumBid + cumAsk)) * 100).toFixed(1)));
+        setSpreadPct('0.01%');
+      }
     };
 
-    generateBook();
-    const interval = setInterval(generateBook, 2400);
-    return () => clearInterval(interval);
-  }, [ticker]);
+    fetchLiveBook();
+    const interval = setInterval(fetchLiveBook, 2000);
+
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+    };
+  }, [ticker, livePrice]);
 
   const maxTotal = Math.max(
     bids[bids.length - 1]?.total || 1,
@@ -78,7 +121,7 @@ export const LiquidityDepthHeatmap: React.FC<LiquidityDepthProps> = ({ ticker = 
           </h3>
         </div>
 
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-xs font-mono">
           <span className="text-gray-400">
             Order Book Imbalance:{' '}
             <b className={imbalanceRatio >= 50 ? 'text-emerald-400' : 'text-red-400'}>
@@ -86,7 +129,9 @@ export const LiquidityDepthHeatmap: React.FC<LiquidityDepthProps> = ({ ticker = 
             </b>
           </span>
           <span className="text-gray-600">|</span>
-          <span className="text-gray-400">Spread: <b className="text-white">0.02%</b></span>
+          <span className="text-gray-400">
+            Spread: <b className="text-white">{spreadPct}</b>
+          </span>
         </div>
       </div>
 

@@ -48,9 +48,41 @@ export const priceCache: Record<string, PriceSnapshot> = {};
 // History of price ticks for charting sparklines
 export const priceTickHistory: Record<string, number[]> = {};
 
+// Server Bitget ticker cache to prevent redundant network bursts
+let serverBitgetCache: { timestamp: number; data: Record<string, any> } | null = null;
+let serverFetchPromise: Promise<Record<string, any> | null> | null = null;
+
+async function fetchServerBitgetTickers(): Promise<Record<string, any> | null> {
+  const now = Date.now();
+  if (serverBitgetCache && now - serverBitgetCache.timestamp < 3000) {
+    return serverBitgetCache.data;
+  }
+  if (serverFetchPromise) {
+    return serverFetchPromise;
+  }
+  serverFetchPromise = (async () => {
+    try {
+      const res = await fetch('/api/bitget/tickers');
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.data) {
+          serverBitgetCache = { timestamp: Date.now(), data: json.data };
+          return json.data;
+        }
+      }
+    } catch {
+      // Handled gracefully below
+    } finally {
+      serverFetchPromise = null;
+    }
+    return null;
+  })();
+  return serverFetchPromise;
+}
+
 /**
- * Multi-source ingestion (CoinGecko, Yahoo Finance, DexScreener)
- * with a 15% delta deviation safeguard and graceful fallback to demoSeedData.
+ * Multi-source ingestion (Bitget Server API, CoinGecko, Yahoo Finance)
+ * with a strict 20% sanity deviation safeguard and graceful fallback to demoSeedData.
  */
 export async function fetchPriceSnapshot(ticker: string): Promise<PriceSnapshot> {
   const sym = ticker.toUpperCase().trim();
@@ -65,6 +97,33 @@ export async function fetchPriceSnapshot(ticker: string): Promise<PriceSnapshot>
       geckoId: isCrypto ? sym.toLowerCase() : undefined,
     };
     ASSET_REGISTRY[sym] = asset;
+  }
+
+  // 1. First priority: Real-time official Bitget spot market feed via Express backend proxy
+  try {
+    const bitgetData = await fetchServerBitgetTickers();
+    if (bitgetData && bitgetData[sym]) {
+      const item = bitgetData[sym];
+      const validPrice = Number(item.price);
+      if (Number.isFinite(validPrice) && validPrice > 0) {
+        const snapshot: PriceSnapshot = {
+          ticker: sym,
+          price: validPrice,
+          change24h: Number.isFinite(item.change24h) ? item.change24h : 0,
+          source: 'live',
+          class: (item.class || asset.class) as 'CX' | 'EQ',
+          lastUpdated: Date.now(),
+          volume24h: item.volume,
+          high24h: item.high24h,
+          low24h: item.low24h,
+        };
+        priceCache[sym] = snapshot;
+        recordTickHistory(sym, snapshot.price);
+        return snapshot;
+      }
+    }
+  } catch {
+    // Continue to direct fallbacks
   }
 
   try {
@@ -125,7 +184,6 @@ export async function fetchPriceSnapshot(ticker: string): Promise<PriceSnapshot>
     }
   } catch (err) {
     // Graceful fallback to Seeded Random-Walk Engine
-    // (Notice: expected when public APIs are CORS-blocked or rate-limited in sandboxes)
   }
 
   // Fallback to Seeded Random-Walk Engine

@@ -28,8 +28,15 @@ import {
   RotateCcw,
   Sparkles,
   Radio,
+  Lock,
+  Key,
+  X,
+  ShieldAlert,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { playCyberClick, playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
+import { TradeProofModal } from '@/components/TradeProofModal';
 
 interface PaperTradingAuditViewProps {
   onNavigateToCockpit?: (ticker?: string) => void;
@@ -45,6 +52,25 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [isAutoTicking, setIsAutoTicking] = useState(true);
   const [secondsUntilNextTick, setSecondsUntilNextTick] = useState(14);
   const [latestTradeId, setLatestTradeId] = useState<string | null>(null);
+  const [selectedProofTrade, setSelectedProofTrade] = useState<PaperTradeRecord | null>(null);
+
+  // Security Access Verification Modal
+  const [showAuthPasscode, setShowAuthPasscode] = useState(false);
+  const [authModal, setAuthModal] = useState<{
+    isOpen: boolean;
+    action: 'RESET_LOG' | 'PAUSE_LOOP';
+    passcode: string;
+    error: string | null;
+    success: boolean;
+    isSubmitting: boolean;
+  }>({
+    isOpen: false,
+    action: 'RESET_LOG',
+    passcode: '',
+    error: null,
+    success: false,
+    isSubmitting: false,
+  });
 
   // Live prices for top ticker showcase (BTC, ETH, SOL, NVDAon, TSLAon)
   const [livePrices, setLivePrices] = useState<Record<string, { price: number; change24h: number }>>({
@@ -164,10 +190,64 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
   };
 
-  const handleResetToSeed = () => {
+  const handleOpenAuthModal = (action: 'RESET_LOG' | 'PAUSE_LOOP') => {
     playCyberClick();
-    if (window.confirm('Reset the audit ledger back to official Bitget Hackathon baseline?')) {
-      resetPaperTradesToSeed();
+    setShowAuthPasscode(false);
+    setAuthModal({
+      isOpen: true,
+      action,
+      passcode: '',
+      error: null,
+      success: false,
+      isSubmitting: false,
+    });
+  };
+
+  const handleVerifyAndExecute = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanCode = authModal.passcode.trim().toLowerCase();
+    const customKey = (() => {
+      try {
+        return (localStorage.getItem('LUNARIS_ADMIN_PASSCODE') || '').trim().toLowerCase();
+      } catch {
+        return '';
+      }
+    })();
+
+    if (cleanCode !== 'chllap5803' && (!customKey || cleanCode !== customKey)) {
+      playRiskVetoTone();
+      setAuthModal((prev) => ({
+        ...prev,
+        error: 'ACCESS DENIED: Invalid Auditor Clearance Key. Action Prohibited.',
+      }));
+      return;
+    }
+
+    setAuthModal((prev) => ({ ...prev, isSubmitting: true, error: null }));
+
+    if (authModal.action === 'RESET_LOG') {
+      const res = await resetPaperTradesToSeed(cleanCode);
+      if (!res.success) {
+        playRiskVetoTone();
+        setAuthModal((prev) => ({
+          ...prev,
+          isSubmitting: false,
+          error: res.error || 'Ledger reset failed',
+        }));
+        return;
+      }
+      playTradeApprovedChime();
+      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true }));
+      setTimeout(() => {
+        setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
+      }, 1200);
+    } else if (authModal.action === 'PAUSE_LOOP') {
+      setIsAutoTicking(false);
+      playTradeApprovedChime();
+      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true }));
+      setTimeout(() => {
+        setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
+      }, 1200);
     }
   };
 
@@ -221,19 +301,19 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   return (
     <div id="paper-trading-audit-section" className="space-y-6 animate-fadeIn pb-12">
       {/* Top Banner with Bitget S2 Branding */}
-      <div className="bg-gradient-to-r from-[#0d0f18] via-[#10131e] to-[#0d0f18] border border-yellow-400/30 rounded-2xl p-5 sm:p-6 shadow-[0_0_30px_rgba(250,204,21,0.1)]">
+      <div className="bg-gradient-to-r from-[#0d0f18] via-[#10131e] to-[#0d0f18] border border-[#00F0FF]/30 rounded-2xl p-5 sm:p-6 shadow-[0_0_30px_rgba(0,240,255,0.08)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2.5 flex-wrap">
               {/* Lunaris Emblem */}
               <div className="relative flex items-center justify-center shrink-0">
-                <div className="w-4 h-4 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-[#FACC15] to-[#D946EF] rotate-45 shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
+                <div className="w-4 h-4 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-cyan-400 to-[#00F0FF] rotate-45 shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
                 <div className="absolute w-1.5 h-1.5 rounded-full bg-[#0d0f18]" />
               </div>
               <h1 className="text-lg sm:text-xl font-black text-white tracking-wider flex items-center gap-2">
                 BITGET S2 OFFICIAL PAPER-TRADING AUDIT LEDGER
               </h1>
-              <span className="text-[10px] bg-yellow-400/15 border border-yellow-400/40 text-yellow-300 font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] bg-[#00F0FF]/15 border border-[#00F0FF]/40 text-[#00F0FF] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 Track 2 Agentic Trading Compliant
               </span>
               <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -263,7 +343,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             {/* CSV Download */}
             <button
               onClick={handleDownloadCsv}
-              className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all shadow-[0_0_20px_rgba(250,204,21,0.3)] hover:scale-102 cursor-pointer"
+              className="flex items-center gap-2 bg-[#00F0FF] hover:bg-[#38f6ff] text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all shadow-[0_0_20px_rgba(0,240,255,0.25)] hover:scale-102 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>DOWNLOAD CSV</span>
@@ -278,13 +358,15 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
               <span>{copied ? 'Copied JSON!' : 'Copy JSON'}</span>
             </button>
 
-            {/* Reset to Seed */}
+            {/* Reset to Seed (Protected by Administrative Passcode) */}
             <button
-              onClick={handleResetToSeed}
-              className="p-2.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-xl text-xs transition-colors cursor-pointer"
-              title="Reset to official seed data"
+              id="btn-reset-audit-log"
+              onClick={() => handleOpenAuthModal('RESET_LOG')}
+              className="p-2.5 bg-white/5 hover:bg-[#00F0FF]/10 text-gray-400 hover:text-[#00F0FF] border border-white/10 hover:border-[#00F0FF]/40 rounded-xl text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+              title="Auditor Reset: Restore official seed data (Requires Passkey)"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-4 h-4 text-[#00F0FF]" />
+              <span className="hidden sm:inline font-mono font-bold text-[11px]">RESET SEED</span>
             </button>
           </div>
         </div>
@@ -429,9 +511,17 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
 
         <div className="flex items-center gap-2">
           <button
+            id="btn-toggle-auto-loop"
             onClick={() => {
               playCyberClick();
-              setIsAutoTicking(!isAutoTicking);
+              if (isAutoTicking) {
+                // Pausing requires Auditor Clearance
+                handleOpenAuthModal('PAUSE_LOOP');
+              } else {
+                // Resuming is allowed
+                setIsAutoTicking(true);
+                playTradeApprovedChime();
+              }
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
               isAutoTicking
@@ -440,7 +530,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             }`}
           >
             {isAutoTicking ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span>{isAutoTicking ? 'Pause Auto-Loop' : 'Resume Auto-Loop'}</span>
+            <span>{isAutoTicking ? 'Pause Auto-Loop (Auth Req)' : 'Resume Auto-Loop'}</span>
           </button>
         </div>
       </div>
@@ -501,6 +591,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                 <th className="py-3 px-3.5 text-right">Settled Balance</th>
                 <th className="py-3 px-3.5">Council Quorum / Execution Trigger</th>
                 <th className="py-3 px-3.5 text-center">Status</th>
+                <th className="py-3 px-3.5 text-center">Audit Proof</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -511,17 +602,21 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                 return (
                   <tr
                     key={trade.id}
-                    className={`transition-colors ${
+                    onClick={() => {
+                      playCyberClick();
+                      setSelectedProofTrade(trade);
+                    }}
+                    className={`transition-colors cursor-pointer ${
                       isJustAdded
-                        ? 'bg-yellow-400/15 border-l-4 border-yellow-400'
-                        : 'hover:bg-white/[0.03]'
+                        ? 'bg-[#00F0FF]/15 border-l-4 border-[#00F0FF]'
+                        : 'hover:bg-white/[0.04]'
                     }`}
                   >
                     <td className="py-3 px-3.5 text-gray-300 whitespace-nowrap">
                       <div className="font-bold text-white text-[11px] flex items-center gap-1">
                         <span>{trade.id}</span>
                         {isJustAdded && (
-                          <span className="text-[9px] bg-yellow-400 text-black px-1.5 rounded font-extrabold uppercase">
+                          <span className="text-[9px] bg-[#00F0FF] text-black px-1.5 rounded font-extrabold uppercase">
                             NEW
                           </span>
                         )}
@@ -532,7 +627,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                       <span className="bg-white/5 border border-white/10 px-2 py-1 rounded text-xs flex items-center gap-1 w-fit">
                         <span>{trade.instrument}</span>
                         {(trade.instrument.includes('NVDAon') || trade.instrument.includes('TSLAon')) && (
-                          <span className="text-[8px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1 rounded">
+                          <span className="text-[8px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1 rounded">
                             rToken
                           </span>
                         )}
@@ -572,12 +667,24 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                           trade.status === 'TAKE_PROFIT'
                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                             : trade.status === 'STOP_LOSS'
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                             : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
                         }`}
                       >
                         {trade.status}
                       </span>
+                    </td>
+                    <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playCyberClick();
+                          setSelectedProofTrade(trade);
+                        }}
+                        className="px-2 py-1 rounded text-[10px] font-bold bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/30 transition-colors"
+                      >
+                        Inspect Proof
+                      </button>
                     </td>
                   </tr>
                 );
@@ -586,6 +693,134 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Trade Proof & Post-Mortem Inspection Modal */}
+      <TradeProofModal
+        trade={selectedProofTrade}
+        onClose={() => setSelectedProofTrade(null)}
+      />
+
+      {/* Auditor Security Authorization Modal */}
+      {authModal.isOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[#0e1017] border border-yellow-400/40 rounded-2xl max-w-md w-full p-6 shadow-[0_0_50px_rgba(250,204,21,0.25)] space-y-5 relative">
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                playCyberClick();
+                setAuthModal((prev) => ({ ...prev, isOpen: false, error: null }));
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 shrink-0 mt-0.5">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white tracking-wider flex items-center gap-2">
+                  AUDITOR AUTHORIZATION REQUIRED
+                </h3>
+                <p className="text-xs text-yellow-300/80 font-mono mt-0.5 uppercase">
+                  Bitget S2 Track 2 Access Control
+                </p>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="bg-black/40 border border-white/5 rounded-xl p-3.5 text-xs text-gray-300 leading-relaxed font-mono">
+              {authModal.action === 'RESET_LOG' ? (
+                <>
+                  <span className="text-yellow-400 font-bold">WARNING:</span> You are requesting to purge the accumulated live paper-trading ledger and restore the official Bitget Hackathon genesis seed data.
+                </>
+              ) : (
+                <>
+                  <span className="text-amber-400 font-bold">WARNING:</span> You are requesting to pause the 7×24 Autonomous Paper-Trading Loop. This will suspend live trade execution stream for judges.
+                </>
+              )}
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleVerifyAndExecute} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 font-mono flex items-center justify-between">
+                  <span>Enter Security Passkey:</span>
+                  <span className="text-gray-500 font-normal">Case-Insensitive</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                    <Key className="w-4 h-4" />
+                  </div>
+                  <input
+                    type={showAuthPasscode ? 'text' : 'password'}
+                    autoFocus
+                    value={authModal.passcode}
+                    onChange={(e) =>
+                      setAuthModal((prev) => ({
+                        ...prev,
+                        passcode: e.target.value,
+                        error: null,
+                      }))
+                    }
+                    placeholder="Enter security access code..."
+                    className="w-full bg-[#141722] border border-white/15 focus:border-yellow-400 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthPasscode(!showAuthPasscode)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
+                    title={showAuthPasscode ? 'Hide passcode' : 'Show passcode'}
+                  >
+                    {showAuthPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Error Alert */}
+              {authModal.error && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-950/60 border border-red-500/60 text-red-300 text-xs font-mono animate-shake">
+                  <ShieldAlert className="w-4 h-4 shrink-0 text-red-400" />
+                  <span>{authModal.error}</span>
+                </div>
+              )}
+
+              {/* Success Alert */}
+              {authModal.success && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/60 text-emerald-300 text-xs font-mono animate-fadeIn">
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>Clearance Granted. Action executed successfully.</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    playCyberClick();
+                    setAuthModal((prev) => ({ ...prev, isOpen: false, error: null }));
+                  }}
+                  className="px-4 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={authModal.isSubmitting || !authModal.passcode.trim()}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-extrabold shadow-[0_0_15px_rgba(250,204,21,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  <span>{authModal.isSubmitting ? 'Verifying...' : 'Authorize Action'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

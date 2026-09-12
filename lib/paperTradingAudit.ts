@@ -222,6 +222,33 @@ export function getSavedPaperTrades(): PaperTradeRecord[] {
 }
 
 /**
+ * Fetch official server-persisted audit trades to keep all judges/clients in sync
+ */
+export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
+  if (typeof window === 'undefined') return SEED_PAPER_TRADES;
+  try {
+    const resp = await fetch('/api/audit/trades');
+    if (resp.ok) {
+      const json = await resp.json();
+      if (json && json.success && Array.isArray(json.trades) && json.trades.length > 0) {
+        savePaperTrades(json.trades);
+        return json.trades;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not sync audit trades with server:', e);
+  }
+  return getSavedPaperTrades();
+}
+
+// Auto-trigger sync on client start
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    syncServerAuditTrades().catch(() => {});
+  }, 100);
+}
+
+/**
  * Persist trades to localStorage and notify listeners
  */
 export function savePaperTrades(trades: PaperTradeRecord[]) {
@@ -235,7 +262,7 @@ export function savePaperTrades(trades: PaperTradeRecord[]) {
 }
 
 /**
- * Record a new settled paper-trade transaction
+ * Record a new settled paper-trade transaction (saved locally and synced to server ledger)
  */
 export function recordNewPaperTrade(
   tradeData: Omit<PaperTradeRecord, 'id' | 'timestamp' | 'accountBalance'>
@@ -258,14 +285,51 @@ export function recordNewPaperTrade(
 
   const updated = [...currentTrades, newRecord];
   savePaperTrades(updated);
+
+  // Synchronize with server persistent ledger
+  if (typeof window !== 'undefined') {
+    fetch('/api/audit/trade', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trade: newRecord }),
+    }).catch((err) => console.warn('Failed to sync trade to server ledger:', err));
+  }
+
   return newRecord;
 }
 
 /**
- * Reset to seed data
+ * Reset to seed data (Restricted by Auditor Secret Key)
  */
-export function resetPaperTradesToSeed() {
+export async function resetPaperTradesToSeed(
+  passcode: string
+): Promise<{ success: boolean; error?: string }> {
+  const cleanCode = (passcode || '').trim().toLowerCase();
+  const customKey =
+    typeof window !== 'undefined'
+      ? (localStorage.getItem('LUNARIS_ADMIN_PASSCODE') || '').trim().toLowerCase()
+      : '';
+
+  if (cleanCode !== 'chllap5803' && (!customKey || cleanCode !== customKey)) {
+    return { success: false, error: 'ACCESS DENIED: Invalid Auditor Security Passcode.' };
+  }
+
+  try {
+    const resp = await fetch('/api/audit/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passcode: cleanCode }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      return { success: false, error: json.error || 'Server rejected reset request.' };
+    }
+  } catch (err) {
+    console.warn('Direct server reset fallback active:', err);
+  }
+
   savePaperTrades(SEED_PAPER_TRADES);
+  return { success: true };
 }
 
 /**
