@@ -23,6 +23,8 @@ export const SEEDED_ASSETS: Record<string, AssetSeedConfig> = {
   AAPL: { ticker: 'AAPL', name: 'Apple Inc.', basePrice: 228.4, volatility: 0.002, class: 'EQ', unitDecimals: 2 },
   TSLA: { ticker: 'TSLA', name: 'Tesla Inc.', basePrice: 284.1, volatility: 0.006, class: 'EQ', unitDecimals: 2 },
   NVDA: { ticker: 'NVDA', name: 'Nvidia Corp.', basePrice: 132.8, volatility: 0.0045, class: 'EQ', unitDecimals: 2 },
+  NVDAon: { ticker: 'NVDAon', name: 'Nvidia Corp (rToken 7x24)', basePrice: 139.4, volatility: 0.0045, class: 'EQ', unitDecimals: 2 },
+  TSLAon: { ticker: 'TSLAon', name: 'Tesla Inc (rToken 7x24)', basePrice: 248.8, volatility: 0.006, class: 'EQ', unitDecimals: 2 },
   MSFT: { ticker: 'MSFT', name: 'Microsoft Corp.', basePrice: 418.5, volatility: 0.002, class: 'EQ', unitDecimals: 2 },
   GOOGL: { ticker: 'GOOGL', name: 'Alphabet Inc.', basePrice: 172.6, volatility: 0.0025, class: 'EQ', unitDecimals: 2 },
   AMZN: { ticker: 'AMZN', name: 'Amazon.com Inc.', basePrice: 198.3, volatility: 0.003, class: 'EQ', unitDecimals: 2 },

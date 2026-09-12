@@ -21,6 +21,7 @@ import { RealTimeTradingChart } from '@/components/RealTimeTradingChart';
 import { LiquidityDepthHeatmap } from '@/components/LiquidityDepthHeatmap';
 import { QuantBacktestEngine } from '@/components/QuantBacktestEngine';
 import { DeterministicKillSwitch } from '@/components/DeterministicKillSwitch';
+import { PaperTradingAuditView } from '@/components/PaperTradingAuditView';
 import { TradeProposal } from '@/lib/riskVeto';
 import { clearAssetShocks } from '@/lib/demoSeedData';
 import { PulseContext } from '@/lib/councilDebateEngine';
@@ -53,11 +54,12 @@ import {
   Target,
   Shield,
   Grid,
+  ScrollText,
 } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'DECK' | 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'ALGO'>('DECK');
-  const [cockpitModule, setCockpitModule] = useState<'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'ALGO' | 'BACKTEST' | 'SANDBOX' | 'KILLSWITCH' | 'ALL'>('CHART');
+  const [activeTab, setActiveTab] = useState<'DECK' | 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'ALGO' | 'AUDIT'>('DECK');
+  const [cockpitModule, setCockpitModule] = useState<'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'ALGO' | 'BACKTEST' | 'SANDBOX' | 'KILLSWITCH' | 'AUDIT' | 'ALL'>('CHART');
   const [councilSelectedTicker, setCouncilSelectedTicker] = useState<string>('BTC');
   const [incomingPulseContext, setIncomingPulseContext] = useState<(PulseContext & { ticker: string }) | null>(null);
   const [incomingProposal, setIncomingProposal] = useState<TradeProposal | null>(null);
@@ -140,6 +142,7 @@ export default function App() {
     { id: 'STATARB', name: 'StatArb Matrix', icon: ArrowRightLeft, desc: 'Cross-Asset Pairs' },
     { id: 'ALGO', name: 'Algo Studio', icon: Zap, desc: 'Visual Flowchart' },
     { id: 'BACKTEST', name: 'Quant Backtest', icon: History, desc: 'Scenario Replay' },
+    { id: 'AUDIT', name: 'Audit Ledger', icon: ScrollText, desc: 'Bitget S2 Paper Logs' },
     { id: 'SANDBOX', name: 'Shock Sandbox', icon: Target, desc: 'Market Stress Tests' },
     { id: 'KILLSWITCH', name: 'Kill-Switch', icon: Shield, desc: 'Circuit Telemetry' },
     { id: 'ALL', name: 'All-In-One Grid', icon: Grid, desc: 'Complete Matrix' },
@@ -247,10 +250,28 @@ export default function App() {
             >
               <Radio className="w-3.5 h-3.5" /> PULSE
             </button>
+
+            {/* Official Bitget S2 Paper-Trading Audit Tab */}
+            <button
+              id="nav-tab-audit-log"
+              onClick={() => {
+                playCyberClick();
+                setActiveTab('AUDIT');
+              }}
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                activeTab === 'AUDIT'
+                  ? 'bg-yellow-400 text-black font-extrabold shadow-[0_0_15px_rgba(250,204,21,0.5)]'
+                  : 'text-yellow-300 hover:text-white hover:bg-yellow-400/10 border border-yellow-400/30'
+              }`}
+            >
+              <ScrollText className="w-3.5 h-3.5 text-yellow-400" />
+              <span>AUDIT LOG</span>
+              <span className="text-[9px] bg-yellow-400/20 text-yellow-300 px-1.5 py-0.2 rounded-full font-mono">S2</span>
+            </button>
           </nav>
 
           {/* Right: Quick Telemetry & Action Buttons */}
-          <div className="flex items-center gap-2.5 text-xs">
+          <div className="flex items-center gap-2 text-xs">
             {/* Audio Toggle */}
             <button
               onClick={handleToggleSound}
@@ -265,7 +286,7 @@ export default function App() {
             </button>
 
             {/* Bitget Latency */}
-            <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold border border-white/15 bg-white/5 px-2.5 py-1.5 rounded-full whitespace-nowrap">
+            <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-semibold border border-white/15 bg-white/5 px-2.5 py-1.5 rounded-full whitespace-nowrap">
               <Wifi className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
               <span className="text-gray-300">Bitget: 4ms</span>
             </div>
@@ -276,10 +297,28 @@ export default function App() {
                 playCyberClick();
                 setIsCreditsModalOpen(true);
               }}
-              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 px-3 py-1.5 rounded-full text-xs transition-colors font-semibold cursor-pointer"
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 px-2.5 py-1.5 rounded-full text-xs transition-colors font-semibold cursor-pointer"
             >
               <Award className="w-3.5 h-3.5 text-yellow-400" />
               <span className="hidden sm:inline">Handbook</span>
+            </button>
+
+            {/* Direct Audit Log Pill in Header */}
+            <button
+              id="header-btn-audit-log"
+              onClick={() => {
+                playCyberClick();
+                setActiveTab('AUDIT');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
+                activeTab === 'AUDIT'
+                  ? 'bg-yellow-400 text-black border-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.5)]'
+                  : 'bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-300 border-yellow-400/30'
+              }`}
+              title="View Bitget S2 Paper-Trading Audit Log (Track 2 Verification)"
+            >
+              <ScrollText className="w-3.5 h-3.5 text-yellow-400" />
+              <span>Audit Log</span>
             </button>
 
             {/* Action Pill / Live Telemetry Badge */}
@@ -289,15 +328,17 @@ export default function App() {
                   playCyberClick();
                   setActiveTab('TERMINAL');
                 }}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-black font-extrabold px-3.5 py-1.5 rounded-full text-xs transition-all shadow-[0_0_15px_rgba(250,204,21,0.4)] cursor-pointer uppercase tracking-wider"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-black font-extrabold px-3 py-1.5 rounded-full text-xs transition-all shadow-[0_0_15px_rgba(250,204,21,0.4)] cursor-pointer uppercase tracking-wider"
               >
                 <Terminal className="w-3.5 h-3.5 fill-black" />
-                <span>Launch Terminal</span>
+                <span className="hidden sm:inline">Launch Terminal</span>
+                <span className="sm:hidden">Terminal</span>
               </button>
             ) : (
-              <div className="flex items-center gap-1.5 border border-white/15 bg-white/5 text-gray-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm">
+              <div className="flex items-center gap-1.5 border border-white/15 bg-white/5 text-gray-300 px-2.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Quorum Active</span>
+                <span className="hidden sm:inline">Quorum Active</span>
+                <span className="sm:hidden">Active</span>
               </div>
             )}
           </div>
@@ -325,7 +366,44 @@ export default function App() {
                 setActiveTab('TERMINAL');
                 setCockpitModule('ALGO');
               }}
+              onOpenAuditLedger={() => {
+                setActiveTab('AUDIT');
+              }}
             />
+
+            {/* Official Bitget AI Base Camp S2 Audit Ledger Callout Banner */}
+            <div className="bg-gradient-to-r from-yellow-500/10 via-[#0e1017] to-cyan-500/10 border border-yellow-400/30 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[0_0_25px_rgba(250,204,21,0.08)]">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="w-2 h-2 rounded-full bg-yellow-400 animate-ping" />
+                  <span className="text-xs font-mono font-bold text-yellow-300 uppercase tracking-wider">
+                    Bitget AI Base Camp S2 // Track 2: Agentic Trading Submission
+                  </span>
+                  <span className="text-[10px] bg-yellow-400/20 text-yellow-300 border border-yellow-400/40 px-2 py-0.5 rounded font-mono font-bold">
+                    MANDATORY LOG VERIFICATION
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-white tracking-wide">
+                  Complete Autonomous Paper-Trading Audit Ledger & Institutional Metrics (Sept 3 – Present)
+                </h3>
+                <p className="text-xs text-gray-400 max-w-3xl">
+                  Inspect live-settled paper execution logs with exact UTC timestamps, instrument pairs, LONG/SHORT direction, sizing, execution price, Council Quorum reasoning, and settled balance changes ($100k → $107.9k). Includes 1-click CSV download for judge review.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => {
+                    playCyberClick();
+                    setActiveTab('AUDIT');
+                  }}
+                  className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all shadow-[0_0_15px_rgba(250,204,21,0.3)] hover:scale-102 cursor-pointer whitespace-nowrap"
+                >
+                  <ScrollText className="w-4 h-4" />
+                  <span>OPEN AUDIT LEDGER</span>
+                </button>
+              </div>
+            </div>
 
             {/* The 3-Pillar Bento Showcase (01: Data Layer, 02: Algo Builder, 03: What Lunaris Does) */}
             <div id="bento-showcase" className="space-y-3">
@@ -516,6 +594,13 @@ export default function App() {
               </div>
             )}
 
+            {/* 11. BITGET S2 OFFICIAL PAPER-TRADING AUDIT LEDGER */}
+            {cockpitModule === 'AUDIT' && (
+              <div className="space-y-4 animate-fadeIn">
+                <PaperTradingAuditView />
+              </div>
+            )}
+
             {/* 11. ALL-IN-ONE COMPLETE MATRIX */}
             {cockpitModule === 'ALL' && (
               <div className="space-y-4 animate-fadeIn">
@@ -605,6 +690,13 @@ export default function App() {
                 <CrossAssetMatrix onRoutePairSignal={handleSendToAutopilot} />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* VIEW 7: BITGET S2 OFFICIAL PAPER-TRADING AUDIT LEDGER */}
+        {activeTab === 'AUDIT' && (
+          <div className="space-y-6 animate-fadeIn">
+            <PaperTradingAuditView />
           </div>
         )}
       </main>

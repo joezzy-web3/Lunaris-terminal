@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchPriceSnapshot, PriceSnapshot, ASSET_REGISTRY } from '@/lib/liveTokenFeed';
 import { getSeededPrice, SEEDED_ASSETS } from '@/lib/demoSeedData';
 import { evaluateTradeRisk, TradeProposal } from '@/lib/riskVeto';
+import { recordNewPaperTrade } from '@/lib/paperTradingAudit';
 import { Play, Square, Zap, ShieldAlert, RotateCcw, ArrowUpRight, ArrowDownRight, RefreshCw, Target, ShieldCheck, Lock, Sliders } from 'lucide-react';
 import { playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
 
@@ -297,6 +298,26 @@ export function AutonomousLoopPanel({
 
     cashBalanceRef.current = nextCash;
     setCashBalance(nextCash);
+
+    // Record official Bitget S2 compliant paper-trading transaction
+    const initialCost = pos.amount * pos.entryPrice;
+    const pnl = proceeds - initialCost;
+    const pnlPct = initialCost > 0 ? ((proceeds - initialCost) / initialCost) * 100 : 0;
+    try {
+      recordNewPaperTrade({
+        instrument: `${normTicker}/USDT`,
+        direction: 'LONG',
+        price: parseFloat(sellPrice.toFixed(sellPrice < 10 ? 4 : 2)),
+        quantity: parseFloat(initialCost.toFixed(2)),
+        leverage: 3,
+        balanceChange: parseFloat(pnl.toFixed(2)),
+        balanceChangePct: parseFloat(pnlPct.toFixed(2)),
+        trigger: `Autopilot Engine: Position closed on ${normTicker} (${pnl >= 0 ? 'Target Profit Ratified' : 'Risk Sentinel Stop Protection'})`,
+        status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+      });
+    } catch (err) {
+      console.warn('Failed to record audit log on sell:', err);
+    }
 
     setPositions((prev) => {
       const next = { ...prev };

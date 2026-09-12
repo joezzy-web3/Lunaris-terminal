@@ -32,6 +32,8 @@ export const ASSET_REGISTRY: Record<
   AAPL: { name: 'Apple Inc.', class: 'EQ', yahooSymbol: 'AAPL' },
   TSLA: { name: 'Tesla Inc.', class: 'EQ', yahooSymbol: 'TSLA' },
   NVDA: { name: 'Nvidia Corp.', class: 'EQ', yahooSymbol: 'NVDA' },
+  NVDAon: { name: 'Nvidia Corp (rToken 7x24)', class: 'EQ', yahooSymbol: 'NVDA' },
+  TSLAon: { name: 'Tesla Inc (rToken 7x24)', class: 'EQ', yahooSymbol: 'TSLA' },
   MSFT: { name: 'Microsoft', class: 'EQ', yahooSymbol: 'MSFT' },
   GOOGL: { name: 'Alphabet', class: 'EQ', yahooSymbol: 'GOOGL' },
   AMZN: { name: 'Amazon', class: 'EQ', yahooSymbol: 'AMZN' },

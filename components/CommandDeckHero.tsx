@@ -3,12 +3,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { WireframeSphere } from './WireframeSphere';
-import { Terminal, Zap, Shield, TrendingUp, Cpu, ArrowRight, Play, ExternalLink, Sparkles } from 'lucide-react';
+import { Terminal, Zap, Shield, TrendingUp, Cpu, ArrowRight, Play, ExternalLink, Sparkles, ScrollText } from 'lucide-react';
 import { playCyberClick } from '@/lib/soundSynth';
 
 interface CommandDeckHeroProps {
   onLaunchTerminal: () => void;
   onOpenAlgoBuilder?: () => void;
+  onOpenAuditLedger?: () => void;
 }
 
 const ROTATING_TARGETS = [
@@ -19,7 +20,7 @@ const ROTATING_TARGETS = [
   'Consensus_',
 ];
 
-export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder }: CommandDeckHeroProps) {
+export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder, onOpenAuditLedger }: CommandDeckHeroProps) {
   const [targetIndex, setTargetIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -105,6 +106,19 @@ export function CommandDeckHero({ onLaunchTerminal, onOpenAlgoBuilder }: Command
             <Cpu className="w-4 h-4 text-zinc-400" />
             <span>Explore Architecture</span>
           </button>
+
+          {onOpenAuditLedger && (
+            <button
+              onClick={() => {
+                playCyberClick();
+                onOpenAuditLedger();
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider text-yellow-300 hover:text-yellow-200 bg-yellow-400/10 hover:bg-yellow-400/15 border border-yellow-400/30 hover:border-yellow-400/50 transition-all cursor-pointer"
+            >
+              <ScrollText className="w-4 h-4 text-yellow-400" />
+              <span>Audit Ledger (S2)</span>
+            </button>
+          )}
         </div>
 
         {/* Institutional As Seen On Bar */}

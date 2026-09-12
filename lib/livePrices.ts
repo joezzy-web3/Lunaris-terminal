@@ -51,6 +51,30 @@ export const INITIAL_ASSET_QUOTES: Record<string, AssetQuote> = {
     lastTickDirection: 'UP',
     lastUpdated: Date.now(),
   },
+  NVDAon: {
+    ticker: 'NVDAon',
+    name: 'NVIDIA Corp (rToken 7x24)',
+    class: 'EQ',
+    price: 139.4,
+    change24h: 3.82,
+    high24h: 142.1,
+    low24h: 135.0,
+    volume: '$68.4M',
+    lastTickDirection: 'UP',
+    lastUpdated: Date.now(),
+  },
+  TSLAon: {
+    ticker: 'TSLAon',
+    name: 'Tesla Inc (rToken 7x24)',
+    class: 'EQ',
+    price: 248.9,
+    change24h: 2.14,
+    high24h: 254.5,
+    low24h: 242.0,
+    volume: '$52.1M',
+    lastTickDirection: 'UP',
+    lastUpdated: Date.now(),
+  },
   NVDA: {
     ticker: 'NVDA',
     name: 'NVIDIA Corp',
@@ -113,8 +137,30 @@ export const INITIAL_ASSET_QUOTES: Record<string, AssetQuote> = {
   },
 };
 
-// Public real crypto price sync from Binance public tickers
+// Public real crypto price sync from official Bitget API with Binance fallback
 export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { price: number; change24h: number }>>> {
+  // 1. Try our direct Bitget API proxy endpoint
+  try {
+    const res = await fetch('/api/bitget/tickers');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        const result: Partial<Record<string, { price: number; change24h: number }>> = {};
+        Object.entries(json.data).forEach(([key, val]: [string, any]) => {
+          if (val && typeof val.price === 'number') {
+            result[key] = { price: val.price, change24h: val.change24h };
+          }
+        });
+        if (Object.keys(result).length > 0) {
+          return result;
+        }
+      }
+    }
+  } catch {
+    // Continue to fallback
+  }
+
+  // 2. Fallback to public Binance endpoint if needed
   try {
     const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT"]');
     if (!res.ok) return {};
