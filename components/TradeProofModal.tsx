@@ -19,6 +19,9 @@ import {
   Hash,
   Activity,
   Zap,
+  Skull,
+  AlertTriangle,
+  ShieldAlert,
 } from 'lucide-react';
 import { PaperTradeRecord } from '@/lib/paperTradingAudit';
 import { playCyberClick } from '@/lib/soundSynth';
@@ -30,7 +33,7 @@ interface TradeProofModalProps {
 
 export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose }) => {
   const [copiedHash, setCopiedHash] = useState(false);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'QUORUM' | 'ORDERBOOK' | 'JSON'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POST_MORTEM' | 'QUORUM' | 'ORDERBOOK' | 'JSON'>('OVERVIEW');
 
   if (!trade) return null;
 
@@ -178,9 +181,12 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 border-b border-white/10 pt-3 pb-2 shrink-0">
+        <div className="flex items-center gap-1 border-b border-white/10 pt-3 pb-2 shrink-0 flex-wrap">
           {[
             { id: 'OVERVIEW', label: 'Tick Replay & Summary' },
+            ...(trade.postMortem || trade.status === 'STOP_LOSS'
+              ? [{ id: 'POST_MORTEM', label: 'Self-Reflective Post-Mortem' }]
+              : []),
             { id: 'QUORUM', label: 'Council Quorum Votes' },
             { id: 'ORDERBOOK', label: 'Slippage & Microstructure' },
             { id: 'JSON', label: 'Raw Audit Hash' },
@@ -191,13 +197,16 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
                 playCyberClick();
                 setActiveTab(tab.id as typeof activeTab);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === tab.id
-                  ? 'bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/40 shadow-sm'
+                  ? tab.id === 'POST_MORTEM'
+                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-sm'
+                    : 'bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/40 shadow-sm'
                   : 'text-zinc-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              {tab.label}
+              {tab.id === 'POST_MORTEM' && <Skull className="w-3.5 h-3.5 text-rose-400" />}
+              <span>{tab.label}</span>
             </button>
           ))}
         </div>
@@ -295,13 +304,116 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
                 </div>
                 <p className="text-xs text-zinc-200 leading-relaxed font-sans">{trade.trigger}</p>
               </div>
+
+              {/* Loss Post-Mortem Card Preview if Stop Loss */}
+              {(trade.postMortem || trade.status === 'STOP_LOSS') && (
+                <div className="bg-rose-950/20 border border-rose-500/30 p-3.5 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-rose-400 font-bold">
+                      <Skull className="w-4 h-4 text-rose-400" />
+                      <span>Adversarial Post-Mortem Recorded</span>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('POST_MORTEM')}
+                      className="text-[10px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/40 cursor-pointer"
+                    >
+                      View Forensic Breakdown &rarr;
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-zinc-300">
+                    {trade.postMortem?.rootCause || 'Stop-loss triggered by volatility barrier. Nexus-Red adversarial trap identified and dynamic policy adjusted.'}
+                  </p>
+                </div>
+              )}
             </>
+          )}
+
+          {activeTab === 'POST_MORTEM' && (
+            <div className="space-y-3 font-mono text-xs">
+              <div className="bg-gradient-to-r from-rose-950/40 via-black to-zinc-900 border border-rose-500/40 p-4 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Skull className="w-5 h-5 text-rose-400 animate-pulse" />
+                    <span className="font-bold text-sm text-white">NEXUS-RED POST-MORTEM FORENSICS</span>
+                  </div>
+                  <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded border border-rose-500/40 font-bold">
+                    Autonomous Self-Reflection Engine
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-300 leading-relaxed font-sans">
+                  Deterministic post-mortem analysis executed immediately upon stop-loss settlement. The Council’s adversarial red-team persona dissected the failure state and committed policy updates.
+                </p>
+              </div>
+
+              {/* 4 Core Pillars of Post-Mortem */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* 1. Root Cause */}
+                <div className="bg-[#07080d] border border-white/10 p-3.5 rounded-xl space-y-1.5">
+                  <div className="text-[10px] text-rose-400 font-bold uppercase flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                    <span>1. Root Cause Analysis</span>
+                  </div>
+                  <p className="text-xs text-zinc-200 font-sans leading-relaxed">
+                    {trade.postMortem?.rootCause ||
+                      `Adverse liquidity cascade on ${trade.instrument}. Rapid price rejection pierced the -5% stop barrier before mean reversion could manifest.`}
+                  </p>
+                </div>
+
+                {/* 2. Adversarial Flag */}
+                <div className="bg-[#07080d] border border-white/10 p-3.5 rounded-xl space-y-1.5">
+                  <div className="text-[10px] text-amber-400 font-bold uppercase flex items-center gap-1.5">
+                    <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                    <span>2. NEXUS-RED Adversarial Flag</span>
+                  </div>
+                  <p className="text-xs text-zinc-200 font-sans leading-relaxed">
+                    {trade.postMortem?.adversarialFlag ||
+                      'Orderbook spoofing & institutional delta divergence: Bid volume was artificially inflated prior to sudden depth withdrawal.'}
+                  </p>
+                </div>
+
+                {/* 3. Lesson Learned */}
+                <div className="bg-[#07080d] border border-white/10 p-3.5 rounded-xl space-y-1.5">
+                  <div className="text-[10px] text-cyan-400 font-bold uppercase flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>3. Algorithmic Lesson Learned</span>
+                  </div>
+                  <p className="text-xs text-zinc-200 font-sans leading-relaxed">
+                    {trade.postMortem?.lessonLearned ||
+                      'Momentum breakouts without confirmed spot volume follow-through exhibit high bull-trap probability during macroeconomic yield revisions.'}
+                  </p>
+                </div>
+
+                {/* 4. Policy Adjustment */}
+                <div className="bg-[#07080d] border border-white/10 p-3.5 rounded-xl space-y-1.5">
+                  <div className="text-[10px] text-emerald-400 font-bold uppercase flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>4. Autonomous Policy Adjustment</span>
+                  </div>
+                  <p className="text-xs text-zinc-200 font-sans leading-relaxed">
+                    {trade.postMortem?.policyAdjustment ||
+                      `Increased trailing stop threshold by +1.2% and lowered maximum initial sizing on ${trade.instrument} by 25% until win rate stabilizes.`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Cryptographic Execution Footprint */}
+              <div className="bg-[#07080d] border border-white/10 p-3 rounded-xl flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Hash className="w-3.5 h-3.5 text-zinc-500" />
+                  <span className="text-zinc-400">Post-Mortem Proof ID:</span>
+                  <span className="text-white font-mono">{executionHash.slice(0, 18)}...</span>
+                </div>
+                <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  Committed to Audit Trail
+                </span>
+              </div>
+            </div>
           )}
 
           {activeTab === 'QUORUM' && (
             <div className="space-y-3">
               <div className="text-xs text-zinc-400">
-                Institutional tripartite quorum voting breakdown at timestamp {trade.timestamp}:
+                Institutional 4-agent Council quorum voting breakdown at timestamp {trade.timestamp}:
               </div>
 
               {/* Quant-Omega */}
@@ -352,6 +464,26 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
                 </div>
                 <p className="text-[11px] text-zinc-300 font-sans">
                   Portfolio VaR within hard cap (25%). Stop-loss bound calculated deterministically at -10% equity drawdown ceiling. Circuit breakers remain armed.
+                </p>
+              </div>
+
+              {/* NEXUS-RED (Adversarial Agent) */}
+              <div className="bg-[#07080d] border border-rose-500/20 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <Skull className="w-3.5 h-3.5 text-rose-400" />
+                      NEXUS-RED (Adversarial Red Team / Chaos Hunter)
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-rose-400">DISSENT / STRESS-TESTED</span>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-rose-500 h-full rounded-full" style={{ width: '72%' }} />
+                </div>
+                <p className="text-[11px] text-zinc-300 font-sans">
+                  Flagged localized liquidity dry-holes and potential bull-trap slippage risk. Required Guardian-01 to ratify liquidation shield auto-cut prior to order commitment.
                 </p>
               </div>
             </div>

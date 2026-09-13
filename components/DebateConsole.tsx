@@ -28,6 +28,7 @@ import {
   BookOpen,
   FileText,
   Sliders,
+  Skull,
 } from 'lucide-react';
 import { TradeProposal } from '@/lib/riskVeto';
 import { fetchPriceSnapshot, ASSET_REGISTRY } from '@/lib/liveTokenFeed';
@@ -404,6 +405,8 @@ export function DebateConsole({
         return <Flame className={`${className} text-[#FF5722] fill-[#FF9800]/50 drop-shadow-[0_0_6px_rgba(255,87,34,0.7)] shrink-0`} />;
       case 'shield':
         return <Shield className={`${className} text-[#8B5A2B] fill-[#5C3A21]/40 shrink-0`} />;
+      case 'skull':
+        return <Skull className={`${className} text-rose-500 fill-rose-950/40 shrink-0 drop-shadow-[0_0_6px_rgba(244,63,94,0.6)]`} />;
       case 'globe':
       default:
         return <Globe2 className={`${className} text-[#0284C7] fill-[#22C55E]/40 shrink-0 drop-shadow-[0_0_6px_rgba(2,132,199,0.5)]`} />;
@@ -669,8 +672,8 @@ export function DebateConsole({
         </div>
       )}
 
-      {/* The Three Personas Roster Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+      {/* The Four Personas Roster Bar (with NEXUS-RED Adversary) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
         {Object.values(COUNCIL_PERSONAS).map((persona) => {
           const isCurrentSpeaker =
             isDebating &&

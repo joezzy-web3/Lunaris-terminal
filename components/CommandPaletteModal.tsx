@@ -34,7 +34,7 @@ interface CommandPaletteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigateTab: (tab: 'DECK' | 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'ALGO' | 'AUDIT') => void;
-  onNavigateCockpitModule?: (module: 'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'SANDBOX' | 'KILLSWITCH' | 'AUDIT' | 'ALL') => void;
+  onNavigateCockpitModule?: (module: 'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'KILLSWITCH' | 'AUDIT' | 'ALL') => void;
   onConveneCouncil?: (ticker: string, prompt?: string) => void;
   onOpenFlashCrashDrill?: () => void;
   onOpenAuditLedger?: () => void;

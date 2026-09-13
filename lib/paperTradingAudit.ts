@@ -7,6 +7,13 @@
  * Fully reactive & persistent across localStorage with live auto-tick execution.
  */
 
+export interface TradePostMortem {
+  rootCause: string;
+  adversarialFlag: string;
+  lessonLearned: string;
+  policyAdjustment: string;
+}
+
 export interface PaperTradeRecord {
   id: string;
   timestamp: string; // ISO 8601 UTC
@@ -20,6 +27,7 @@ export interface PaperTradeRecord {
   accountBalance: number; // Running balance after settlement
   trigger: string; // e.g. "Council Quorum: Quant-Omega + Atlas-Macro (92% Conf)"
   status: 'CLOSED' | 'OPEN' | 'STOP_LOSS' | 'TAKE_PROFIT';
+  postMortem?: TradePostMortem;
 }
 
 export interface AuditSummaryMetrics {
@@ -140,6 +148,12 @@ export const SEED_PAPER_TRADES: PaperTradeRecord[] = [
     accountBalance: 103768.4,
     trigger: 'Guardian-01 Trailing Stop: Fed Policy Speech Macro Ripple',
     status: 'STOP_LOSS',
+    postMortem: {
+      rootCause: 'Sudden rate-volatility spike following unscheduled Fed remarks breached micro-support band.',
+      adversarialFlag: 'NEXUS-RED Trap Detection: High-frequency taker liquidation cascading into orderbook bids.',
+      lessonLearned: 'Dynamic trailing stop successfully insulated NAV, capping loss at -2.72% vs an unmitigated -14.2% wick.',
+      policyAdjustment: 'Increased pre-announcement macro volatility buffer from 15% to 28% for top-tier crypto assets.',
+    },
   },
   {
     id: 'PT-2026-0908-08',
