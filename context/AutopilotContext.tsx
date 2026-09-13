@@ -230,7 +230,34 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     maxOpenPositionsRef.current = maxOpenPositions;
   }, [maxOpenPositions]);
 
-  // Persist state in localStorage so refreshes and re-renders preserve exact balances
+  // Fetch server-persisted autopilot state on mount
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/autopilot/state')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!isMounted || !data?.success || !data.state) return;
+        const s = data.state;
+        if (typeof s.isExecuting === 'boolean') {
+          setIsExecuting(s.isExecuting);
+        }
+        if (typeof s.cashBalance === 'number' && Number.isFinite(s.cashBalance) && s.cashBalance >= 0) {
+          setCashBalance(s.cashBalance);
+        }
+        if (s.positions && typeof s.positions === 'object') {
+          setPositions(s.positions);
+        }
+        if (Array.isArray(s.ledger) && s.ledger.length > 0) {
+          setLedger(s.ledger);
+        }
+      })
+      .catch((err) => console.warn('Could not sync with server autopilot state:', err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Persist state in localStorage and server so refreshes, new tabs, and server restarts preserve exact balances
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -243,6 +270,11 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         maxOpenPositions,
       };
       localStorage.setItem(AUTOPILOT_PERSISTENCE_KEY, JSON.stringify(stateToSave));
+      fetch('/api/autopilot/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state: stateToSave }),
+      }).catch(() => {});
     } catch (err) {
       console.warn('Failed to persist autopilot state:', err);
     }
@@ -274,6 +306,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setIsExecuting((prev) => {
       const next = !prev;
       playTradeApprovedChime();
+      fetch(next ? '/api/autopilot/start' : '/api/autopilot/stop', { method: 'POST' }).catch(() => {});
       return next;
     });
   }, []);
@@ -1267,6 +1300,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     setLedger((prev) => [resetLedgerEntry, ...prev.slice(0, 299)]);
+    fetch('/api/autopilot/reset', { method: 'POST' }).catch(() => {});
     setLogs((prev) => [
       {
         id: `reset-${Date.now()}`,

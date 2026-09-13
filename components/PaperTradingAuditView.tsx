@@ -6,6 +6,7 @@ import {
   generateAutonomousTradeScenario,
   calculateAuditMetrics,
   generateCsvExport,
+  syncServerAuditTrades,
   PaperTradeRecord,
   AuditSummaryMetrics,
 } from '@/lib/paperTradingAudit';
@@ -34,6 +35,7 @@ import {
   ShieldAlert,
   Eye,
   EyeOff,
+  Skull,
 } from 'lucide-react';
 import { playCyberClick, playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
 import { TradeProofModal } from '@/components/TradeProofModal';
@@ -91,7 +93,31 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       }
     };
     window.addEventListener('lunaris-audit-updated', handleUpdate);
-    return () => window.removeEventListener('lunaris-audit-updated', handleUpdate);
+
+    // Initial server sync & periodic poll to pick up background autopilot executions
+    let isMounted = true;
+    syncServerAuditTrades().then((serverTrades) => {
+      if (isMounted && serverTrades && serverTrades.length > 0) {
+        setTrades(serverTrades);
+      }
+    });
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const fresh = await syncServerAuditTrades();
+        if (isMounted && fresh && fresh.length > 0) {
+          setTrades(fresh);
+        }
+      } catch (err) {
+        // silent
+      }
+    }, 4000);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('lunaris-audit-updated', handleUpdate);
+      clearInterval(pollInterval);
+    };
   }, []);
 
   // Fetch live Bitget prices periodically
@@ -662,17 +688,24 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                       </div>
                     </td>
                     <td className="py-3 px-3.5 text-center whitespace-nowrap">
-                      <span
-                        className={`px-2.5 py-1 rounded text-[10px] font-semibold ${
-                          trade.status === 'TAKE_PROFIT'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : trade.status === 'STOP_LOSS'
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                        }`}
-                      >
-                        {trade.status}
-                      </span>
+                      <div className="flex flex-col items-center gap-1">
+                        <span
+                          className={`px-2.5 py-1 rounded text-[10px] font-semibold ${
+                            trade.status === 'TAKE_PROFIT'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : trade.status === 'STOP_LOSS'
+                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                              : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                          }`}
+                        >
+                          {trade.status}
+                        </span>
+                        {(trade.postMortem || trade.status === 'STOP_LOSS') && (
+                          <span className="text-[9px] text-rose-400 font-mono flex items-center gap-1 bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-500/30">
+                            <Skull className="w-2.5 h-2.5" /> Post-Mortem
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-3.5 text-center whitespace-nowrap">
                       <button

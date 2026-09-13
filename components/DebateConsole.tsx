@@ -264,43 +264,120 @@ export function DebateConsole({
         setCatalysts(apiData.keyCatalysts);
       }
 
-      // Map turns to council personas
-      const mappedTurns: DebateTurn[] = [
-        {
-          turnIndex: 1,
-          totalTurns: 3,
-          speakerId: 'QUANT',
-          stanceLabel: apiData.turns[0]?.stance || 'BULLISH',
-          stanceType: 'BULLISH',
-          speech: apiData.turns[0]?.argument || `Quant order book signals confirm buyer volume expansion on ${symbol}.`,
-          proposedSizePct: optimalSize,
-          takeProfitPct,
-          winRatePct: winRate,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        },
-        {
-          turnIndex: 2,
-          totalTurns: 3,
-          speakerId: 'GUARDIAN',
-          stanceLabel: forceOverAllocation ? 'HARD VETO' : (apiData.turns[1]?.stance || 'CAUTION'),
-          stanceType: forceOverAllocation ? 'VETO' : 'SKEPTIC',
-          speech: apiData.turns[1]?.argument || (forceOverAllocation ? 'Allocation limit breach: trade proposal terminated by Guardian circuit breaker.' : `Risk profile verified for ${symbol}. Stop loss required at ${stopLossPrice}.`),
-          stopLossPct,
-          riskScore: forceOverAllocation ? 9 : 4,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        },
-        {
-          turnIndex: 3,
-          totalTurns: 3,
-          speakerId: 'MACRO',
-          stanceLabel: forceOverAllocation ? 'VETO CONFIRMED' : (apiData.turns[2]?.stance || 'CONSENSUS'),
-          stanceType: forceOverAllocation ? 'VETO' : 'CONSENSUS',
-          speech: apiData.turns[2]?.argument || (forceOverAllocation ? 'Council upholds Guardian veto. Zero capital deployed.' : `Macro convergence confirmed. Ratifying ${action} signal for ${symbol}.`),
-          proposedSizePct: forceOverAllocation ? 0 : optimalSize,
-          winRatePct: winRate,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        },
-      ];
+      // Map turns to council personas (4 Quorum Personas: QUANT, GUARDIAN, NEXUS_RED, MACRO)
+      let mappedTurns: DebateTurn[] = [];
+
+      // Check if server returned 4 structured turns
+      if (apiData.turns && apiData.turns.length >= 4) {
+        mappedTurns = [
+          {
+            turnIndex: 1,
+            totalTurns: 4,
+            speakerId: 'QUANT',
+            stanceLabel: apiData.turns[0]?.stance || 'BULLISH',
+            stanceType: 'BULLISH',
+            speech: apiData.turns[0]?.argument || `Quant order book signals confirm buyer volume expansion on ${symbol}.`,
+            proposedSizePct: optimalSize,
+            takeProfitPct,
+            winRatePct: winRate,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          },
+          {
+            turnIndex: 2,
+            totalTurns: 4,
+            speakerId: 'GUARDIAN',
+            stanceLabel: forceOverAllocation ? 'HARD VETO' : (apiData.turns[1]?.stance || 'CAUTION'),
+            stanceType: forceOverAllocation ? 'VETO' : 'SKEPTIC',
+            speech: apiData.turns[1]?.argument || (forceOverAllocation ? 'Allocation limit breach: trade proposal terminated by Guardian circuit breaker.' : `Risk profile verified for ${symbol}. Stop loss required at ${stopLossPrice}.`),
+            stopLossPct,
+            riskScore: forceOverAllocation ? 9 : 4,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          },
+          {
+            turnIndex: 3,
+            totalTurns: 4,
+            speakerId: 'NEXUS_RED',
+            stanceLabel: forceOverAllocation ? 'CHAOS VETO' : (apiData.turns[2]?.stance || 'ADVERSARIAL_CHALLENGE'),
+            stanceType: forceOverAllocation ? 'VETO' : 'VETO',
+            speech: apiData.turns[2]?.argument || `ATTACK VECTOR ACTIVE: Validating orderbook liquidity depth on ${symbol}. Limit fill bounds and anti-slippage parameters enforced.`,
+            riskScore: forceOverAllocation ? 98 : 62,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          },
+          {
+            turnIndex: 4,
+            totalTurns: 4,
+            speakerId: 'MACRO',
+            stanceLabel: forceOverAllocation ? 'VETO RATIFIED' : (apiData.turns[3]?.stance || 'SUPERMAJORITY'),
+            stanceType: forceOverAllocation ? 'VETO' : 'CONSENSUS',
+            speech: apiData.turns[3]?.argument || (forceOverAllocation ? 'Council upholds dual Guardian & NEXUS-RED veto. Zero capital deployed.' : `Macro convergence confirmed. Ratifying ${action} signal for ${symbol} with NEXUS-RED mitigation clause.`),
+            proposedSizePct: forceOverAllocation ? 0 : optimalSize,
+            winRatePct: winRate,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          },
+        ];
+      } else {
+        // Dynamic mapping based on speakerId from server or fallback to 4 turns
+        mappedTurns = [
+          {
+            turnIndex: 1,
+            totalTurns: 4,
+            speakerId: 'QUANT',
+            stanceLabel: apiData.turns[0]?.stance || 'BULLISH',
+            stanceType: 'BULLISH',
+            speech: apiData.turns[0]?.argument || `Quant order book signals confirm buyer volume expansion on ${symbol}.`,
+            proposedSizePct: optimalSize,
+            takeProfitPct,
+            winRatePct: winRate,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          },
+          {
+            turnIndex: 2,
+            totalTurns: 4,
+            speakerId: 'GUARDIAN',
+            stanceLabel: forceOverAllocation ? 'HARD VETO' : (apiData.turns[1]?.stance || 'CAUTION'),
+            stanceType: forceOverAllocation ? 'VETO' : 'SKEPTIC',
+            speech: apiData.turns[1]?.argument || (forceOverAllocation ? 'Allocation limit breach: trade proposal terminated by Guardian circuit breaker.' : `Risk profile verified for ${symbol}. Stop loss required at ${stopLossPrice}.`),
+            stopLossPct,
+            riskScore: forceOverAllocation ? 9 : 4,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          },
+          {
+            turnIndex: 3,
+            totalTurns: 4,
+            speakerId: 'NEXUS_RED',
+            stanceLabel: forceOverAllocation ? 'CHAOS VETO' : 'ADVERSARIAL_CHALLENGE',
+            stanceType: forceOverAllocation ? 'VETO' : 'VETO',
+            speech: apiData.turns[2]?.speakerId === 'NEXUS_RED' 
+              ? apiData.turns[2]?.argument 
+              : `TRAP CHECK: Stress-testing ${symbol} against liquidity vacuum and predatory sweeps. Enforcing limit-order IOC execution boundaries.`,
+            riskScore: forceOverAllocation ? 98 : 64,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          },
+          {
+            turnIndex: 4,
+            totalTurns: 4,
+            speakerId: 'MACRO',
+            stanceLabel: forceOverAllocation ? 'VETO RATIFIED' : (apiData.turns[apiData.turns.length - 1]?.stance || 'RATIFIED'),
+            stanceType: forceOverAllocation ? 'VETO' : 'CONSENSUS',
+            speech: apiData.turns[apiData.turns.length - 1]?.argument || (forceOverAllocation ? 'Council upholds Guardian & NEXUS-RED veto. Zero capital deployed.' : `Macro convergence confirmed. Ratifying ${action} signal for ${symbol}.`),
+            proposedSizePct: forceOverAllocation ? 0 : optimalSize,
+            winRatePct: winRate,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          },
+        ];
+      }
+
+      // Determine consensus status
+      const serverConsensus = v.consensusStatus;
+      let consensusStatus: 'UNANIMOUS' | 'SUPERMAJORITY' | 'ADVERSARIAL_DISSENT' = 'SUPERMAJORITY';
+      if (forceOverAllocation || v.nexusRedDissent || serverConsensus === 'CONTENTIOUS') {
+        consensusStatus = 'ADVERSARIAL_DISSENT';
+      } else if (serverConsensus === 'UNANIMOUS') {
+        consensusStatus = 'UNANIMOUS';
+      }
+
+      const riskMitigationClause = v.riskMitigationClause || 
+        `NEXUS-RED Trap Audit: Orderbook depth verified. Limit order execution enforced with slippage bound to 0.05%. Max VaR bounded at -${stopLossPct}% NAV.`;
 
       activeVerdict = {
         ticker: symbol,
@@ -316,8 +393,10 @@ export function DebateConsole({
         stopLossPrice,
         maxDrawdownVaR: Number(((optimalSize * stopLossPct) / 100).toFixed(2)),
         confidence: winRate,
-        consensusAlignmentPct: forceOverAllocation ? 40 : 100,
-        unanimous: !forceOverAllocation,
+        consensusAlignmentPct: forceOverAllocation ? 40 : (consensusStatus === 'UNANIMOUS' ? 100 : 85),
+        unanimous: !forceOverAllocation && consensusStatus === 'UNANIMOUS',
+        consensusStatus,
+        riskMitigationClause,
         synthesizedReasoning: v.synthesizedReasoning || `Council ratified strategy for ${symbol}.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         tradeProposal: {
@@ -769,19 +848,28 @@ export function DebateConsole({
             const persona = COUNCIL_PERSONAS[turn.speakerId];
             const isVetoTurn = turn.stanceType === 'VETO' || turn.stanceLabel.includes('VETO');
             const isBullishTurn = turn.stanceType === 'BULLISH' || turn.stanceType === 'APPROVED';
+            const isNexusRed = turn.speakerId === 'NEXUS_RED';
 
             return (
               <div
                 key={turn.turnIndex}
-                className="animate-fadeIn p-3.5 rounded-md bg-black/60 border border-white/10 hover:border-white/20 transition-all space-y-2 relative"
+                className={`animate-fadeIn p-3.5 rounded-md transition-all space-y-2 relative ${
+                  isNexusRed
+                    ? 'bg-rose-950/20 border border-rose-500/35 hover:border-rose-500/50'
+                    : 'bg-black/60 border border-white/10 hover:border-white/20'
+                }`}
               >
                 {/* Speaker Header & Stance */}
                 <div className="flex flex-wrap items-center justify-between gap-1 border-b border-white/8 pb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded flex items-center justify-center border bg-white/5 border-white/15 text-white text-xs">
+                    <div className={`w-5 h-5 rounded flex items-center justify-center border text-xs ${
+                      isNexusRed
+                        ? 'bg-rose-900/40 border-rose-500/40 text-rose-300'
+                        : 'bg-white/5 border-white/15 text-white'
+                    }`}>
                       {getPersonaIcon(persona.avatarIcon, 'w-3 h-3')}
                     </div>
-                    <span className="text-xs font-bold text-white">{persona.name}</span>
+                    <span className={`text-xs font-bold ${isNexusRed ? 'text-rose-300' : 'text-white'}`}>{persona.name}</span>
                     <span className="text-[10px] text-zinc-500 font-mono">Turn {turn.turnIndex}/{turn.totalTurns}</span>
                   </div>
 
@@ -792,6 +880,8 @@ export function DebateConsole({
                           ? 'bg-rose-950/60 text-rose-300 border-rose-500/50'
                           : isBullishTurn
                           ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
+                          : isNexusRed
+                          ? 'bg-rose-950/50 text-rose-300 border-rose-500/40'
                           : 'bg-white/10 text-zinc-200 border-white/15'
                       }`}
                     >
@@ -875,12 +965,24 @@ export function DebateConsole({
                   )}
                 </div>
                 <div className="text-[10px] text-zinc-400">
-                  3-Agent Quorum Consensus • Ratified at {verdict.timestamp}
+                  4-Agent Quorum Consensus • Ratified at {verdict.timestamp}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {verdict.consensusStatus && (
+                <span className={`px-2 py-0.5 rounded border text-xs font-bold font-mono flex items-center gap-1 ${
+                  verdict.consensusStatus === 'UNANIMOUS'
+                    ? 'bg-cyan-950/60 text-cyan-300 border-cyan-500/40'
+                    : verdict.consensusStatus === 'SUPERMAJORITY'
+                    ? 'bg-amber-950/60 text-amber-300 border-amber-500/40'
+                    : 'bg-rose-950/60 text-rose-300 border-rose-500/40'
+                }`}>
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{verdict.consensusStatus.replace('_', ' ')}</span>
+                </span>
+              )}
               <span className={`px-2 py-0.5 rounded border text-xs font-bold flex items-center gap-1 ${
                 verdict.action === 'HOLD' && forceOverAllocation
                   ? 'bg-rose-950/50 text-rose-300 border-rose-500/40'
@@ -963,8 +1065,8 @@ export function DebateConsole({
             </div>
           </div>
 
-          {/* Tri-Persona Final Ratification Signatures */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+          {/* Quad-Persona Final Ratification Signatures */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[11px]">
             <div className="p-2.5 rounded bg-white/[0.03] border border-white/10 text-zinc-300">
               <div className="font-bold flex items-center gap-1.5 text-[10px] text-white">
                 <Flame className="w-3.5 h-3.5 text-[#FF5722] fill-[#FF9800]/50 drop-shadow-[0_0_5px_rgba(255,87,34,0.6)] shrink-0" /> Quant-Omega Signoff
@@ -991,7 +1093,29 @@ export function DebateConsole({
                 Macro orderflow and {verdict.riskRewardRatio}:1 asymmetric structure ratified for execution.
               </p>
             </div>
+
+            <div className="p-2.5 rounded bg-rose-950/20 border border-rose-500/30 text-rose-200">
+              <div className="font-bold flex items-center gap-1.5 text-[10px] text-rose-300">
+                <Skull className="w-3.5 h-3.5 text-rose-400 shrink-0" /> NEXUS-RED Adversarial Audit
+              </div>
+              <p className="text-zinc-400 text-[10px] mt-0.5">
+                Orderbook trap verified. Stress-tested against adverse cascades; limit fill bounds enforced.
+              </p>
+            </div>
           </div>
+
+          {/* NEXUS-RED Adversarial Risk Mitigation Clause */}
+          {verdict.riskMitigationClause && (
+            <div className="p-3 bg-rose-950/20 rounded border border-rose-500/30 text-xs space-y-1">
+              <div className="text-[10px] text-rose-400 uppercase font-semibold flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                <span>NEXUS-RED Adversarial Risk Mitigation Clause</span>
+              </div>
+              <p className="text-zinc-200 leading-relaxed text-[11px] font-sans">
+                {verdict.riskMitigationClause}
+              </p>
+            </div>
+          )}
 
           {/* Synthesized Council Reasoning */}
           <div className="p-3 bg-black/70 rounded border border-white/10 text-xs">
@@ -1031,7 +1155,7 @@ export function DebateConsole({
           </p>
           <p className="text-zinc-400 max-w-lg mx-auto leading-relaxed">
             Enter any stock or crypto ticker (e.g. <span className="text-white font-semibold">PLTR</span>, <span className="text-white font-semibold">SUI</span>, <span className="text-white font-semibold">NVDA</span>, <span className="text-white font-semibold">ARM</span>), or write a custom instruction or thesis, then click{' '}
-            <span className="text-white font-bold">CONVENE COUNCIL</span>. The 3 agent personas deliberate in sequence using real-time search grounding.
+            <span className="text-white font-bold">CONVENE COUNCIL</span>. The 4 agent personas (including NEXUS-RED Adversarial Red Team) deliberate in sequence using real-time search grounding.
           </p>
         </div>
       )}

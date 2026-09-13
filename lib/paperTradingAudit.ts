@@ -213,39 +213,48 @@ export const SEED_PAPER_TRADES: PaperTradeRecord[] = [
   },
 ];
 
+let inMemoryTradesCache: PaperTradeRecord[] | null = null;
+
 /**
- * Load persistent trades from localStorage or seed
+ * Load persistent trades from in-memory cache, localStorage, or seed
  */
 export function getSavedPaperTrades(): PaperTradeRecord[] {
+  if (inMemoryTradesCache && inMemoryTradesCache.length > 0) {
+    return inMemoryTradesCache;
+  }
   if (typeof window === 'undefined') return SEED_PAPER_TRADES;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_PAPER_TRADES));
-      return SEED_PAPER_TRADES;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        inMemoryTradesCache = parsed;
+        return parsed;
+      }
     }
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
-    }
-    return SEED_PAPER_TRADES;
   } catch (err) {
-    console.warn('Failed to load paper trades from localStorage, using seed:', err);
-    return SEED_PAPER_TRADES;
+    console.warn('Failed to load paper trades from localStorage:', err);
   }
+
+  // Trigger non-blocking server fetch
+  syncServerAuditTrades().catch(() => {});
+  return SEED_PAPER_TRADES;
 }
 
 /**
- * Fetch official server-persisted audit trades to keep all judges/clients in sync
+ * Fetch official server-persisted audit trades from physical server file
  */
 export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
-  if (typeof window === 'undefined') return SEED_PAPER_TRADES;
   try {
     const resp = await fetch('/api/audit/trades');
     if (resp.ok) {
       const json = await resp.json();
       if (json && json.success && Array.isArray(json.trades) && json.trades.length > 0) {
-        savePaperTrades(json.trades);
+        inMemoryTradesCache = json.trades;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(json.trades));
+          window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: json.trades }));
+        }
         return json.trades;
       }
     }
@@ -255,17 +264,16 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   return getSavedPaperTrades();
 }
 
-// Auto-trigger sync on client start
+// Auto-trigger sync on module load
 if (typeof window !== 'undefined') {
-  setTimeout(() => {
-    syncServerAuditTrades().catch(() => {});
-  }, 100);
+  syncServerAuditTrades().catch(() => {});
 }
 
 /**
- * Persist trades to localStorage and notify listeners
+ * Persist trades to memory, localStorage, and notify listeners
  */
 export function savePaperTrades(trades: PaperTradeRecord[]) {
+  inMemoryTradesCache = trades;
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));

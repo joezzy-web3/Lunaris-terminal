@@ -99,6 +99,8 @@ export interface ConsensusVerdict {
   consensusAlignmentPct: number;
   unanimous: boolean;
   synthesizedReasoning: string;
+  consensusStatus?: 'UNANIMOUS' | 'SUPERMAJORITY' | 'ADVERSARIAL_DISSENT';
+  riskMitigationClause?: string;
   timestamp: string;
   tradeProposal: TradeProposal;
   turns: DebateTurn[];
@@ -139,10 +141,10 @@ export function generateCouncilDebate(
   const turns: DebateTurn[] = [];
 
   if (isVetoTest) {
-    // Veto Standoff Dialogue: Quant pushes an illegal oversized position (32%) and Guardian vetoes it
+    // Veto Standoff Dialogue: Quant pushes an illegal oversized position (32%), Guardian & NEXUS-RED veto and stress-test, Macro ratifies boundaries
     turns.push({
       turnIndex: 1,
-      totalTurns: 5,
+      totalTurns: 6,
       speakerId: 'QUANT',
       stanceLabel: 'OVERSIZED MOMENTUM PITCH',
       stanceType: 'BULLISH',
@@ -154,7 +156,7 @@ export function generateCouncilDebate(
 
     turns.push({
       turnIndex: 2,
-      totalTurns: 5,
+      totalTurns: 6,
       speakerId: 'GUARDIAN',
       stanceLabel: 'CIRCUIT BREAKER VETO',
       stanceType: 'VETO',
@@ -166,17 +168,29 @@ export function generateCouncilDebate(
 
     turns.push({
       turnIndex: 3,
-      totalTurns: 5,
-      speakerId: 'MACRO',
-      stanceLabel: 'COLLATERAL VOLATILITY AUDIT',
-      stanceType: 'SYNTHESIS',
-      speech: `Atlas-Macro concurs with Guardian. Cross-asset liquidation clusters show elevated vulnerability at current levels. We cannot ratify an unhedged ${optimalSize}% exposure without triggering institutional kill-switches.`,
-      timestamp: timeStr(4),
+      totalTurns: 6,
+      speakerId: 'NEXUS_RED',
+      stanceLabel: 'CHAOS SIMULATION / ADVERSARIAL VETO',
+      stanceType: 'VETO',
+      speech: `DUAL VETO CONFIRMED: Simulating cascading market-maker liquidity withdrawal on ${ticker}. At 32% single-asset commitment, an adverse $2.50 wick triggers margin call cascading and predatory front-running across exchanges. This trade proposal is mathematically lethal without an immediate size cut.`,
+      proposedSizePct: optimalSize,
+      riskScore: 98,
+      timestamp: timeStr(3),
     });
 
     turns.push({
       turnIndex: 4,
-      totalTurns: 5,
+      totalTurns: 6,
+      speakerId: 'MACRO',
+      stanceLabel: 'COLLATERAL VOLATILITY AUDIT',
+      stanceType: 'SYNTHESIS',
+      speech: `Atlas-Macro concurs with Guardian and NEXUS-RED. Cross-asset liquidation clusters show extreme vulnerability at current levels. We cannot ratify an unhedged ${optimalSize}% exposure without triggering institutional kill-switches.`,
+      timestamp: timeStr(4),
+    });
+
+    turns.push({
+      turnIndex: 5,
+      totalTurns: 6,
       speakerId: 'QUANT',
       stanceLabel: 'CONCESSION TO RISK CEILING',
       stanceType: 'RECALIBRATE',
@@ -186,8 +200,8 @@ export function generateCouncilDebate(
     });
 
     turns.push({
-      turnIndex: 5,
-      totalTurns: 5,
+      turnIndex: 6,
+      totalTurns: 6,
       speakerId: 'GUARDIAN',
       stanceLabel: 'DEFENSIVE BOUNDARY RESTORED',
       stanceType: 'APPROVED',
@@ -351,6 +365,8 @@ export function generateCouncilDebate(
     consensusAlignmentPct: 100,
     unanimous: true,
     synthesizedReasoning,
+    consensusStatus: 'UNANIMOUS',
+    riskMitigationClause: `NEXUS-RED Trap Audit: Orderbook depth verified. Limit order execution enforced to prevent predatory slippage. Max VaR bounded at -${maxVaR}% NAV.`,
     timestamp: timeStr(10),
     tradeProposal,
     turns,
