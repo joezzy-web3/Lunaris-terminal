@@ -329,6 +329,7 @@ import {
   resolveRealTradeTimestamp,
   isFirestoreQuotaExceeded,
   isAnomalousTrade,
+  reconcileTradeCollection,
 } from './firestoreAudit';
 import { getLiveMarketQuotes } from './livePrices';
 
@@ -344,12 +345,21 @@ export function purgeCorruptLocalStorageTrades(): PaperTradeRecord[] {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('LUNARIS_AUTOPILOT_LOCAL_STATE');
       localStorage.removeItem('LUNARIS_SAVED_LEDGER_ITEMS');
+      localStorage.removeItem('LUNARIS_AUTOPILOT_PERSISTED_STATE_V2');
+      localStorage.removeItem('lunaris_paper_trades');
+      localStorage.removeItem('LUNARIS_PAPER_TRADES_AUDIT_V2');
+      localStorage.removeItem('lunaris_audit_trades');
+      localStorage.removeItem('lunaris_autopilot_state');
     } catch {}
+
+    // Reset server autopilot state as well
+    fetch('/api/autopilot/reset', { method: 'POST' }).catch(() => {});
   }
   inMemoryTradesCache = [...SEED_PAPER_TRADES];
   savePaperTrades(SEED_PAPER_TRADES);
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('lunaris-audit-reset', { detail: SEED_PAPER_TRADES }));
+    window.dispatchEvent(new CustomEvent('lunaris-autopilot-reset', { detail: SEED_PAPER_TRADES }));
   }
   return SEED_PAPER_TRADES;
 }
@@ -367,13 +377,9 @@ export function getSavedPaperTrades(): PaperTradeRecord[] {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Filter out corrupted runaway records with isAnomalousTrade
-          const nonAnomalous = parsed.filter((t) => !isAnomalousTrade(t));
-          const toNormalize = nonAnomalous.length > 0 ? nonAnomalous : SEED_PAPER_TRADES;
-          const normalized = toNormalize.map((t) => normalizeTradeRecord(t));
-          normalized.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-          inMemoryTradesCache = normalized;
-          return normalized;
+          const reconciled = reconcileTradeCollection(parsed);
+          inMemoryTradesCache = reconciled;
+          return reconciled;
         }
       }
     } catch (err) {
@@ -436,7 +442,6 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   if (Array.isArray(currentLocal) && currentLocal.length > 0) {
     for (const t of currentLocal) {
       if (t && t.id && !isAnomalousTrade(t)) {
-        // Only set if not already present or if local has valid fields
         if (!tradeMap.has(t.id)) {
           tradeMap.set(t.id, normalizeTradeRecord(t));
         }
@@ -444,25 +449,17 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
     }
   }
 
-  // Convert map to array and sort chronologically by true execution timestamp
-  const merged = Array.from(tradeMap.values()).sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
+  const reconciled = reconcileTradeCollection(Array.from(tradeMap.values()));
 
-  inMemoryTradesCache = merged;
+  inMemoryTradesCache = reconciled;
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-      window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: merged }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
+      window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: reconciled }));
     } catch {}
-
-    // Backfill Firestore with full audit ledger if quota permits
-    if (!isFirestoreQuotaExceeded() && merged.length > 11) {
-      seedFirestoreAuditTrades(merged).catch(() => {});
-    }
   }
 
-  return merged;
+  return reconciled;
 }
 
 // Auto-trigger sync on module load
@@ -474,13 +471,12 @@ if (typeof window !== 'undefined') {
  * Persist trades to memory, localStorage, and notify listeners
  */
 export function savePaperTrades(trades: PaperTradeRecord[]) {
-  const normalized = trades.map((t) => normalizeTradeRecord(t));
-  normalized.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  inMemoryTradesCache = normalized;
+  const reconciled = reconcileTradeCollection(trades);
+  inMemoryTradesCache = reconciled;
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-    window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: normalized }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
+    window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: reconciled }));
   } catch (err) {
     console.error('Failed to save paper trades:', err);
   }
@@ -501,29 +497,26 @@ export function recordNewPaperTrade(
   }
 ): PaperTradeRecord {
   const currentTrades = getSavedPaperTrades();
-  const lastBalance = currentTrades.length > 0 ? currentTrades[currentTrades.length - 1].accountBalance : 100000;
-  const newBalance = typeof tradeData.accountBalance === 'number'
-    ? tradeData.accountBalance
-    : parseFloat((lastBalance + tradeData.balanceChange).toFixed(2));
-
-  // Determine actual historical execution time - never override with new Date() if original timestamp exists
   const timestamp = resolveRealTradeTimestamp(tradeData, tradeData.id);
   const count = currentTrades.length + 1;
   const dateStr = timestamp.slice(0, 10).replace(/-/g, '');
   const id = tradeData.id || `PT-${dateStr}-${count.toString().padStart(2, '0')}`;
 
-  const newRecord: PaperTradeRecord = {
+  const rawNewRecord: PaperTradeRecord = {
     ...tradeData,
     id,
     timestamp,
-    accountBalance: newBalance,
+    accountBalance: 100000,
   };
 
-  const updated = [...currentTrades, newRecord];
-  savePaperTrades(updated);
+  const updated = [...currentTrades, rawNewRecord];
+  const reconciled = reconcileTradeCollection(updated);
+  savePaperTrades(reconciled);
+
+  const finalRecord = reconciled[reconciled.length - 1];
 
   // Synchronize with Firestore Cloud DB
-  saveTradeToFirestore(newRecord).catch((err) =>
+  saveTradeToFirestore(finalRecord).catch((err) =>
     console.warn('Failed to sync trade to Firestore:', err)
   );
 
@@ -532,11 +525,11 @@ export function recordNewPaperTrade(
     fetch('/api/audit/trade', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ trade: newRecord }),
+      body: JSON.stringify({ trade: finalRecord }),
     }).catch((err) => console.warn('Failed to sync trade to server ledger:', err));
   }
 
-  return newRecord;
+  return finalRecord;
 }
 
 /**
@@ -556,7 +549,7 @@ export async function resetPaperTradesToSeed(
   }
 
   try {
-    await seedFirestoreAuditTrades(SEED_PAPER_TRADES);
+    await seedFirestoreAuditTrades(SEED_PAPER_TRADES, true);
   } catch (err) {
     console.warn('Failed to reset Firestore audit trades:', err);
   }
@@ -589,10 +582,10 @@ const ASSET_PRICE_CORRIDORS: Record<string, { min: number; max: number; realisti
   'BTC/USDT': { min: 55000, max: 98000, realistic: 78450 },
   'ETH/USDT': { min: 2000, max: 3900, realistic: 2540 },
   'SOL/USDT': { min: 95, max: 210, realistic: 139.5 },
-  'NVDAon/USDT': { min: 95, max: 155, realistic: 128.4 },
-  'TSLAon/USDT': { min: 195, max: 310, realistic: 252.0 },
+  'NVDAon/USDT': { min: 80, max: 240, realistic: 128.4 },
+  'TSLAon/USDT': { min: 140, max: 420, realistic: 248.0 },
   'SUI/USDT': { min: 1.8, max: 4.8, realistic: 3.18 },
-  'AAPLon/USDT': { min: 180, max: 260, realistic: 226.5 },
+  'AAPLon/USDT': { min: 150, max: 320, realistic: 226.5 },
 };
 
 /**
@@ -881,8 +874,8 @@ export function generateAutonomousTradeScenario(
   }
 
   const instruments = [
-    { name: 'NVDAon/USDT', ticker: 'NVDAon', fallbackPrice: 218.29, class: 'rToken' },
-    { name: 'TSLAon/USDT', ticker: 'TSLAon', fallbackPrice: 365.44, class: 'rToken' },
+    { name: 'NVDAon/USDT', ticker: 'NVDAon', fallbackPrice: 128.4, class: 'rToken' },
+    { name: 'TSLAon/USDT', ticker: 'TSLAon', fallbackPrice: 248.0, class: 'rToken' },
     { name: 'BTC/USDT', ticker: 'BTC', fallbackPrice: 76820.0, class: 'Crypto' },
     { name: 'ETH/USDT', ticker: 'ETH', fallbackPrice: 2485.0, class: 'Crypto' },
     { name: 'SOL/USDT', ticker: 'SOL', fallbackPrice: 99.66, class: 'Crypto' },

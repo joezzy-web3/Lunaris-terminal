@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import { SEED_PAPER_TRADES } from './lib/paperTradingAudit';
+import { isAnomalousTrade, reconcileTradeCollection } from './lib/firestoreAudit';
 
 dotenv.config();
 
@@ -372,7 +373,7 @@ function getAuditTrades(): any[] {
       const data = fs.readFileSync(AUDIT_FILE_PATH, 'utf8');
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return reconcileTradeCollection(parsed);
       }
     }
   } catch (err) {
@@ -384,7 +385,8 @@ function getAuditTrades(): any[] {
 function saveAuditTrades(trades: any[]) {
   try {
     ensureAuditFile();
-    fs.writeFileSync(AUDIT_FILE_PATH, JSON.stringify(trades, null, 2), 'utf8');
+    const reconciled = reconcileTradeCollection(Array.isArray(trades) ? trades : SEED_PAPER_TRADES);
+    fs.writeFileSync(AUDIT_FILE_PATH, JSON.stringify(reconciled.length > 0 ? reconciled : SEED_PAPER_TRADES, null, 2), 'utf8');
   } catch (err) {
     console.error('Error writing audit trades:', err);
   }
@@ -557,6 +559,8 @@ function runAutopilotDaemonTick() {
 
       // Append to audit_trades.json
       const trades = getAuditTrades();
+      const lastBal = trades.length > 0 ? (trades[trades.length - 1].accountBalance || 100000) : 100000;
+      const newAccBalance = parseFloat((lastBal + parseFloat(pnl.toFixed(2))).toFixed(2));
       const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${(trades.length + 1).toString().padStart(2, '0')}`;
       trades.push({
         id: newTradeId,
@@ -568,7 +572,7 @@ function runAutopilotDaemonTick() {
         leverage: 3,
         balanceChange: parseFloat(pnl.toFixed(2)),
         balanceChangePct: parseFloat(pnlPct.toFixed(2)),
-        accountBalance: state.cashBalance,
+        accountBalance: newAccBalance,
         trigger: `Autopilot Daemon: Target profit ratified (+${pnlPct.toFixed(2)}%) on ${ticker} by Tri-Persona Council`,
         status: 'TAKE_PROFIT',
       });
@@ -608,6 +612,8 @@ function runAutopilotDaemonTick() {
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
 
       const trades = getAuditTrades();
+      const lastBal = trades.length > 0 ? (trades[trades.length - 1].accountBalance || 100000) : 100000;
+      const newAccBalance = parseFloat((lastBal + parseFloat(pnl.toFixed(2))).toFixed(2));
       const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${(trades.length + 1).toString().padStart(2, '0')}`;
       trades.push({
         id: newTradeId,
@@ -619,7 +625,7 @@ function runAutopilotDaemonTick() {
         leverage: 3,
         balanceChange: parseFloat(pnl.toFixed(2)),
         balanceChangePct: parseFloat(pnlPct.toFixed(2)),
-        accountBalance: state.cashBalance,
+        accountBalance: newAccBalance,
         trigger: `Guardian-01 Risk Veto: Stop-loss protection executed on ${ticker}. Forensic post-mortem committed.`,
         status: 'STOP_LOSS',
         postMortem,
@@ -720,6 +726,11 @@ app.post('/api/audit/trade', (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid trade payload' });
     }
 
+    // Ingestion filter: Reject corrupt/anomalous trades
+    if (isAnomalousTrade(trade)) {
+      return res.status(400).json({ success: false, error: 'Rejected anomalous trade: value outside realistic corridor' });
+    }
+
     const trades = getAuditTrades();
     const existingIndex = trades.findIndex((t) => t.id === trade.id);
     if (existingIndex >= 0) {
@@ -746,10 +757,11 @@ app.post('/api/audit/sync', (req, res) => {
     if (!Array.isArray(trades)) {
       return res.status(400).json({ success: false, error: 'Invalid trades payload' });
     }
-    saveAuditTrades(trades);
+    const clean = trades.filter((t) => !isAnomalousTrade(t));
+    saveAuditTrades(clean);
     return res.json({
       success: true,
-      count: trades.length,
+      count: clean.length,
       timestamp: Date.now(),
     });
   } catch (err: any) {
@@ -770,6 +782,17 @@ app.post('/api/audit/reset', (req, res) => {
     }
 
     saveAuditTrades(SEED_PAPER_TRADES);
+
+    // Stop daemon and reset autopilot state
+    stopAutopilotDaemon();
+    const resetState: ServerAutopilotState = {
+      ...DEFAULT_AUTOPILOT_STATE,
+      lastUpdated: new Date().toISOString(),
+    };
+    try {
+      fs.writeFileSync(AUTOPILOT_FILE_PATH, JSON.stringify(resetState, null, 2), 'utf8');
+    } catch {}
+
     return res.json({
       success: true,
       message: 'Audit log successfully restored to official Bitget S2 genesis seed.',

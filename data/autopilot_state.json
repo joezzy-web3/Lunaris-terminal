@@ -5,38 +5,38 @@
   "positions": {},
   "ledger": [
     {
-      "realizedPnl": 0,
-      "totalUsd": 3000,
       "id": "seed-ledger-1",
-      "balanceAfter": 97000,
+      "timestamp": "09:00:00 AM",
+      "utcTimestamp": "2026-09-03T09:00:00.000Z",
       "type": "BUY",
-      "balanceBefore": 100000,
-      "amount": 0.0388,
       "ticker": "BTC",
-      "utcTimestamp": "2026-09-12T17:21:55.521Z",
-      "timestamp": "6:21:55 PM",
+      "amount": 0.0388,
       "price": 77300,
-      "notes": "Initial Autopilot baseline position open on Bitget BTC/USDT",
-      "realizedPnlPct": 0
+      "totalUsd": 3000,
+      "balanceBefore": 100000,
+      "balanceAfter": 97000,
+      "realizedPnl": 0,
+      "realizedPnlPct": 0,
+      "notes": "Initial Autopilot baseline position open on Bitget BTC/USDT"
     },
     {
-      "realizedPnl": 98.18,
-      "balanceAfter": 100098.18,
-      "timestamp": "6:21:55 PM",
       "id": "seed-ledger-2",
-      "balanceBefore": 97000,
-      "utcTimestamp": "2026-09-12T17:21:55.521Z",
-      "amount": 0.0388,
+      "timestamp": "09:45:00 AM",
+      "utcTimestamp": "2026-09-03T09:45:00.000Z",
       "type": "TAKE_PROFIT",
       "ticker": "BTC",
-      "notes": "Auto-Exit Profit Target triggered (+3.27%). Proceeds credited to Available Cash.",
+      "amount": 0.0388,
       "price": 79850,
       "totalUsd": 3098.18,
-      "realizedPnlPct": 3.27
+      "balanceBefore": 97000,
+      "balanceAfter": 100098.18,
+      "realizedPnl": 98.18,
+      "realizedPnlPct": 3.27,
+      "notes": "Auto-Exit Profit Target triggered (+3.27%). Proceeds credited to Available Cash."
     }
   ],
   "autoExitPct": 3,
   "maxOpenPositions": 3,
   "cycleCount": 0,
-  "lastUpdated": "2026-09-14T12:36:44.936Z"
+  "lastUpdated": "2026-09-14T15:20:36.952Z"
 }

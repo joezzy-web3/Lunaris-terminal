@@ -13,7 +13,12 @@ import {
   PaperTradeRecord,
   AuditSummaryMetrics,
 } from '@/lib/paperTradingAudit';
-import { subscribeToFirestoreAuditTrades, formatAuditTimestamp, isFirestoreQuotaExceeded } from '@/lib/firestoreAudit';
+import {
+  subscribeToFirestoreAuditTrades,
+  formatAuditTimestamp,
+  isFirestoreQuotaExceeded,
+  reconcileTradeCollection,
+} from '@/lib/firestoreAudit';
 import { useLiveMarketQuotes } from '@/lib/livePrices';
 import { DailyPnlCalendar } from '@/components/DailyPnlCalendar';
 import {
@@ -106,16 +111,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     currentList: PaperTradeRecord[],
     newList: PaperTradeRecord[]
   ): PaperTradeRecord[] => {
-    const tradeMap = new Map<string, PaperTradeRecord>();
-    for (const t of currentList) {
-      if (t && t.id) tradeMap.set(t.id, t);
-    }
-    for (const t of newList) {
-      if (t && t.id) tradeMap.set(t.id, t);
-    }
-    return Array.from(tradeMap.values()).sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
+    return reconcileTradeCollection([...currentList, ...newList]);
   };
 
   // Sync with Firestore Cloud real-time updates, Server Disk Ledger, and global storage events
@@ -127,7 +123,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       if (!isMounted) return;
       const incoming = e.detail && Array.isArray(e.detail) ? e.detail : getSavedPaperTrades();
       if (!Array.isArray(incoming) || incoming.length === 0) return;
-      setTrades((prev) => mergeTradesSafely(prev, incoming));
+      setTrades((prev) => reconcileTradeCollection([...prev, ...incoming]));
     };
     window.addEventListener('lunaris-audit-updated', handleUpdate);
 
@@ -135,7 +131,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     const handleReset = (e: any) => {
       if (!isMounted) return;
       if (Array.isArray(e.detail)) {
-        setTrades(e.detail);
+        setTrades(reconcileTradeCollection(e.detail));
       }
     };
     window.addEventListener('lunaris-audit-reset', handleReset);
@@ -145,8 +141,12 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     const unsubscribeFirestore = subscribeToFirestoreAuditTrades((cloudTrades) => {
       if (!isMounted || !cloudTrades || cloudTrades.length === 0) return;
       setTrades((prevTrades) => {
-        const merged = mergeTradesSafely(prevTrades, cloudTrades);
-        savePaperTrades(merged);
+        const merged = reconcileTradeCollection([...prevTrades, ...cloudTrades]);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('LUNARIS_BITGET_S2_PAPER_TRADES_V2', JSON.stringify(merged));
+          } catch {}
+        }
         return merged;
       });
     });
@@ -154,7 +154,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     // 2. Initial cloud and server disk fetch to ensure all trades are pulled
     syncServerAuditTrades().then((serverTrades) => {
       if (!isMounted || !serverTrades || serverTrades.length === 0) return;
-      setTrades((prevTrades) => mergeTradesSafely(prevTrades, serverTrades));
+      setTrades((prevTrades) => reconcileTradeCollection([...prevTrades, ...serverTrades]));
     });
 
     // 3. Periodic background sync with server disk ledger (/api/audit/trades) every 10s
@@ -163,7 +163,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       if (!isMounted) return;
       syncServerAuditTrades().then((serverTrades) => {
         if (!isMounted || !serverTrades || serverTrades.length === 0) return;
-        setTrades((prevTrades) => mergeTradesSafely(prevTrades, serverTrades));
+        setTrades((prevTrades) => reconcileTradeCollection([...prevTrades, ...serverTrades]));
       });
     }, 10000);
 
@@ -191,6 +191,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
           }
 
           const record = recordNewPaperTrade(scenario);
+          setTrades(getSavedPaperTrades());
           setLatestTradeId(record.id);
 
           if (record.balanceChange >= 0) {
@@ -229,6 +230,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
 
     const record = recordNewPaperTrade(scenario);
+    setTrades(getSavedPaperTrades());
     setLatestTradeId(record.id);
 
     if (record.balanceChange >= 0) {

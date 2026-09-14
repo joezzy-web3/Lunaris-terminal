@@ -169,31 +169,20 @@ export function isAnomalousTrade(data: any): boolean {
   const price = Number(data.price) || 0;
   const quantity = Number(data.quantity) || 0;
   const balanceChange = Number(data.balanceChange) || 0;
-  const accountBalance = Number(data.accountBalance) || 0;
-  const inst = String(data.instrument || '').toUpperCase();
 
-  // 1. Extreme balance check: Account balance cannot exceed $300k or be below $40k
-  if (accountBalance > 300000 || accountBalance < 40000) {
+  // 1. Extreme trade size check: Single trade size cannot exceed $50k or be <= 0
+  if (quantity > 50000 || quantity <= 0 || !Number.isFinite(quantity)) {
     return true;
   }
 
-  // 2. Extreme trade size check: Single trade size cannot exceed $40k
-  if (quantity > 40000 || quantity < 0) {
+  // 2. Extreme PnL check: Single trade PnL cannot exceed ±$20,000
+  if (Math.abs(balanceChange) > 20000 || !Number.isFinite(balanceChange)) {
     return true;
   }
 
-  // 3. Extreme PnL check: Single trade PnL cannot exceed ±$15,000
-  if (Math.abs(balanceChange) > 15000) {
+  // 3. Valid price check
+  if (price <= 0 || !Number.isFinite(price)) {
     return true;
-  }
-
-  // 4. Price corridor check
-  for (const [ticker, corridor] of Object.entries(INGESTION_PRICE_CORRIDORS)) {
-    if (inst.includes(ticker)) {
-      if (price > corridor.max || price < corridor.min) {
-        return true;
-      }
-    }
   }
 
   return false;
@@ -201,7 +190,7 @@ export function isAnomalousTrade(data: any): boolean {
 
 /**
  * Normalizes any trade object from Firestore, local storage, or API into a validated PaperTradeRecord
- * with its true immutable execution timestamp and strict price sanity bounds.
+ * with its true immutable execution timestamp, strict price sanity bounds, and mathematically reconciled PnL.
  */
 export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTradeRecord {
   const id = data?.id || fallbackId || `PT-${Date.now()}`;
@@ -230,18 +219,21 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
     quantity = 10000;
   }
 
-  // Sanity clamp single trade PnL (max ±10%)
+  // Sanity clamp single trade PnL percentage (realistic corridors: TP max +15%, SL max -12%)
   if (balanceChangePct > 15) {
     balanceChangePct = 6.5;
-    balanceChange = parseFloat(((quantity * 0.065)).toFixed(2));
   } else if (balanceChangePct < -12) {
     balanceChangePct = -3.2;
-    balanceChange = parseFloat((-1 * (quantity * 0.032)).toFixed(2));
   }
 
-  // Sanity clamp runaway account balance
-  if (accountBalance > 250000 || accountBalance < 50000 || !Number.isFinite(accountBalance)) {
-    accountBalance = 100000;
+  // Enforce mathematical integrity: balanceChange MUST match quantity * (balanceChangePct / 100)
+  const expectedPnl = parseFloat((quantity * (balanceChangePct / 100)).toFixed(2));
+  if (
+    Math.abs(balanceChange) > 4000 ||
+    Math.abs(balanceChange - expectedPnl) > 50 ||
+    balanceChange === 0
+  ) {
+    balanceChange = expectedPnl;
   }
 
   return {
@@ -259,6 +251,39 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
     trigger: data?.trigger || 'Autonomous Council Execution',
     status: data?.status || (balanceChange >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS'),
   };
+}
+
+/**
+ * Universal canonical reconciler for paper-trade collections.
+ * Deduplicates by ID, sorts strictly chronologically, and recalculates
+ * cumulative account balances starting at genesis $100,000.00.
+ */
+export function reconcileTradeCollection(trades: (PaperTradeRecord | any)[]): PaperTradeRecord[] {
+  if (!Array.isArray(trades) || trades.length === 0) {
+    return SEED_PAPER_TRADES;
+  }
+
+  const tradeMap = new Map<string, PaperTradeRecord>();
+  for (const item of trades) {
+    if (!item) continue;
+    const id = item.id || item._id;
+    if (!id || typeof id !== 'string') continue;
+    const normalized = normalizeTradeRecord(item, id);
+    tradeMap.set(id, normalized);
+  }
+
+  const sorted = Array.from(tradeMap.values()).sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  let runningBalance = 100000;
+  return sorted.map((t) => {
+    runningBalance = parseFloat((runningBalance + (Number(t.balanceChange) || 0)).toFixed(2));
+    return {
+      ...t,
+      accountBalance: runningBalance,
+    };
+  });
 }
 
 /**
@@ -337,10 +362,6 @@ export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
     snapshot.forEach((docSnap) => {
       const raw = docSnap.data();
       if (raw && (raw.id || docSnap.id)) {
-        // Drop obviously corrupt / runaway trades from Firestore directly at ingestion gate
-        if (isAnomalousTrade(raw)) {
-          return;
-        }
         const normalized = normalizeTradeRecord(raw, docSnap.id);
         if (normalized.id.startsWith('PT-')) {
           trades.push(normalized);
@@ -352,9 +373,7 @@ export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
       return SEED_PAPER_TRADES;
     }
 
-    // Always sort by true execution timestamp ascending
-    trades.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    return trades;
+    return reconcileTradeCollection(trades);
   } catch (err: any) {
     if (checkIsQuotaError(err)) {
       flagFirestoreQuotaExceeded(err);
@@ -394,12 +413,37 @@ export async function saveTradeToFirestore(trade: PaperTradeRecord): Promise<voi
 /**
  * Seed or reset audit trades in Firestore cloud database.
  */
-export async function seedFirestoreAuditTrades(trades: PaperTradeRecord[]): Promise<void> {
+export async function seedFirestoreAuditTrades(
+  trades: PaperTradeRecord[],
+  purgeOthers: boolean = false
+): Promise<void> {
   if (isFirestoreQuotaExceeded()) {
     return;
   }
 
   try {
+    const validIds = new Set(trades.map((t) => t.id));
+    if (purgeOthers) {
+      try {
+        const colRef = collection(db, TRADES_COLLECTION);
+        const snap = await getDocs(colRef);
+        const deleteBatch = writeBatch(db);
+        let deleteCount = 0;
+        snap.forEach((d) => {
+          if (!validIds.has(d.id)) {
+            deleteBatch.delete(d.ref);
+            deleteCount++;
+          }
+        });
+        if (deleteCount > 0) {
+          await deleteBatch.commit();
+          console.log(`🧹 [Firestore] Purged ${deleteCount} anomalous/stale cloud trade records.`);
+        }
+      } catch (delErr) {
+        console.warn('⚠️ [Firestore] Optional purge notice:', delErr);
+      }
+    }
+
     const batch = writeBatch(db);
     for (const t of trades) {
       const docRef = doc(db, TRADES_COLLECTION, t.id);
@@ -456,8 +500,8 @@ export function subscribeToFirestoreAuditTrades(
           return;
         }
 
-        updatedTrades.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        onTradesUpdate(updatedTrades);
+        const reconciled = reconcileTradeCollection(updatedTrades);
+        onTradesUpdate(reconciled);
       },
       (error: any) => {
         if (checkIsQuotaError(error)) {

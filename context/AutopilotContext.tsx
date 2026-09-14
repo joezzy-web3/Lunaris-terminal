@@ -1508,6 +1508,20 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     ]);
   }, []);
 
+  // Listen for global reset events triggered from Audit view or security modals
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleReset = () => {
+      handleConfirmPasscodeReset();
+    };
+    window.addEventListener('lunaris-audit-reset', handleReset);
+    window.addEventListener('lunaris-autopilot-reset', handleReset);
+    return () => {
+      window.removeEventListener('lunaris-audit-reset', handleReset);
+      window.removeEventListener('lunaris-autopilot-reset', handleReset);
+    };
+  }, [handleConfirmPasscodeReset]);
+
   return (
     <AutopilotContext.Provider
       value={{
