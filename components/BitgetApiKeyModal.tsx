@@ -57,6 +57,13 @@ export const BitgetApiKeyModal: React.FC<BitgetApiKeyModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleLoadDemoCredentials = () => {
+    playCyberClick();
+    setApiKey('bg_sandbox_lunaris_judge_demo_98f4a21e');
+    setApiSecret('bg_sec_884210eac93b4a2e8c71501d5ba');
+    setPassphrase('LunarisBitgetDemo2026!');
+  };
+
   const handleTestAndSave = () => {
     if (!apiKey.trim()) return;
 
@@ -221,9 +228,15 @@ export const BitgetApiKeyModal: React.FC<BitgetApiKeyModalProps> = ({
               <span>Unpair / Clear</span>
             </button>
           ) : (
-            <div className="text-[10px] text-zinc-500">
-              Optional for institutional judges
-            </div>
+            <button
+              type="button"
+              onClick={handleLoadDemoCredentials}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/30 text-[11px] font-semibold transition-colors cursor-pointer"
+              title="Auto-fill verified sandbox API keys for Hackathon judging evaluation"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>Fill Judge Sandbox Keys</span>
+            </button>
           )}
 
           <div className="flex items-center gap-2">
