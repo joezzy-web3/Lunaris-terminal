@@ -683,7 +683,8 @@ function runAutopilotDaemonTick() {
 function startAutopilotDaemon() {
   if (autopilotDaemonTimer) clearInterval(autopilotDaemonTimer);
   const state = getAutopilotState();
-  const intervalMs = state.isTurbo ? 4000 : 8000;
+  // Disciplined cadences: 30s in turbo, 60s standard to avoid excessive writes and runaway loops
+  const intervalMs = state.isTurbo ? 30000 : 60000;
   autopilotDaemonTimer = setInterval(runAutopilotDaemonTick, intervalMs);
 }
 

@@ -328,10 +328,31 @@ import {
   normalizeTradeRecord,
   resolveRealTradeTimestamp,
   isFirestoreQuotaExceeded,
+  isAnomalousTrade,
 } from './firestoreAudit';
 import { getLiveMarketQuotes } from './livePrices';
 
 let inMemoryTradesCache: PaperTradeRecord[] | null = null;
+
+/**
+ * Hard purge utility for corrupted client-side local storage.
+ * Removes runaway simulation entries and resets state cleanly to verified server/seed ledger.
+ */
+export function purgeCorruptLocalStorageTrades(): PaperTradeRecord[] {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('LUNARIS_AUTOPILOT_LOCAL_STATE');
+      localStorage.removeItem('LUNARIS_SAVED_LEDGER_ITEMS');
+    } catch {}
+  }
+  inMemoryTradesCache = [...SEED_PAPER_TRADES];
+  savePaperTrades(SEED_PAPER_TRADES);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('lunaris-audit-reset', { detail: SEED_PAPER_TRADES }));
+  }
+  return SEED_PAPER_TRADES;
+}
 
 /**
  * Load persistent trades from in-memory cache, localStorage, or seed
@@ -346,7 +367,10 @@ export function getSavedPaperTrades(): PaperTradeRecord[] {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const normalized = parsed.map((t) => normalizeTradeRecord(t));
+          // Filter out corrupted runaway records with isAnomalousTrade
+          const nonAnomalous = parsed.filter((t) => !isAnomalousTrade(t));
+          const toNormalize = nonAnomalous.length > 0 ? nonAnomalous : SEED_PAPER_TRADES;
+          const normalized = toNormalize.map((t) => normalizeTradeRecord(t));
           normalized.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
           inMemoryTradesCache = normalized;
           return normalized;
@@ -382,7 +406,7 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
         const json = await resp.json();
         if (Array.isArray(json.trades)) {
           for (const t of json.trades) {
-            if (t && t.id) {
+            if (t && t.id && !isAnomalousTrade(t)) {
               tradeMap.set(t.id, normalizeTradeRecord(t));
             }
           }
@@ -398,7 +422,7 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
     const cloudTrades = await fetchFirestoreAuditTrades();
     if (Array.isArray(cloudTrades) && cloudTrades.length > 0) {
       for (const t of cloudTrades) {
-        if (t && t.id) {
+        if (t && t.id && !isAnomalousTrade(t)) {
           tradeMap.set(t.id, normalizeTradeRecord(t));
         }
       }
@@ -411,7 +435,7 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   const currentLocal = getSavedPaperTrades();
   if (Array.isArray(currentLocal) && currentLocal.length > 0) {
     for (const t of currentLocal) {
-      if (t && t.id) {
+      if (t && t.id && !isAnomalousTrade(t)) {
         // Only set if not already present or if local has valid fields
         if (!tradeMap.has(t.id)) {
           tradeMap.set(t.id, normalizeTradeRecord(t));

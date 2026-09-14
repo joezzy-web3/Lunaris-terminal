@@ -14,6 +14,7 @@ import {
   saveAutopilotStateToFirestore,
   subscribeToAutopilotState,
   isFirestoreQuotaExceeded,
+  INGESTION_PRICE_CORRIDORS,
 } from '@/lib/firestoreAudit';
 
 export interface AutonomousLog {
@@ -410,6 +411,19 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: false, ticker: normTicker, reason: 'Invalid ticker or market price' };
     }
 
+    // Price Collar Protection: prevent anomalous fills exceeding Bitget corridor
+    const cleanSym = normTicker.replace('ON', '').replace('/USDT', '');
+    const priceCorridor = INGESTION_PRICE_CORRIDORS[cleanSym] || INGESTION_PRICE_CORRIDORS[normTicker];
+    if (priceCorridor) {
+      if (validPrice > priceCorridor.max || validPrice < priceCorridor.min) {
+        return {
+          success: false,
+          ticker: normTicker,
+          reason: `Price Collar Veto: Proposed execution price $${validPrice.toLocaleString()} is outside verified corridor ($${priceCorridor.min.toLocaleString()} - $${priceCorridor.max.toLocaleString()}).`,
+        };
+      }
+    }
+
     const currentPosMap = positionsRef.current;
     const isAlreadyHeld = Boolean(currentPosMap[normTicker] && currentPosMap[normTicker].amount > 0);
     const activePositions = (Object.values(currentPosMap) as Position[]).filter(
@@ -432,8 +446,13 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     const totalVal = calculateTotalValue(currentPosMap, safeCash);
-    const validSizePct = Math.min(25, Math.max(1, Number(sizePct) || 5));
+    const validSizePct = Math.min(15, Math.max(1, Number(sizePct) || 5)); // Cap single trade allocation at 15%
     let tradeUsd = (totalVal * validSizePct) / 100;
+
+    // Hard ceiling: Absolute max position size is $25,000 USDT to prevent runaway compounding
+    if (tradeUsd > 25000) {
+      tradeUsd = 25000;
+    }
 
     if (!Number.isFinite(tradeUsd) || tradeUsd <= 0) {
       return { success: false, ticker: normTicker, reason: 'Invalid calculated trade size' };
@@ -1150,7 +1169,8 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     };
 
-    const intervalMs = isTurbo ? 2000 : 7000;
+    // Disciplined execution cadences: 30s in turbo, 60s in standard mode to prevent runaway loops and quota exhaustion
+    const intervalMs = isTurbo ? 30000 : 60000;
     const intervalId = setInterval(runAutonomousDecision, intervalMs);
     return () => clearInterval(intervalId);
   }, [isExecuting, isTurbo, calculateTotalValue, executeSimulatedBuy, executeSimulatedSell]);

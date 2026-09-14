@@ -9,6 +9,7 @@ import {
   generateCsvExport,
   syncServerAuditTrades,
   executeAuditorSanitization,
+  purgeCorruptLocalStorageTrades,
   PaperTradeRecord,
   AuditSummaryMetrics,
 } from '@/lib/paperTradingAudit';
@@ -83,7 +84,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [showAuthPasscode, setShowAuthPasscode] = useState(false);
   const [authModal, setAuthModal] = useState<{
     isOpen: boolean;
-    action: 'RESET_LOG' | 'PAUSE_LOOP' | 'SANITIZE_LOG';
+    action: 'RESET_LOG' | 'PAUSE_LOOP' | 'SANITIZE_LOG' | 'PURGE_CORRUPT';
     passcode: string;
     error: string | null;
     success: boolean;
@@ -237,7 +238,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
   };
 
-  const handleOpenAuthModal = (action: 'RESET_LOG' | 'PAUSE_LOOP' | 'SANITIZE_LOG') => {
+  const handleOpenAuthModal = (action: 'RESET_LOG' | 'PAUSE_LOOP' | 'SANITIZE_LOG' | 'PURGE_CORRUPT') => {
     playCyberClick();
     setShowAuthPasscode(false);
     setAuthModal({
@@ -271,6 +272,22 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
 
     setAuthModal((prev) => ({ ...prev, isSubmitting: true, error: null }));
+
+    if (authModal.action === 'PURGE_CORRUPT') {
+      const pristine = purgeCorruptLocalStorageTrades();
+      setTrades(pristine);
+      await resetPaperTradesToSeed(cleanCode);
+      playTradeApprovedChime();
+      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true }));
+      setSanitizerBanner({
+        visible: true,
+        message: 'Purged corrupt local and server trades. Restored pristine Bitget S2 seed ledger.',
+      });
+      setTimeout(() => {
+        setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
+      }, 1400);
+      return;
+    }
 
     if (authModal.action === 'RESET_LOG') {
       const res = await resetPaperTradesToSeed(cleanCode);
@@ -492,6 +509,17 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             >
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span className="font-mono font-bold text-[11px]">CLOUD SANITIZER</span>
+            </button>
+
+            {/* Hard Purge Corrupt Local Artifacts */}
+            <button
+              id="btn-purge-corrupt"
+              onClick={() => handleOpenAuthModal('PURGE_CORRUPT')}
+              className="p-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 rounded-xl text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+              title="Purge Corrupted Artifacts: Remove runaway local storage items and restore clean seed state"
+            >
+              <Skull className="w-4 h-4 text-red-400" />
+              <span className="hidden sm:inline font-mono font-bold text-[11px]">PURGE CORRUPT</span>
             </button>
 
             {/* Reset to Seed (Protected by Administrative Passcode) */}
@@ -1100,7 +1128,11 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
 
             {/* Description */}
             <div className="bg-black/40 border border-white/5 rounded-xl p-3.5 text-xs text-gray-300 leading-relaxed font-mono">
-              {authModal.action === 'RESET_LOG' ? (
+              {authModal.action === 'PURGE_CORRUPT' ? (
+                <>
+                  <span className="text-red-400 font-bold">PURGE CORRUPTION:</span> You are clearing out runaway corrupted local storage artifacts, resetting autopilot memory to $100,000 baseline, and reverting the ledger to the verified 18-trade Bitget S2 seed set.
+                </>
+              ) : authModal.action === 'RESET_LOG' ? (
                 <>
                   <span className="text-yellow-400 font-bold">WARNING:</span> You are requesting to purge the accumulated live paper-trading ledger and restore the official Bitget Hackathon genesis seed data.
                 </>
@@ -1191,6 +1223,8 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                       ? 'Verifying...'
                       : authModal.action === 'SANITIZE_LOG'
                       ? 'Execute Cloud Sanitizer'
+                      : authModal.action === 'PURGE_CORRUPT'
+                      ? 'Purge & Restore Seed'
                       : 'Authorize Action'}
                   </span>
                 </button>
