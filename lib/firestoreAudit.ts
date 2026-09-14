@@ -511,10 +511,6 @@ export function cleanFirestoreData<T extends Record<string, any>>(obj: T): T {
  * Guarantees every trade retains its true execution timestamp.
  */
 export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
-  if (isFirestoreQuotaExceeded()) {
-    return [];
-  }
-
   try {
     const colRef = collection(db, TRADES_COLLECTION);
     const q = query(colRef, limit(500));
@@ -707,10 +703,6 @@ export function subscribeToFirestoreAuditTrades(
   onTradesUpdate: (trades: PaperTradeRecord[]) => void,
   onError?: (error: Error) => void
 ): () => void {
-  if (isFirestoreQuotaExceeded()) {
-    return () => {};
-  }
-
   let activeUnsubscribe: (() => void) | null = null;
 
   try {
@@ -812,10 +804,6 @@ export async function saveAutopilotStateToFirestore(state: any): Promise<void> {
 export function subscribeToAutopilotState(
   onStateUpdate: (state: any) => void
 ): () => void {
-  if (isFirestoreQuotaExceeded()) {
-    return () => {};
-  }
-
   let activeUnsubscribe: (() => void) | null = null;
 
   try {
