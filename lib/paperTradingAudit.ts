@@ -217,7 +217,11 @@ import {
   fetchFirestoreAuditTrades,
   saveTradeToFirestore,
   seedFirestoreAuditTrades,
+  normalizeTradeRecord,
+  resolveRealTradeTimestamp,
+  isFirestoreQuotaExceeded,
 } from './firestoreAudit';
+import { getLiveMarketQuotes } from './livePrices';
 
 let inMemoryTradesCache: PaperTradeRecord[] | null = null;
 
@@ -228,62 +232,105 @@ export function getSavedPaperTrades(): PaperTradeRecord[] {
   if (inMemoryTradesCache && inMemoryTradesCache.length > 0) {
     return inMemoryTradesCache;
   }
-  if (typeof window === 'undefined') return SEED_PAPER_TRADES;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        inMemoryTradesCache = parsed;
-        return parsed;
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const normalized = parsed.map((t) => normalizeTradeRecord(t));
+          normalized.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          inMemoryTradesCache = normalized;
+          return normalized;
+        }
       }
+    } catch (err) {
+      console.warn('Failed to load paper trades from localStorage:', err);
     }
-  } catch (err) {
-    console.warn('Failed to load paper trades from localStorage:', err);
   }
 
-  // Trigger non-blocking cloud Firestore fetch
-  syncServerAuditTrades().catch(() => {});
   return SEED_PAPER_TRADES;
 }
 
 /**
- * Fetch official persistent audit trades from Firestore cloud database (with server & localStorage fallback)
+ * Fetch official persistent audit trades from Firestore cloud database and persistent server ledger.
+ * Merges across all persistence layers (Firestore, Server Ledger disk, LocalStorage)
+ * so newly recorded trades are NEVER clobbered, reset, or truncated on refresh even if
+ * Firestore free-tier write quotas are reached.
  */
 export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
-  // 1. Primary Source of Truth: Firestore Cloud Database
+  const tradeMap = new Map<string, PaperTradeRecord>();
+
+  // 1. Seed baseline trades first
+  for (const t of SEED_PAPER_TRADES) {
+    tradeMap.set(t.id, normalizeTradeRecord(t));
+  }
+
+  // 2. Fetch server persistent disk ledger (/api/audit/trades)
+  if (typeof window !== 'undefined') {
+    try {
+      const resp = await fetch('/api/audit/trades');
+      if (resp.ok) {
+        const json = await resp.json();
+        if (Array.isArray(json.trades)) {
+          for (const t of json.trades) {
+            if (t && t.id) {
+              tradeMap.set(t.id, normalizeTradeRecord(t));
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Server disk ledger fetch error:', err);
+    }
+  }
+
+  // 3. Primary Cloud Source: Firestore Cloud Database
   try {
     const cloudTrades = await fetchFirestoreAuditTrades();
     if (Array.isArray(cloudTrades) && cloudTrades.length > 0) {
-      inMemoryTradesCache = cloudTrades;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudTrades));
-        window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: cloudTrades }));
+      for (const t of cloudTrades) {
+        if (t && t.id) {
+          tradeMap.set(t.id, normalizeTradeRecord(t));
+        }
       }
-      return cloudTrades;
     }
   } catch (err) {
-    console.warn('⚠️ Firestore fetch error, trying backend server fallback:', err);
+    console.warn('⚠️ Firestore fetch error, preserving current cache:', err);
   }
 
-  // 2. Secondary Source of Truth: Node Server endpoint
-  try {
-    const resp = await fetch('/api/audit/trades');
-    if (resp.ok) {
-      const json = await resp.json();
-      if (json && json.success && Array.isArray(json.trades) && json.trades.length > 0) {
-        inMemoryTradesCache = json.trades;
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(json.trades));
-          window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: json.trades }));
+  // 4. Merge Local Storage cache
+  const currentLocal = getSavedPaperTrades();
+  if (Array.isArray(currentLocal) && currentLocal.length > 0) {
+    for (const t of currentLocal) {
+      if (t && t.id) {
+        // Only set if not already present or if local has valid fields
+        if (!tradeMap.has(t.id)) {
+          tradeMap.set(t.id, normalizeTradeRecord(t));
         }
-        return json.trades;
       }
     }
-  } catch (e) {
-    console.warn('Could not sync audit trades with server:', e);
   }
-  return getSavedPaperTrades();
+
+  // Convert map to array and sort chronologically by true execution timestamp
+  const merged = Array.from(tradeMap.values()).sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  inMemoryTradesCache = merged;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: merged }));
+    } catch {}
+
+    // Backfill Firestore with full audit ledger if quota permits
+    if (!isFirestoreQuotaExceeded() && merged.length > 11) {
+      seedFirestoreAuditTrades(merged).catch(() => {});
+    }
+  }
+
+  return merged;
 }
 
 // Auto-trigger sync on module load
@@ -295,30 +342,43 @@ if (typeof window !== 'undefined') {
  * Persist trades to memory, localStorage, and notify listeners
  */
 export function savePaperTrades(trades: PaperTradeRecord[]) {
-  inMemoryTradesCache = trades;
+  const normalized = trades.map((t) => normalizeTradeRecord(t));
+  normalized.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  inMemoryTradesCache = normalized;
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
-    window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: trades }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: normalized }));
   } catch (err) {
     console.error('Failed to save paper trades:', err);
   }
 }
 
 /**
- * Record a new settled paper-trade transaction (saved locally, synced to Firestore cloud DB, and synced to server ledger)
+ * Record a new settled paper-trade transaction (saved locally, synced to Firestore cloud DB, and synced to server ledger).
+ * Guarantees that any provided execution timestamp is preserved and NOT overwritten by today's date.
  */
 export function recordNewPaperTrade(
-  tradeData: Omit<PaperTradeRecord, 'id' | 'timestamp' | 'accountBalance'>
+  tradeData: Omit<PaperTradeRecord, 'id' | 'timestamp' | 'accountBalance'> & {
+    id?: string;
+    timestamp?: string | number;
+    utcTimestamp?: string;
+    executedAt?: string;
+    createdAt?: string;
+    accountBalance?: number;
+  }
 ): PaperTradeRecord {
   const currentTrades = getSavedPaperTrades();
   const lastBalance = currentTrades.length > 0 ? currentTrades[currentTrades.length - 1].accountBalance : 100000;
-  const newBalance = parseFloat((lastBalance + tradeData.balanceChange).toFixed(2));
+  const newBalance = typeof tradeData.accountBalance === 'number'
+    ? tradeData.accountBalance
+    : parseFloat((lastBalance + tradeData.balanceChange).toFixed(2));
 
+  // Determine actual historical execution time - never override with new Date() if original timestamp exists
+  const timestamp = resolveRealTradeTimestamp(tradeData, tradeData.id);
   const count = currentTrades.length + 1;
-  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const id = `PT-${dateStr}-${count.toString().padStart(2, '0')}`;
-  const timestamp = new Date().toISOString();
+  const dateStr = timestamp.slice(0, 10).replace(/-/g, '');
+  const id = tradeData.id || `PT-${dateStr}-${count.toString().padStart(2, '0')}`;
 
   const newRecord: PaperTradeRecord = {
     ...tradeData,
@@ -384,6 +444,9 @@ export async function resetPaperTradesToSeed(
   }
 
   savePaperTrades(SEED_PAPER_TRADES);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('lunaris-audit-reset', { detail: SEED_PAPER_TRADES }));
+  }
   return { success: true };
 }
 
@@ -478,25 +541,42 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
 
 /**
  * Realistic autonomous paper-trade generator for live continuous loop or manual trigger
+ * Uses real-time Bitget market prices and tokenized equity rates
  */
-export function generateAutonomousTradeScenario(): Omit<PaperTradeRecord, 'id' | 'timestamp' | 'accountBalance'> {
+export function generateAutonomousTradeScenario(
+  quoteOverrides?: Record<string, { price: number }>
+): Omit<PaperTradeRecord, 'id' | 'timestamp' | 'accountBalance'> {
+  let liveQuotes: Record<string, { price: number }> | null = quoteOverrides || null;
+  if (!liveQuotes && typeof getLiveMarketQuotes === 'function') {
+    try {
+      liveQuotes = getLiveMarketQuotes();
+    } catch {
+      // fallback
+    }
+  }
+
   const instruments = [
-    { name: 'NVDAon/USDT', price: 139.4, class: 'rToken' },
-    { name: 'TSLAon/USDT', price: 248.6, class: 'rToken' },
-    { name: 'BTC/USDT', price: 88420.0, class: 'Crypto' },
-    { name: 'ETH/USDT', price: 2748.0, class: 'Crypto' },
-    { name: 'SOL/USDT', price: 184.5, class: 'Crypto' },
+    { name: 'NVDAon/USDT', ticker: 'NVDAon', fallbackPrice: 218.29, class: 'rToken' },
+    { name: 'TSLAon/USDT', ticker: 'TSLAon', fallbackPrice: 365.44, class: 'rToken' },
+    { name: 'BTC/USDT', ticker: 'BTC', fallbackPrice: 76820.0, class: 'Crypto' },
+    { name: 'ETH/USDT', ticker: 'ETH', fallbackPrice: 2485.0, class: 'Crypto' },
+    { name: 'SOL/USDT', ticker: 'SOL', fallbackPrice: 99.66, class: 'Crypto' },
   ];
 
   const selectedInst = instruments[Math.floor(Math.random() * instruments.length)];
+  const currentLivePrice =
+    liveQuotes && liveQuotes[selectedInst.ticker]?.price
+      ? liveQuotes[selectedInst.ticker].price
+      : selectedInst.fallbackPrice;
+
   const isWin = Math.random() < 0.76; // 76% win rate aligned with council quorum
   const direction: 'LONG' | 'SHORT' = Math.random() > 0.3 ? 'LONG' : 'SHORT';
   const leverage = selectedInst.class === 'rToken' ? 2 : Math.floor(Math.random() * 3) + 3; // 3x to 5x
   const quantity = Math.floor(Math.random() * 8000) + 7000; // $7,000 - $15,000
 
-  // Price deviation
-  const priceVariation = (Math.random() * 0.02 - 0.01) * selectedInst.price;
-  const execPrice = parseFloat((selectedInst.price + priceVariation).toFixed(selectedInst.price < 10 ? 4 : 2));
+  // Micro price deviation relative to current real Bitget market price (within 0.2%)
+  const priceVariation = (Math.random() * 0.004 - 0.002) * currentLivePrice;
+  const execPrice = parseFloat((currentLivePrice + priceVariation).toFixed(currentLivePrice < 10 ? 4 : 2));
 
   let pnlPct: number;
   let status: 'TAKE_PROFIT' | 'STOP_LOSS';

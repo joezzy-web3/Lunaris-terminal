@@ -24,6 +24,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { PaperTradeRecord } from '@/lib/paperTradingAudit';
+import { formatAuditTimestamp } from '@/lib/firestoreAudit';
 import { playCyberClick } from '@/lib/soundSynth';
 
 interface TradeProofModalProps {
@@ -153,6 +154,10 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
               </span>
               <span className="text-[10px] bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/10">
                 {trade.id}
+              </span>
+              <span className="text-[10px] bg-cyan-950/40 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 flex items-center gap-1 font-mono">
+                <Clock className="w-3 h-3 text-cyan-400" />
+                <span>{formatAuditTimestamp(trade.timestamp, trade.id).fullUtc}</span>
               </span>
             </div>
             <h2 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">

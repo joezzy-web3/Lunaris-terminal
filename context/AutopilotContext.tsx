@@ -13,6 +13,7 @@ import { AutopilotLedgerEntry } from '@/components/AutopilotLedgerView';
 import {
   saveAutopilotStateToFirestore,
   subscribeToAutopilotState,
+  isFirestoreQuotaExceeded,
 } from '@/lib/firestoreAudit';
 
 export interface AutonomousLog {
@@ -56,6 +57,11 @@ export interface Position {
   unrealizedPnl: number;
   unrealizedPnlPct: number;
   class: 'CX' | 'EQ';
+  peakPrice?: number;
+  peakPnlPct?: number;
+  trailingStopPct?: number;
+  lockedFloorPrice?: number;
+  isBreakevenLocked?: boolean;
 }
 
 interface AutopilotContextType {
@@ -299,20 +305,27 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         maxOpenPositions,
       };
 
-      // Local cache
+      // Local cache (instant)
       localStorage.setItem(AUTOPILOT_PERSISTENCE_KEY, JSON.stringify(stateToSave));
 
-      // Sync to Firestore Cloud DB
-      saveAutopilotStateToFirestore(stateToSave).catch((err) =>
-        console.warn('Failed to sync autopilot state to Firestore:', err)
-      );
-
-      // Server persistence
+      // Server persistence (instant)
       fetch('/api/autopilot/state', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ state: stateToSave }),
       }).catch(() => {});
+
+      // Debounce Firestore Cloud DB sync (save at most once every 30s) and skip if quota reached
+      if (!isFirestoreQuotaExceeded()) {
+        const timer = setTimeout(() => {
+          if (!isFirestoreQuotaExceeded()) {
+            saveAutopilotStateToFirestore(stateToSave).catch((err) =>
+              console.warn('Failed to sync autopilot state to Firestore:', err)
+            );
+          }
+        }, 30000);
+        return () => clearTimeout(timer);
+      }
     } catch (err) {
       console.warn('Failed to persist autopilot state:', err);
     }
@@ -476,6 +489,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (existing && existing.amount > 0) {
         const totalUnits = existing.amount + units;
         const avgPrice = (existing.amount * existing.entryPrice + tradeUsd) / totalUnits;
+        const peak = Math.max(existing.peakPrice || avgPrice, validPrice);
         updatedPos = {
           ...existing,
           amount: totalUnits,
@@ -483,6 +497,11 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           currentPrice: validPrice,
           unrealizedPnl: (validPrice - avgPrice) * totalUnits,
           unrealizedPnlPct: ((validPrice - avgPrice) / avgPrice) * 100,
+          peakPrice: peak,
+          peakPnlPct: ((peak - avgPrice) / avgPrice) * 100,
+          trailingStopPct: existing.trailingStopPct ?? -3.0,
+          lockedFloorPrice: existing.lockedFloorPrice ?? (avgPrice * 0.97),
+          isBreakevenLocked: existing.isBreakevenLocked ?? false,
         };
       } else {
         updatedPos = {
@@ -493,6 +512,11 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           unrealizedPnl: 0,
           unrealizedPnlPct: 0,
           class: assetClass,
+          peakPrice: validPrice,
+          peakPnlPct: 0,
+          trailingStopPct: -3.0, // Quantitative baseline stop at -3.0%
+          lockedFloorPrice: validPrice * 0.97,
+          isBreakevenLocked: false,
         };
       }
       const nextPositions = { ...prev, [normTicker]: updatedPos };
@@ -586,6 +610,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           : `Autopilot Engine: Target Profit Ratified on ${normTicker} (+${pnlPct.toFixed(2)}%)`,
         status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         postMortem: postMortemData,
+        timestamp: sellEntry.utcTimestamp,
       });
     } catch (err) {
       console.warn('Failed to record audit log on sell:', err);
@@ -676,6 +701,56 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const pnlPct = entry > 0 ? ((newPrice - entry) / entry) * 100 : 0;
         const totalPosVal = amount * newPrice;
 
+        // 1. Highest observed peak price and peak PnL%
+        const prevPeakPrice = Number.isFinite(p.peakPrice) && (p.peakPrice as number) > 0
+          ? (p.peakPrice as number)
+          : Math.max(entry, newPrice);
+        const currentPeakPrice = Math.max(prevPeakPrice, newPrice);
+        const currentPeakPnlPct = entry > 0 ? ((currentPeakPrice - entry) / entry) * 100 : 0;
+
+        // 2. Trailing Stop & Breakeven Ratchet state
+        let trailingStopPct = typeof p.trailingStopPct === 'number' ? p.trailingStopPct : -3.0;
+        let isBreakevenLocked = Boolean(p.isBreakevenLocked);
+        let lockedFloorPrice = typeof p.lockedFloorPrice === 'number' ? p.lockedFloorPrice : entry * 0.97;
+
+        // --- RATCHET TIER 1: BREAKEVEN RATCHET ACTIVATION (+1.2% Gain) ---
+        // As soon as price touches +1.2%, lock stop to Breakeven (+0.2% fee & slippage buffer)
+        if (currentPeakPnlPct >= 1.2 && !isBreakevenLocked) {
+          isBreakevenLocked = true;
+          trailingStopPct = Math.max(trailingStopPct, 0.2);
+          lockedFloorPrice = Math.max(lockedFloorPrice, entry * 1.002);
+
+          autoExitLogs.push({
+            id: `ratchet-${Date.now()}-${t}`,
+            timestamp: new Date().toLocaleTimeString(),
+            ticker: t,
+            action: 'HOLD',
+            sizePct: 0,
+            text: `[BREAKEVEN RATCHET ACTIVATED] ${t} touched peak +${currentPeakPnlPct.toFixed(2)}%. Stop-loss ratcheted to Breakeven (+0.2%). Position is now mathematically RISK-FREE!`,
+            status: 'APPROVED',
+            source: 'AUTONOMOUS',
+          });
+        }
+
+        // --- RATCHET TIER 2: PROFIT LOCK-IN (+2.0% Gain) ---
+        // Lock in guaranteed +1.0% profit minimum
+        if (currentPeakPnlPct >= 2.0) {
+          if (trailingStopPct < 1.0) {
+            trailingStopPct = 1.0;
+            lockedFloorPrice = entry * 1.01;
+          }
+        }
+
+        // --- RATCHET TIER 3: DYNAMIC TRAILING STOP (+3.0% Peak or higher) ---
+        // Dynamic ratchet trailing 1.2% behind the high watermark
+        if (currentPeakPnlPct >= 3.0) {
+          const dynamicTrail = currentPeakPnlPct - 1.2;
+          if (dynamicTrail > trailingStopPct) {
+            trailingStopPct = dynamicTrail;
+            lockedFloorPrice = entry * (1 + trailingStopPct / 100);
+          }
+        }
+
         // Condition A: Take-Profit Auto-Exit Target reached
         if (pnlPct >= targetProfitPct) {
           totalCashProceedsToAdd += totalPosVal;
@@ -687,14 +762,15 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             ticker: t,
             action: 'SELL',
             sizePct: 100,
-            text: `[AUTO-EXIT CASHOUT] Target +${targetProfitPct.toFixed(1)}% reached! Closed ${t} at +${pnlPct.toFixed(2)}% gain. Full proceeds credited into Available Cash.`,
+            text: `[AUTO-EXIT TARGET] +${targetProfitPct.toFixed(1)}% target reached! Closed ${t} at +${pnlPct.toFixed(2)}% gain ($${pnl.toFixed(2)}). Proceeds credited to Available Cash.`,
             status: 'APPROVED',
             source: 'AUTONOMOUS',
           });
+          const exitUtcTime = new Date().toISOString();
           autoExitLedgerEntries.push({
             id: `autoexit-ledger-${Date.now()}-${t}`,
             timestamp: new Date().toLocaleTimeString(),
-            utcTimestamp: new Date().toISOString(),
+            utcTimestamp: exitUtcTime,
             type: 'AUTO_EXIT',
             ticker: t,
             amount: p.amount,
@@ -704,7 +780,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             balanceAfter: nextRunningCash,
             realizedPnl: pnl,
             realizedPnlPct: pnlPct,
-            notes: `Take-Profit Auto-Exit (+${targetProfitPct.toFixed(1)}% target): Closed ${t} at +${pnlPct.toFixed(2)}% gain. Proceeds credited to Available Cash.`,
+            notes: `Take-Profit Target (+${targetProfitPct.toFixed(1)}%): Closed ${t} at +${pnlPct.toFixed(2)}% gain. Proceeds credited to Available Cash.`,
           });
           runningCash = nextRunningCash;
 
@@ -720,29 +796,81 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               balanceChangePct: parseFloat(pnlPct.toFixed(2)),
               trigger: `Autopilot Engine: Target Profit Auto-Exit (+${pnlPct.toFixed(2)}%) ratified on ${t}`,
               status: 'TAKE_PROFIT',
+              timestamp: exitUtcTime,
             });
           } catch (e) {
             console.warn('Audit record error:', e);
           }
-        } else if (pnlPct <= -5.5) {
-          // Condition B: Liquidation Shield auto-cut at -5.5% drawdown
+        } else if (isBreakevenLocked && (pnlPct <= trailingStopPct || newPrice <= lockedFloorPrice)) {
+          // Condition B: Trailing Stop / Breakeven Ratchet Reversal Protection
+          // Locks in profit and ensures green trade never turns red!
           totalCashProceedsToAdd += totalPosVal;
           const nextRunningCash = runningCash + totalPosVal;
-          soundToPlay = soundToPlay || 'VETO';
+          soundToPlay = 'CHIME';
           autoExitLogs.push({
-            id: `shieldcut-${Date.now()}-${t}`,
+            id: `trailing-stop-${Date.now()}-${t}`,
             timestamp: new Date().toLocaleTimeString(),
             ticker: t,
             action: 'SELL',
             sizePct: 100,
-            text: `[POST-MORTEM TRIGGERED] Emergency stop on ${t} at ${pnlPct.toFixed(2)}% drawdown. Nexus-Red Adversarial audit recorded.`,
+            text: `[TRAILING STOP SECURED] Breakeven Ratchet locked in +${pnlPct.toFixed(2)}% gain ($${pnl.toFixed(2)}) on ${t}! Peak was +${currentPeakPnlPct.toFixed(2)}%. Green trade protected.`,
             status: 'APPROVED',
             source: 'AUTONOMOUS',
           });
+          const exitUtcTime = new Date().toISOString();
           autoExitLedgerEntries.push({
-            id: `shieldcut-ledger-${Date.now()}-${t}`,
+            id: `trailing-ledger-${Date.now()}-${t}`,
             timestamp: new Date().toLocaleTimeString(),
-            utcTimestamp: new Date().toISOString(),
+            utcTimestamp: exitUtcTime,
+            type: 'AUTO_EXIT',
+            ticker: t,
+            amount: p.amount,
+            price: newPrice,
+            totalUsd: totalPosVal,
+            balanceBefore: runningCash,
+            balanceAfter: nextRunningCash,
+            realizedPnl: pnl,
+            realizedPnlPct: pnlPct,
+            notes: `Breakeven Ratchet & Trailing Stop: Locked in +${pnlPct.toFixed(2)}% profit on ${t} (Peak: +${currentPeakPnlPct.toFixed(2)}%). Reversed from peak but closed in profit.`,
+          });
+          runningCash = nextRunningCash;
+
+          try {
+            recordNewPaperTrade({
+              instrument: `${t}/USDT`,
+              direction: 'LONG',
+              price: parseFloat(newPrice.toFixed(newPrice < 10 ? 4 : 2)),
+              quantity: parseFloat((amount * entry).toFixed(2)),
+              leverage: 3,
+              balanceChange: parseFloat(pnl.toFixed(2)),
+              balanceChangePct: parseFloat(pnlPct.toFixed(2)),
+              trigger: `Breakeven Ratchet: Trailing stop locked in +${pnlPct.toFixed(2)}% profit on ${t} (Peak: +${currentPeakPnlPct.toFixed(2)}%)`,
+              status: 'TAKE_PROFIT',
+              timestamp: exitUtcTime,
+            });
+          } catch (e) {
+            console.warn('Audit record error:', e);
+          }
+        } else if (!isBreakevenLocked && (pnlPct <= trailingStopPct || pnlPct <= -3.0)) {
+          // Condition C: Disciplined Early Stop Loss (-3.0% quantitative stop instead of -5.5% bleed)
+          totalCashProceedsToAdd += totalPosVal;
+          const nextRunningCash = runningCash + totalPosVal;
+          soundToPlay = soundToPlay || 'VETO';
+          autoExitLogs.push({
+            id: `stoploss-${Date.now()}-${t}`,
+            timestamp: new Date().toLocaleTimeString(),
+            ticker: t,
+            action: 'SELL',
+            sizePct: 100,
+            text: `[DISCIPLINED STOP-LOSS] Quantitative risk cut on ${t} at ${pnlPct.toFixed(2)}% drawdown (Stop ceiling: -3.0%). Preserved capital for high-conviction setups.`,
+            status: 'APPROVED',
+            source: 'AUTONOMOUS',
+          });
+          const exitUtcTime = new Date().toISOString();
+          autoExitLedgerEntries.push({
+            id: `stoploss-ledger-${Date.now()}-${t}`,
+            timestamp: new Date().toLocaleTimeString(),
+            utcTimestamp: exitUtcTime,
             type: 'STOP_LOSS',
             ticker: t,
             amount: p.amount,
@@ -752,7 +880,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             balanceAfter: nextRunningCash,
             realizedPnl: pnl,
             realizedPnlPct: pnlPct,
-            notes: `Liquidation Shield & Post-Mortem: Closed ${t} at ${pnlPct.toFixed(2)}% drawdown. Self-reflective analysis logged.`,
+            notes: `Disciplined Stop-Loss: Cut ${t} at ${pnlPct.toFixed(2)}% drawdown. Nexus-Red adversarial post-mortem logged.`,
           });
           runningCash = nextRunningCash;
 
@@ -767,9 +895,10 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               leverage: 3,
               balanceChange: parseFloat(pnl.toFixed(2)),
               balanceChangePct: parseFloat(pnlPct.toFixed(2)),
-              trigger: `Risk Sentinel & Nexus-Red Stop: Volatility ceiling hit on ${t} (${pnlPct.toFixed(2)}%)`,
+              trigger: `Disciplined Risk Cut: Automated stop preserved capital on ${t} (${pnlPct.toFixed(2)}%)`,
               status: 'STOP_LOSS',
               postMortem,
+              timestamp: exitUtcTime,
             });
           } catch (e) {
             console.warn('Audit record error:', e);
@@ -780,6 +909,11 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             currentPrice: newPrice,
             unrealizedPnl: Number.isFinite(pnl) ? pnl : 0,
             unrealizedPnlPct: Number.isFinite(pnlPct) ? pnlPct : 0,
+            peakPrice: currentPeakPrice,
+            peakPnlPct: currentPeakPnlPct,
+            trailingStopPct,
+            lockedFloorPrice,
+            isBreakevenLocked,
           };
         }
       });

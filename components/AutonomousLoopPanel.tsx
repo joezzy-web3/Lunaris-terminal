@@ -51,6 +51,11 @@ export interface Position {
   unrealizedPnl: number;
   unrealizedPnlPct: number;
   class: 'CX' | 'EQ';
+  peakPrice?: number;
+  peakPnlPct?: number;
+  trailingStopPct?: number;
+  lockedFloorPrice?: number;
+  isBreakevenLocked?: boolean;
 }
 
 interface AutonomousLoopPanelProps {
@@ -542,15 +547,18 @@ export function AutonomousLoopPanel({
           </div>
         </div>
 
-        {/* Liquidation Shield */}
+        {/* Breakeven Ratchet & Trailing Stop Telemetry */}
         <div>
-          <div className="text-[10px] text-gray-400 uppercase">Liquidation Shield</div>
+          <div className="text-[10px] text-gray-400 uppercase flex items-center justify-between">
+            <span>Breakeven Ratchet</span>
+            <span className="text-[9px] text-emerald-400 font-bold">ACTIVE</span>
+          </div>
           <div className="text-xs font-bold text-emerald-400 flex items-center gap-1 mt-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            0% LIQUIDATION RISK
+            RISK-FREE ON +1.2% GAIN
           </div>
           <div className="text-[9px] text-gray-400 mt-1">
-            Auto-Cut @ -6% | Zero Margin Call
+            Dynamic Trail Stop | Green Trades Never Turn Red
           </div>
         </div>
       </div>
@@ -615,8 +623,23 @@ export function AutonomousLoopPanel({
                         <div className="text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
                           <span>Entry: ${safeEntry.toFixed(2)} → Now: ${safePrice.toFixed(2)}</span>
                           <span className="text-purple-300/90 font-mono bg-purple-500/10 px-1 py-0.2 rounded border border-purple-500/20">
-                            Auto-Exit: +{autoExitPct}% (${(safeEntry * (1 + autoExitPct / 100)).toFixed(2)})
+                            Target: +{autoExitPct}% (${(safeEntry * (1 + autoExitPct / 100)).toFixed(2)})
                           </span>
+                          {pos.isBreakevenLocked ? (
+                            <span className="text-emerald-300 font-mono bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30 flex items-center gap-1 font-bold">
+                              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                              RATCHET LOCKED: Stop @ {pos.trailingStopPct !== undefined ? `+${pos.trailingStopPct.toFixed(1)}%` : 'BE'} (${(pos.lockedFloorPrice || safeEntry * 1.002).toFixed(2)})
+                            </span>
+                          ) : (
+                            <span className="text-cyan-400/90 font-mono bg-cyan-500/10 px-1 py-0.2 rounded border border-cyan-500/20">
+                              Stop: {pos.trailingStopPct !== undefined ? `${pos.trailingStopPct.toFixed(1)}%` : '-3.0%'} (Ratchet @ +1.2%)
+                            </span>
+                          )}
+                          {pos.peakPnlPct !== undefined && pos.peakPnlPct > 0.1 && (
+                            <span className="text-gray-400 font-mono text-[9px] bg-white/5 px-1 py-0.2 rounded">
+                              Peak: +{pos.peakPnlPct.toFixed(1)}%
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

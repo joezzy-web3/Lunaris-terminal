@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   getSavedPaperTrades,
+  savePaperTrades,
   recordNewPaperTrade,
   resetPaperTradesToSeed,
   generateAutonomousTradeScenario,
@@ -10,8 +11,8 @@ import {
   PaperTradeRecord,
   AuditSummaryMetrics,
 } from '@/lib/paperTradingAudit';
-import { subscribeToFirestoreAuditTrades } from '@/lib/firestoreAudit';
-import { fetchLiveCryptoPrices } from '@/lib/livePrices';
+import { subscribeToFirestoreAuditTrades, formatAuditTimestamp, isFirestoreQuotaExceeded } from '@/lib/firestoreAudit';
+import { useLiveMarketQuotes } from '@/lib/livePrices';
 import {
   Download,
   Copy,
@@ -37,6 +38,10 @@ import {
   Eye,
   EyeOff,
   Skull,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { playCyberClick, playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
 import { TradeProofModal } from '@/components/TradeProofModal';
@@ -51,11 +56,21 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [trades, setTrades] = useState<PaperTradeRecord[]>(() => getSavedPaperTrades());
   const [filter, setFilter] = useState<'ALL' | 'LONG' | 'SHORT' | 'TAKE_PROFIT' | 'STOP_LOSS' | 'RTOKENS'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [pageSize, setPageSize] = useState<number | 'ALL'>(20);
+  const [currentPage, setCurrentPage] = useState(1);
   const [copied, setCopied] = useState(false);
   const [isAutoTicking, setIsAutoTicking] = useState(true);
   const [secondsUntilNextTick, setSecondsUntilNextTick] = useState(14);
   const [latestTradeId, setLatestTradeId] = useState<string | null>(null);
   const [selectedProofTrade, setSelectedProofTrade] = useState<PaperTradeRecord | null>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState(() => isFirestoreQuotaExceeded());
+
+  // Listen for Firestore free-tier quota events
+  useEffect(() => {
+    const onQuotaEvent = () => setQuotaExceeded(true);
+    window.addEventListener('lunaris-firestore-quota-exceeded', onQuotaEvent);
+    return () => window.removeEventListener('lunaris-firestore-quota-exceeded', onQuotaEvent);
+  }, []);
 
   // Security Access Verification Modal
   const [showAuthPasscode, setShowAuthPasscode] = useState(false);
@@ -75,84 +90,81 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     isSubmitting: false,
   });
 
-  // Live prices for top ticker showcase (BTC, ETH, SOL, NVDAon, TSLAon)
-  const [livePrices, setLivePrices] = useState<Record<string, { price: number; change24h: number }>>({
-    BTC: { price: 88420.5, change24h: 3.45 },
-    ETH: { price: 2748.2, change24h: 2.15 },
-    SOL: { price: 184.6, change24h: 5.82 },
-    NVDAon: { price: 139.4, change24h: 3.82 },
-    TSLAon: { price: 248.9, change24h: 2.14 },
-  });
+  // Real-time Bitget market feed & tokenized equities from unified WebSocket/REST poller
+  const { quotes } = useLiveMarketQuotes();
 
-  // Sync with Firestore Cloud real-time updates and global storage events
+  // Helper to merge trade collections monotonically without ever dropping historical records
+  const mergeTradesSafely = (
+    currentList: PaperTradeRecord[],
+    newList: PaperTradeRecord[]
+  ): PaperTradeRecord[] => {
+    const tradeMap = new Map<string, PaperTradeRecord>();
+    for (const t of currentList) {
+      if (t && t.id) tradeMap.set(t.id, t);
+    }
+    for (const t of newList) {
+      if (t && t.id) tradeMap.set(t.id, t);
+    }
+    return Array.from(tradeMap.values()).sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+  };
+
+  // Sync with Firestore Cloud real-time updates, Server Disk Ledger, and global storage events
   useEffect(() => {
     let isMounted = true;
 
+    // Normal trade updates merge safely so that smaller partial snapshots cannot wipe out historical orders
     const handleUpdate = (e: any) => {
       if (!isMounted) return;
-      if (e.detail && Array.isArray(e.detail)) {
-        setTrades(e.detail);
-      } else {
-        setTrades(getSavedPaperTrades());
-      }
+      const incoming = e.detail && Array.isArray(e.detail) ? e.detail : getSavedPaperTrades();
+      if (!Array.isArray(incoming) || incoming.length === 0) return;
+      setTrades((prev) => mergeTradesSafely(prev, incoming));
     };
     window.addEventListener('lunaris-audit-updated', handleUpdate);
 
-    // 1. Instant real-time Firestore listener across all devices/browsers
+    // Explicit Auditor Secret Passcode Reset
+    const handleReset = (e: any) => {
+      if (!isMounted) return;
+      if (Array.isArray(e.detail)) {
+        setTrades(e.detail);
+      }
+    };
+    window.addEventListener('lunaris-audit-reset', handleReset);
+
+    // 1. Real-time Firestore listener across all devices/browsers
+    // Merges new cloud trades by ID instead of clobbering the existing persistent ledger
     const unsubscribeFirestore = subscribeToFirestoreAuditTrades((cloudTrades) => {
-      if (isMounted && cloudTrades && cloudTrades.length > 0) {
-        setTrades(cloudTrades);
-      }
+      if (!isMounted || !cloudTrades || cloudTrades.length === 0) return;
+      setTrades((prevTrades) => {
+        const merged = mergeTradesSafely(prevTrades, cloudTrades);
+        savePaperTrades(merged);
+        return merged;
+      });
     });
 
-    // 2. Initial fetch and fallback poll
+    // 2. Initial cloud and server disk fetch to ensure all trades are pulled
     syncServerAuditTrades().then((serverTrades) => {
-      if (isMounted && serverTrades && serverTrades.length > 0) {
-        setTrades(serverTrades);
-      }
+      if (!isMounted || !serverTrades || serverTrades.length === 0) return;
+      setTrades((prevTrades) => mergeTradesSafely(prevTrades, serverTrades));
     });
 
-    const pollInterval = setInterval(async () => {
-      try {
-        const fresh = await syncServerAuditTrades();
-        if (isMounted && fresh && fresh.length > 0) {
-          setTrades(fresh);
-        }
-      } catch (err) {
-        // silent
-      }
-    }, 6000);
+    // 3. Periodic background sync with server disk ledger (/api/audit/trades) every 10s
+    // Ensures trades settled in background by server autopilot daemon are seamlessly merged in real-time
+    const serverPollInterval = setInterval(() => {
+      if (!isMounted) return;
+      syncServerAuditTrades().then((serverTrades) => {
+        if (!isMounted || !serverTrades || serverTrades.length === 0) return;
+        setTrades((prevTrades) => mergeTradesSafely(prevTrades, serverTrades));
+      });
+    }, 10000);
 
     return () => {
       isMounted = false;
       window.removeEventListener('lunaris-audit-updated', handleUpdate);
+      window.removeEventListener('lunaris-audit-reset', handleReset);
       unsubscribeFirestore();
-      clearInterval(pollInterval);
-    };
-  }, []);
-
-  // Fetch live Bitget prices periodically
-  useEffect(() => {
-    let isMounted = true;
-    const fetchPrices = async () => {
-      try {
-        const quotes = await fetchLiveCryptoPrices();
-        if (isMounted && Object.keys(quotes).length > 0) {
-          setLivePrices((prev) => ({
-            ...prev,
-            ...quotes as any,
-          }));
-        }
-      } catch (err) {
-        console.warn('Bitget price sync fallback:', err);
-      }
-    };
-
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 6000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
+      clearInterval(serverPollInterval);
     };
   }, []);
 
@@ -163,19 +175,11 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     const timer = setInterval(() => {
       setSecondsUntilNextTick((prev) => {
         if (prev <= 1) {
-          // Fire automatic paper trade
-          const scenario = generateAutonomousTradeScenario();
-          // Align price with current live quotes if available
-          if (scenario.instrument.includes('NVDAon') && livePrices.NVDAon) {
-            scenario.price = livePrices.NVDAon.price;
-          } else if (scenario.instrument.includes('TSLAon') && livePrices.TSLAon) {
-            scenario.price = livePrices.TSLAon.price;
-          } else if (scenario.instrument.includes('BTC') && livePrices.BTC) {
-            scenario.price = livePrices.BTC.price;
-          } else if (scenario.instrument.includes('ETH') && livePrices.ETH) {
-            scenario.price = livePrices.ETH.price;
-          } else if (scenario.instrument.includes('SOL') && livePrices.SOL) {
-            scenario.price = livePrices.SOL.price;
+          // Fire automatic paper trade using live Bitget prices
+          const scenario = generateAutonomousTradeScenario(quotes);
+          const baseTicker = scenario.instrument.split('/')[0];
+          if (quotes[baseTicker]?.price) {
+            scenario.price = quotes[baseTicker].price;
           }
 
           const record = recordNewPaperTrade(scenario);
@@ -194,7 +198,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isAutoTicking, livePrices]);
+  }, [isAutoTicking, quotes]);
 
   // Clear highlight flash after 3s
   useEffect(() => {
@@ -210,11 +214,10 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   // Manual Trigger
   const handleTriggerManualTrade = () => {
     playCyberClick();
-    const scenario = generateAutonomousTradeScenario();
-    if (scenario.instrument.includes('NVDAon') && livePrices.NVDAon) {
-      scenario.price = livePrices.NVDAon.price;
-    } else if (scenario.instrument.includes('TSLAon') && livePrices.TSLAon) {
-      scenario.price = livePrices.TSLAon.price;
+    const scenario = generateAutonomousTradeScenario(quotes);
+    const baseTicker = scenario.instrument.split('/')[0];
+    if (quotes[baseTicker]?.price) {
+      scenario.price = quotes[baseTicker].price;
     }
 
     const record = recordNewPaperTrade(scenario);
@@ -335,6 +338,29 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     return matchesFilter && matchesSearch;
   });
 
+  // Pagination calculations
+  const totalItems = filteredTrades.length;
+  const numericPageSize = pageSize === 'ALL' ? totalItems : pageSize;
+  const totalPages = pageSize === 'ALL' || totalItems === 0 ? 1 : Math.ceil(totalItems / numericPageSize);
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const startIndex = (safeCurrentPage - 1) * numericPageSize;
+  const endIndex = pageSize === 'ALL' ? totalItems : Math.min(startIndex + numericPageSize, totalItems);
+  const paginatedTrades = pageSize === 'ALL' ? filteredTrades : filteredTrades.slice(startIndex, endIndex);
+
+  const getPageNumbers = (): (number | string)[] => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    if (safeCurrentPage <= 4) {
+      return [1, 2, 3, 4, 5, '...', totalPages];
+    }
+    if (safeCurrentPage >= totalPages - 3) {
+      return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, '...', safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, '...', totalPages];
+  };
+
   return (
     <div id="paper-trading-audit-section" className="space-y-6 animate-fadeIn pb-12">
       {/* Top Banner with Bitget S2 Branding */}
@@ -353,11 +379,36 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
               <span className="text-[10px] bg-[#00F0FF]/15 border border-[#00F0FF]/40 text-[#00F0FF] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 Track 2 Agentic Trading Compliant
               </span>
-              <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                LIVE FIRESTORE CLOUD SYNC
-              </span>
+              {quotaExceeded ? (
+                <span className="text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5" title="Free daily write quota reached on Firebase Spark plan. Operating on persistent local & server ledger.">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  PERSISTENT LEDGER SYNC (SPARK TIER)
+                </span>
+              ) : (
+                <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  LIVE FIRESTORE CLOUD SYNC
+                </span>
+              )}
             </div>
+            {quotaExceeded && (
+              <div className="bg-amber-950/30 border border-amber-500/30 rounded-lg px-3 py-1.5 text-[11px] text-amber-200/90 flex items-center justify-between gap-2 max-w-3xl">
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>
+                    Firestore daily write quota reached (Spark Free Plan). Audit logs are 100% preserved in the persistent server ledger and will resume cloud writes tomorrow.
+                  </span>
+                </div>
+                <a
+                  href="https://console.firebase.google.com/project/gen-lang-client-0422269194/firestore/databases/ai-studio-lunaristerminal-a46b0af1-1948-4697-be4b-f2df2f1bb25b/data?openUpgradeDialog=true"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline text-amber-300 hover:text-white shrink-0 font-medium"
+                >
+                  Upgrade Database
+                </a>
+              </div>
+            )}
             <p className="text-xs text-gray-300 max-w-3xl leading-relaxed">
               Official real-time paper-trading audit stream satisfying Bitget AI Base Camp S2 criteria: Continuous 7×24
               autonomous execution with verified UTC timestamps, instruments (including <strong>NVDAon/USDT</strong> & <strong>TSLAon/USDT</strong> tokenized equities),
@@ -380,6 +431,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             {/* CSV Download */}
             <button
               onClick={handleDownloadCsv}
+              title={`Download complete audit ledger (${trades.length} historical verified executions)`}
               className="flex items-center gap-2 bg-[#00F0FF] hover:bg-[#38f6ff] text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all shadow-[0_0_20px_rgba(0,240,255,0.25)] hover:scale-102 cursor-pointer"
             >
               <Download className="w-4 h-4" />
@@ -389,6 +441,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             {/* Copy JSON */}
             <button
               onClick={handleCopyJson}
+              title={`Copy complete JSON audit trail (${trades.length} records)`}
               className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 text-gray-200 border border-white/15 px-3 py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
             >
               {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -431,7 +484,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             { ticker: 'NVDAon', label: 'NVDAon/USDT', class: 'rToken' },
             { ticker: 'TSLAon', label: 'TSLAon/USDT', class: 'rToken' },
           ].map((item) => {
-            const data = livePrices[item.ticker];
+            const data = quotes[item.ticker];
             const price = data?.price || 0;
             const change = data?.change24h || 0;
             const isUp = change >= 0;
@@ -572,7 +625,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
         </div>
       </div>
 
-      {/* Control Bar: Filters & Search */}
+      {/* Control Bar: Filters, Row Size & Search */}
       <div className="bg-[#090a10] border border-white/10 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-xs text-gray-400 font-mono mr-1">Filter:</span>
@@ -582,6 +635,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
               onClick={() => {
                 playCyberClick();
                 setFilter(mode);
+                setCurrentPage(1);
               }}
               className={`px-3 py-1 rounded-lg text-xs font-semibold font-mono transition-all cursor-pointer ${
                 filter === mode
@@ -594,14 +648,39 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
+        <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
+          {/* Rows per page selector */}
+          <div className="flex items-center gap-1 bg-white/[0.04] border border-white/10 rounded-lg p-1 text-xs font-mono">
+            <span className="text-gray-400 px-1.5 text-[11px] font-semibold">Rows:</span>
+            {([10, 20, 50, 100, 'ALL'] as const).map((size) => (
+              <button
+                key={size}
+                onClick={() => {
+                  playCyberClick();
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                  pageSize === size
+                    ? 'bg-[#00F0FF] text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
+                    : 'text-gray-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {size === 'ALL' ? 'All' : size}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative flex-1 sm:w-60">
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search ticker, ID, trigger..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 font-mono focus:outline-none focus:border-yellow-400/50"
             />
           </div>
@@ -612,6 +691,25 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Real-Time Live Execution Toast (if user is on page > 1) */}
+      {latestTradeId && safeCurrentPage !== 1 && (
+        <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/40 rounded-xl p-2.5 px-4 flex items-center justify-between gap-3 text-xs font-mono animate-pulse">
+          <div className="flex items-center gap-2 text-[#00F0FF]">
+            <Zap className="w-4 h-4 shrink-0" />
+            <span>New autonomous trade settled (<strong>{latestTradeId}</strong>) on Page 1</span>
+          </div>
+          <button
+            onClick={() => {
+              playCyberClick();
+              setCurrentPage(1);
+            }}
+            className="bg-[#00F0FF] text-black text-[11px] font-bold px-3 py-1 rounded-lg hover:bg-cyan-300 transition-colors shrink-0 cursor-pointer"
+          >
+            Jump to Page 1
+          </button>
+        </div>
+      )}
 
       {/* Ledger Table with Live Highlight Flash */}
       <div className="bg-[#08090f] border border-white/10 rounded-xl overflow-hidden shadow-xl">
@@ -632,7 +730,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredTrades.map((trade) => {
+              {paginatedTrades.map((trade) => {
                 const isProfit = trade.balanceChange >= 0;
                 const isJustAdded = trade.id === latestTradeId;
 
@@ -650,15 +748,25 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                     }`}
                   >
                     <td className="py-3 px-3.5 text-gray-300 whitespace-nowrap">
-                      <div className="font-bold text-white text-[11px] flex items-center gap-1">
-                        <span>{trade.id}</span>
-                        {isJustAdded && (
-                          <span className="text-[9px] bg-[#00F0FF] text-black px-1.5 rounded font-extrabold uppercase">
-                            NEW
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-gray-400">{trade.timestamp.replace('T', ' ').replace('Z', '')}</div>
+                      {(() => {
+                        const { dateStr, timeStr } = formatAuditTimestamp(trade.timestamp, trade.id);
+                        return (
+                          <>
+                            <div className="font-bold text-white text-[11px] flex items-center gap-1">
+                              <span>{trade.id}</span>
+                              {isJustAdded && (
+                                <span className="text-[9px] bg-[#00F0FF] text-black px-1.5 rounded font-extrabold uppercase">
+                                  NEW
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] font-mono flex items-center gap-1.5 mt-0.5">
+                              <span className="text-gray-300 font-medium">{dateStr}</span>
+                              <span className="text-[#00F0FF]/80">{timeStr}</span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 px-3.5 font-bold text-white whitespace-nowrap">
                       <span className="bg-white/5 border border-white/10 px-2 py-1 rounded text-xs flex items-center gap-1 w-fit">
@@ -682,7 +790,21 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                       </span>
                     </td>
                     <td className="py-3 px-3.5 text-right font-medium text-gray-200 whitespace-nowrap">
-                      ${trade.price.toLocaleString(undefined, { minimumFractionDigits: trade.price < 10 ? 4 : 2 })}
+                      <div className="font-mono text-white">
+                        ${trade.price.toLocaleString(undefined, { minimumFractionDigits: trade.price < 10 ? 4 : 2 })}
+                      </div>
+                      {(() => {
+                        const base = trade.instrument.split('/')[0];
+                        const live = quotes[base]?.price;
+                        if (live) {
+                          return (
+                            <div className="text-[10px] text-gray-400 font-mono font-normal">
+                              Live: ${live.toLocaleString(undefined, { minimumFractionDigits: live < 10 ? 4 : 2 })}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </td>
                     <td className="py-3 px-3.5 text-right text-gray-300 whitespace-nowrap">
                       ${trade.quantity.toLocaleString()}
@@ -733,8 +855,137 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                   </tr>
                 );
               })}
+              {paginatedTrades.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="py-12 text-center text-gray-500 font-mono">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <AlertCircle className="w-6 h-6 text-gray-600" />
+                      <p className="text-xs">No audited paper trades found matching this criteria.</p>
+                      {(filter !== 'ALL' || searchQuery !== '') && (
+                        <button
+                          onClick={() => {
+                            playCyberClick();
+                            setFilter('ALL');
+                            setSearchQuery('');
+                            setCurrentPage(1);
+                          }}
+                          className="text-[11px] text-[#00F0FF] hover:underline cursor-pointer"
+                        >
+                          Clear filters and show all trades
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Bar */}
+        <div className="bg-[#0b0d15] border-t border-white/10 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2 text-gray-400">
+            <span>
+              Showing <span className="text-white font-bold">{totalItems === 0 ? 0 : startIndex + 1}–{endIndex}</span> of{' '}
+              <span className="text-white font-bold">{totalItems}</span> {totalItems === 1 ? 'trade' : 'trades'}
+            </span>
+            {totalItems < trades.length && (
+              <span className="text-[10px] text-gray-500 hidden sm:inline">
+                ({trades.length - totalItems} filtered out)
+              </span>
+            )}
+            <span className="text-gray-600 hidden md:inline">•</span>
+            <span className="text-gray-400 hidden md:inline">
+              Page <span className="text-[#00F0FF] font-bold">{safeCurrentPage}</span> of{' '}
+              <span className="text-white font-bold">{totalPages}</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* First Page Button */}
+            <button
+              onClick={() => {
+                playCyberClick();
+                setCurrentPage(1);
+              }}
+              disabled={safeCurrentPage === 1 || totalPages <= 1}
+              className="p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-gray-300 transition-colors cursor-pointer"
+              title="First Page"
+              aria-label="First Page"
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+
+            {/* Prev Page Button */}
+            <button
+              onClick={() => {
+                playCyberClick();
+                setCurrentPage((prev) => Math.max(1, prev - 1));
+              }}
+              disabled={safeCurrentPage === 1 || totalPages <= 1}
+              className="p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-gray-300 transition-colors cursor-pointer"
+              title="Previous Page"
+              aria-label="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {/* Numeric Page Buttons */}
+            {pageSize !== 'ALL' && (
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((p, idx) =>
+                  p === '...' ? (
+                    <span key={`ellipsis-${idx}`} className="px-1.5 text-gray-500 font-mono select-none">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={`page-${p}`}
+                      onClick={() => {
+                        playCyberClick();
+                        setCurrentPage(Number(p));
+                      }}
+                      className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        safeCurrentPage === p
+                          ? 'bg-[#00F0FF] text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
+                          : 'text-gray-400 hover:text-white hover:bg-white/10 border border-white/5'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+
+            {/* Next Page Button */}
+            <button
+              onClick={() => {
+                playCyberClick();
+                setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+              }}
+              disabled={safeCurrentPage === totalPages || totalPages <= 1}
+              className="p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-gray-300 transition-colors cursor-pointer"
+              title="Next Page"
+              aria-label="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Last Page Button */}
+            <button
+              onClick={() => {
+                playCyberClick();
+                setCurrentPage(totalPages);
+              }}
+              disabled={safeCurrentPage === totalPages || totalPages <= 1}
+              className="p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-gray-300 transition-colors cursor-pointer"
+              title="Last Page"
+              aria-label="Last Page"
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
