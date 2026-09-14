@@ -213,6 +213,12 @@ export const SEED_PAPER_TRADES: PaperTradeRecord[] = [
   },
 ];
 
+import {
+  fetchFirestoreAuditTrades,
+  saveTradeToFirestore,
+  seedFirestoreAuditTrades,
+} from './firestoreAudit';
+
 let inMemoryTradesCache: PaperTradeRecord[] | null = null;
 
 /**
@@ -236,15 +242,31 @@ export function getSavedPaperTrades(): PaperTradeRecord[] {
     console.warn('Failed to load paper trades from localStorage:', err);
   }
 
-  // Trigger non-blocking server fetch
+  // Trigger non-blocking cloud Firestore fetch
   syncServerAuditTrades().catch(() => {});
   return SEED_PAPER_TRADES;
 }
 
 /**
- * Fetch official server-persisted audit trades from physical server file
+ * Fetch official persistent audit trades from Firestore cloud database (with server & localStorage fallback)
  */
 export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
+  // 1. Primary Source of Truth: Firestore Cloud Database
+  try {
+    const cloudTrades = await fetchFirestoreAuditTrades();
+    if (Array.isArray(cloudTrades) && cloudTrades.length > 0) {
+      inMemoryTradesCache = cloudTrades;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudTrades));
+        window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: cloudTrades }));
+      }
+      return cloudTrades;
+    }
+  } catch (err) {
+    console.warn('⚠️ Firestore fetch error, trying backend server fallback:', err);
+  }
+
+  // 2. Secondary Source of Truth: Node Server endpoint
   try {
     const resp = await fetch('/api/audit/trades');
     if (resp.ok) {
@@ -284,7 +306,7 @@ export function savePaperTrades(trades: PaperTradeRecord[]) {
 }
 
 /**
- * Record a new settled paper-trade transaction (saved locally and synced to server ledger)
+ * Record a new settled paper-trade transaction (saved locally, synced to Firestore cloud DB, and synced to server ledger)
  */
 export function recordNewPaperTrade(
   tradeData: Omit<PaperTradeRecord, 'id' | 'timestamp' | 'accountBalance'>
@@ -307,6 +329,11 @@ export function recordNewPaperTrade(
 
   const updated = [...currentTrades, newRecord];
   savePaperTrades(updated);
+
+  // Synchronize with Firestore Cloud DB
+  saveTradeToFirestore(newRecord).catch((err) =>
+    console.warn('Failed to sync trade to Firestore:', err)
+  );
 
   // Synchronize with server persistent ledger
   if (typeof window !== 'undefined') {
@@ -334,6 +361,12 @@ export async function resetPaperTradesToSeed(
 
   if (cleanCode !== 'chllap5803' && (!customKey || cleanCode !== customKey)) {
     return { success: false, error: 'ACCESS DENIED: Invalid Auditor Security Passcode.' };
+  }
+
+  try {
+    await seedFirestoreAuditTrades(SEED_PAPER_TRADES);
+  } catch (err) {
+    console.warn('Failed to reset Firestore audit trades:', err);
   }
 
   try {

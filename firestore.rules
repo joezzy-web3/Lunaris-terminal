@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Audit trades collection - publicly readable and appendable for hackathon verification across all browser sessions
+    match /audit_trades/{tradeId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.id is string
+                           && request.resource.data.instrument is string
+                           && request.resource.data.price is number;
+      allow delete: if false;
+    }
+
+    // Autopilot global state collection - accessible to all concurrent terminals
+    match /autopilot_state/{docId} {
+      allow read, write: if true;
+    }
+
+    // Default catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

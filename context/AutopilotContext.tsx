@@ -10,6 +10,10 @@ import { evaluateTradeRisk, TradeProposal } from '@/lib/riskVeto';
 import { recordNewPaperTrade } from '@/lib/paperTradingAudit';
 import { playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
 import { AutopilotLedgerEntry } from '@/components/AutopilotLedgerView';
+import {
+  saveAutopilotStateToFirestore,
+  subscribeToAutopilotState,
+} from '@/lib/firestoreAudit';
 
 export interface AutonomousLog {
   id: string;
@@ -230,9 +234,32 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     maxOpenPositionsRef.current = maxOpenPositions;
   }, [maxOpenPositions]);
 
-  // Fetch server-persisted autopilot state on mount
+  // Fetch and subscribe to Firestore cloud-persisted autopilot state across all browsers
   useEffect(() => {
     let isMounted = true;
+
+    // 1. Subscribe to Firestore cloud document
+    const unsubscribeCloud = subscribeToAutopilotState((cloudState) => {
+      if (!isMounted || !cloudState) return;
+      if (typeof cloudState.isExecuting === 'boolean') {
+        setIsExecuting(cloudState.isExecuting);
+      }
+      if (
+        typeof cloudState.cashBalance === 'number' &&
+        Number.isFinite(cloudState.cashBalance) &&
+        cloudState.cashBalance >= 0
+      ) {
+        setCashBalance(cloudState.cashBalance);
+      }
+      if (cloudState.positions && typeof cloudState.positions === 'object') {
+        setPositions(cloudState.positions);
+      }
+      if (Array.isArray(cloudState.ledger) && cloudState.ledger.length > 0) {
+        setLedger(cloudState.ledger);
+      }
+    });
+
+    // 2. Fetch server-persisted autopilot state fallback
     fetch('/api/autopilot/state')
       .then((r) => r.json())
       .then((data) => {
@@ -252,12 +279,14 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       })
       .catch((err) => console.warn('Could not sync with server autopilot state:', err));
+
     return () => {
       isMounted = false;
+      unsubscribeCloud();
     };
   }, []);
 
-  // Persist state in localStorage and server so refreshes, new tabs, and server restarts preserve exact balances
+  // Persist state in Firestore cloud database, localStorage, and server so any browser/device sees the exact same portfolio
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -269,7 +298,16 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         autoExitPct,
         maxOpenPositions,
       };
+
+      // Local cache
       localStorage.setItem(AUTOPILOT_PERSISTENCE_KEY, JSON.stringify(stateToSave));
+
+      // Sync to Firestore Cloud DB
+      saveAutopilotStateToFirestore(stateToSave).catch((err) =>
+        console.warn('Failed to sync autopilot state to Firestore:', err)
+      );
+
+      // Server persistence
       fetch('/api/autopilot/state', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

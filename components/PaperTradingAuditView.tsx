@@ -10,6 +10,7 @@ import {
   PaperTradeRecord,
   AuditSummaryMetrics,
 } from '@/lib/paperTradingAudit';
+import { subscribeToFirestoreAuditTrades } from '@/lib/firestoreAudit';
 import { fetchLiveCryptoPrices } from '@/lib/livePrices';
 import {
   Download,
@@ -83,9 +84,12 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     TSLAon: { price: 248.9, change24h: 2.14 },
   });
 
-  // Sync with global storage events
+  // Sync with Firestore Cloud real-time updates and global storage events
   useEffect(() => {
+    let isMounted = true;
+
     const handleUpdate = (e: any) => {
+      if (!isMounted) return;
       if (e.detail && Array.isArray(e.detail)) {
         setTrades(e.detail);
       } else {
@@ -94,8 +98,14 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     };
     window.addEventListener('lunaris-audit-updated', handleUpdate);
 
-    // Initial server sync & periodic poll to pick up background autopilot executions
-    let isMounted = true;
+    // 1. Instant real-time Firestore listener across all devices/browsers
+    const unsubscribeFirestore = subscribeToFirestoreAuditTrades((cloudTrades) => {
+      if (isMounted && cloudTrades && cloudTrades.length > 0) {
+        setTrades(cloudTrades);
+      }
+    });
+
+    // 2. Initial fetch and fallback poll
     syncServerAuditTrades().then((serverTrades) => {
       if (isMounted && serverTrades && serverTrades.length > 0) {
         setTrades(serverTrades);
@@ -111,11 +121,12 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       } catch (err) {
         // silent
       }
-    }, 4000);
+    }, 6000);
 
     return () => {
       isMounted = false;
       window.removeEventListener('lunaris-audit-updated', handleUpdate);
+      unsubscribeFirestore();
       clearInterval(pollInterval);
     };
   }, []);
@@ -344,7 +355,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
               </span>
               <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                LIVE REAL-TIME SYNC
+                LIVE FIRESTORE CLOUD SYNC
               </span>
             </div>
             <p className="text-xs text-gray-300 max-w-3xl leading-relaxed">
