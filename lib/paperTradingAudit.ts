@@ -28,6 +28,8 @@ export interface PaperTradeRecord {
   trigger: string; // e.g. "Council Quorum: Quant-Omega + Atlas-Macro (92% Conf)"
   status: 'CLOSED' | 'OPEN' | 'STOP_LOSS' | 'TAKE_PROFIT';
   postMortem?: TradePostMortem;
+  idempotencyKey?: string;
+  sourceHandler?: 'AUTOPILOT_DAEMON' | 'COUNCIL_SIGNAL' | 'PULSE_RADAR' | 'MANUAL' | 'AUDIT_SIM';
 }
 
 export interface AuditSummaryMetrics {
@@ -330,6 +332,7 @@ import {
   isFirestoreQuotaExceeded,
   isAnomalousTrade,
   reconcileTradeCollection,
+  generateTradeIdempotencyKey,
 } from './firestoreAudit';
 import { getLiveMarketQuotes } from './livePrices';
 
@@ -484,7 +487,8 @@ export function savePaperTrades(trades: PaperTradeRecord[]) {
 
 /**
  * Record a new settled paper-trade transaction (saved locally, synced to Firestore cloud DB, and synced to server ledger).
- * Guarantees that any provided execution timestamp is preserved and NOT overwritten by today's date.
+ * Guarantees that any provided execution timestamp is preserved, deterministic idempotency keys prevent duplicates,
+ * and duplicate writes for the same event return the existing record instead of double-writing.
  */
 export function recordNewPaperTrade(
   tradeData: Omit<PaperTradeRecord, 'id' | 'timestamp' | 'accountBalance'> & {
@@ -494,10 +498,27 @@ export function recordNewPaperTrade(
     executedAt?: string;
     createdAt?: string;
     accountBalance?: number;
+    idempotencyKey?: string;
+    sourceHandler?: 'AUTOPILOT_DAEMON' | 'COUNCIL_SIGNAL' | 'PULSE_RADAR' | 'MANUAL' | 'AUDIT_SIM';
   }
 ): PaperTradeRecord {
   const currentTrades = getSavedPaperTrades();
   const timestamp = resolveRealTradeTimestamp(tradeData, tradeData.id);
+  const idempotencyKey =
+    tradeData.idempotencyKey || generateTradeIdempotencyKey({ ...tradeData, timestamp });
+
+  // Guard against duplicate invocations (idempotency key or same instrument+direction within 1.5s)
+  const existingTrade = currentTrades.find((t) => {
+    if (t.idempotencyKey && t.idempotencyKey === idempotencyKey) return true;
+    if (tradeData.id && t.id === tradeData.id) return true;
+    const timeDiff = Math.abs(new Date(t.timestamp).getTime() - new Date(timestamp).getTime());
+    return timeDiff < 1500 && t.instrument === tradeData.instrument && t.direction === tradeData.direction;
+  });
+
+  if (existingTrade) {
+    return existingTrade;
+  }
+
   const count = currentTrades.length + 1;
   const dateStr = timestamp.slice(0, 10).replace(/-/g, '');
   const id = tradeData.id || `PT-${dateStr}-${count.toString().padStart(2, '0')}`;
@@ -506,6 +527,8 @@ export function recordNewPaperTrade(
     ...tradeData,
     id,
     timestamp,
+    idempotencyKey,
+    sourceHandler: tradeData.sourceHandler || 'AUTOPILOT_DAEMON',
     accountBalance: 100000,
   };
 
@@ -513,9 +536,9 @@ export function recordNewPaperTrade(
   const reconciled = reconcileTradeCollection(updated);
   savePaperTrades(reconciled);
 
-  const finalRecord = reconciled[reconciled.length - 1];
+  const finalRecord = reconciled.find((t) => t.id === id) || reconciled[reconciled.length - 1];
 
-  // Synchronize with Firestore Cloud DB
+  // Synchronize with Firestore Cloud DB (buffered batch write)
   saveTradeToFirestore(finalRecord).catch((err) =>
     console.warn('Failed to sync trade to Firestore:', err)
   );

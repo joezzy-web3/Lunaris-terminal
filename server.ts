@@ -5,7 +5,12 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import { SEED_PAPER_TRADES } from './lib/paperTradingAudit';
-import { isAnomalousTrade, reconcileTradeCollection } from './lib/firestoreAudit';
+import {
+  isAnomalousTrade,
+  reconcileTradeCollection,
+  normalizeTradeRecord,
+  generateTradeIdempotencyKey,
+} from './lib/firestoreAudit';
 
 dotenv.config();
 
@@ -351,6 +356,7 @@ app.get('/api/bitget/orderbook', async (req, res) => {
 const AUDIT_DATA_DIR = path.join(process.cwd(), 'data');
 const AUDIT_FILE_PATH = path.join(AUDIT_DATA_DIR, 'audit_trades.json');
 const AUTOPILOT_FILE_PATH = path.join(AUDIT_DATA_DIR, 'autopilot_state.json');
+const FIRESTORE_QUOTA_FILE_PATH = path.join(AUDIT_DATA_DIR, 'firestore_quota.json');
 
 function ensureAuditFile() {
   try {
@@ -365,6 +371,39 @@ function ensureAuditFile() {
   }
 }
 ensureAuditFile();
+
+function getFirestoreQuotaStatus(): { quotaExceeded: boolean; date: string; message: string } {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    if (fs.existsSync(FIRESTORE_QUOTA_FILE_PATH)) {
+      const data = JSON.parse(fs.readFileSync(FIRESTORE_QUOTA_FILE_PATH, 'utf8'));
+      if (data && data.date === today && data.quotaExceeded) {
+        return data;
+      }
+    }
+  } catch {}
+  // Default to true for known exhausted date 2026-09-14 on free tier Spark plan
+  return {
+    quotaExceeded: today === '2026-09-14',
+    date: today,
+    message: 'Free daily write units per project (free tier database) reached.',
+  };
+}
+
+function setFirestoreQuotaStatus(quotaExceeded: boolean, date?: string) {
+  const d = date || new Date().toISOString().slice(0, 10);
+  const data = {
+    quotaExceeded,
+    date: d,
+    updatedAt: new Date().toISOString(),
+    message: 'Free daily write units per project (free tier database) limit reached for today.',
+  };
+  try {
+    ensureAuditFile();
+    fs.writeFileSync(FIRESTORE_QUOTA_FILE_PATH, JSON.stringify(data, null, 2), 'utf8');
+  } catch {}
+  return data;
+}
 
 function getAuditTrades(): any[] {
   try {
@@ -559,10 +598,10 @@ function runAutopilotDaemonTick() {
 
       // Append to audit_trades.json
       const trades = getAuditTrades();
-      const lastBal = trades.length > 0 ? (trades[trades.length - 1].accountBalance || 100000) : 100000;
-      const newAccBalance = parseFloat((lastBal + parseFloat(pnl.toFixed(2))).toFixed(2));
-      const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${(trades.length + 1).toString().padStart(2, '0')}`;
-      trades.push({
+      const count = trades.length + 1;
+      const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${count.toString().padStart(2, '0')}`;
+      const idempKey = `daemon_tp_${ticker}_${Math.floor(new Date(nowUtc).getTime() / 2000)}`;
+      const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
         timestamp: nowUtc,
         instrument: `${ticker}/USDT`,
@@ -572,11 +611,15 @@ function runAutopilotDaemonTick() {
         leverage: 3,
         balanceChange: parseFloat(pnl.toFixed(2)),
         balanceChangePct: parseFloat(pnlPct.toFixed(2)),
-        accountBalance: newAccBalance,
+        accountBalance: 100000,
         trigger: `Autopilot Daemon: Target profit ratified (+${pnlPct.toFixed(2)}%) on ${ticker} by Tri-Persona Council`,
         status: 'TAKE_PROFIT',
-      });
-      saveAuditTrades(trades);
+        sourceHandler: 'AUTOPILOT_DAEMON',
+        idempotencyKey: idempKey,
+      }, newTradeId);
+      trades.push(normalizedTrade);
+      const reconciled = reconcileTradeCollection(trades);
+      saveAuditTrades(reconciled);
       continue;
     }
 
@@ -612,10 +655,10 @@ function runAutopilotDaemonTick() {
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
 
       const trades = getAuditTrades();
-      const lastBal = trades.length > 0 ? (trades[trades.length - 1].accountBalance || 100000) : 100000;
-      const newAccBalance = parseFloat((lastBal + parseFloat(pnl.toFixed(2))).toFixed(2));
-      const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${(trades.length + 1).toString().padStart(2, '0')}`;
-      trades.push({
+      const count = trades.length + 1;
+      const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${count.toString().padStart(2, '0')}`;
+      const idempKey = `daemon_sl_${ticker}_${Math.floor(new Date(nowUtc).getTime() / 2000)}`;
+      const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
         timestamp: nowUtc,
         instrument: `${ticker}/USDT`,
@@ -625,12 +668,16 @@ function runAutopilotDaemonTick() {
         leverage: 3,
         balanceChange: parseFloat(pnl.toFixed(2)),
         balanceChangePct: parseFloat(pnlPct.toFixed(2)),
-        accountBalance: newAccBalance,
+        accountBalance: 100000,
         trigger: `Guardian-01 Risk Veto: Stop-loss protection executed on ${ticker}. Forensic post-mortem committed.`,
         status: 'STOP_LOSS',
         postMortem,
-      });
-      saveAuditTrades(trades);
+        sourceHandler: 'AUTOPILOT_DAEMON',
+        idempotencyKey: idempKey,
+      }, newTradeId);
+      trades.push(normalizedTrade);
+      const reconciled = reconcileTradeCollection(trades);
+      saveAuditTrades(reconciled);
       continue;
     }
   }
@@ -710,10 +757,11 @@ if (initialServerState.isExecuting) {
 // GET /api/audit/trades - Global read for all judges and clients
 app.get('/api/audit/trades', (req, res) => {
   const trades = getAuditTrades();
+  const reconciled = reconcileTradeCollection(trades);
   res.json({
     success: true,
-    trades,
-    count: trades.length,
+    trades: reconciled,
+    count: reconciled.length,
     timestamp: Date.now(),
   });
 });
@@ -731,19 +779,26 @@ app.post('/api/audit/trade', (req, res) => {
       return res.status(400).json({ success: false, error: 'Rejected anomalous trade: value outside realistic corridor' });
     }
 
+    const normalized = normalizeTradeRecord(trade, trade.id);
+    const idempKey = normalized.idempotencyKey || generateTradeIdempotencyKey(normalized);
     const trades = getAuditTrades();
-    const existingIndex = trades.findIndex((t) => t.id === trade.id);
+
+    const existingIndex = trades.findIndex(
+      (t) => t.id === normalized.id || (t.idempotencyKey && t.idempotencyKey === idempKey)
+    );
+
     if (existingIndex >= 0) {
-      trades[existingIndex] = trade;
+      trades[existingIndex] = { ...trades[existingIndex], ...normalized };
     } else {
-      trades.push(trade);
+      trades.push(normalized);
     }
 
-    saveAuditTrades(trades);
+    const reconciled = reconcileTradeCollection(trades);
+    saveAuditTrades(reconciled);
     return res.json({
       success: true,
-      tradeId: trade.id,
-      count: trades.length,
+      tradeId: normalized.id,
+      count: reconciled.length,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
@@ -757,11 +812,11 @@ app.post('/api/audit/sync', (req, res) => {
     if (!Array.isArray(trades)) {
       return res.status(400).json({ success: false, error: 'Invalid trades payload' });
     }
-    const clean = trades.filter((t) => !isAnomalousTrade(t));
-    saveAuditTrades(clean);
+    const reconciled = reconcileTradeCollection(trades);
+    saveAuditTrades(reconciled);
     return res.json({
       success: true,
-      count: clean.length,
+      count: reconciled.length,
       timestamp: Date.now(),
     });
   } catch (err: any) {
@@ -801,6 +856,28 @@ app.post('/api/audit/reset', (req, res) => {
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/firestore/quota - Query Firestore free-tier quota circuit breaker status
+app.get('/api/firestore/quota', (req, res) => {
+  const status = getFirestoreQuotaStatus();
+  res.json({
+    success: true,
+    ...status,
+    timestamp: Date.now(),
+  });
+});
+
+// POST /api/firestore/quota - Broadcast Firestore daily write quota exhaustion across system
+app.post('/api/firestore/quota', (req, res) => {
+  try {
+    const quotaExceeded = req.body?.quotaExceeded ?? true;
+    const date = req.body?.date;
+    const updated = setFirestoreQuotaStatus(quotaExceeded, date);
+    res.json({ success: true, ...updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

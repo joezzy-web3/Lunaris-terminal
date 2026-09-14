@@ -11,7 +11,9 @@
     "balanceChange": -30.99,
     "timestamp": "2026-09-01T15:20:10.000Z",
     "trigger": "Guardian-01 Risk Veto: Volatility threshold breach; executed tight trailing stop",
-    "id": "PT-2026-0901-01"
+    "id": "PT-2026-0901-01",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894138005_SOL/USDT_SHORT_guardian01riskvetovo"
   },
   {
     "leverage": 2,
@@ -25,49 +27,25 @@
     "status": "TAKE_PROFIT",
     "trigger": "Atlas-Macro: Tokenized US Equities 7x24 Weekend Catalyst (rToken)",
     "quantity": 18000,
-    "id": "PT-2026-0902-02"
-  },
-  {
-    "price": 94820.5,
-    "accountBalance": 102104.41,
-    "timestamp": "2026-09-03T04:15:22.000Z",
-    "direction": "LONG",
-    "quantity": 12000,
-    "balanceChange": 785.4,
-    "id": "PT-2026-0903-01",
-    "balanceChangePct": 6.54,
-    "status": "TAKE_PROFIT",
-    "leverage": 5,
-    "instrument": "BTC/USDT",
-    "trigger": "Council Quorum: Quant-Omega + Atlas-Macro (Breakout + Low Funding Rate)"
+    "id": "PT-2026-0902-02",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894172036_NVDAON/USDT_LONG_atlasmacrotokenizedus"
   },
   {
     "balanceChange": 785.4,
     "id": "PT-2026-0903-03",
     "quantity": 12000,
     "trigger": "Council Quorum: Quant-Omega + Atlas-Macro (Breakout + Low Funding Rate)",
-    "accountBalance": 102889.81,
+    "accountBalance": 102104.41,
     "instrument": "BTC/USDT",
     "leverage": 4,
     "balanceChangePct": 6.54,
     "price": 76820.5,
     "timestamp": "2026-09-03T04:15:22.000Z",
     "direction": "LONG",
-    "status": "TAKE_PROFIT"
-  },
-  {
-    "balanceChangePct": 4.85,
-    "leverage": 4,
-    "price": 3420.1,
-    "balanceChange": 412.8,
-    "instrument": "ETH/USDT",
-    "trigger": "Autopilot Pulse: Layer-1 Hype Velocity > 85 (Unanimous Council Quorum)",
     "status": "TAKE_PROFIT",
-    "quantity": 8500,
-    "id": "PT-2026-0903-02",
-    "accountBalance": 103302.61,
-    "timestamp": "2026-09-03T11:42:08.000Z",
-    "direction": "LONG"
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894204461_BTC/USDT_LONG_councilquorumquantome"
   },
   {
     "instrument": "ETH/USDT",
@@ -76,31 +54,19 @@
     "trigger": "Autopilot Pulse: Layer-1 Hype Velocity > 85 (Unanimous Council Quorum)",
     "timestamp": "2026-09-03T11:42:08.000Z",
     "direction": "LONG",
-    "accountBalance": 103887.21,
+    "accountBalance": 102689.01,
     "balanceChange": 584.6,
     "leverage": 4,
     "status": "TAKE_PROFIT",
     "balanceChangePct": 5.31,
-    "id": "PT-2026-0903-04"
-  },
-  {
-    "price": 198.4,
-    "id": "PT-2026-0904-03",
-    "accountBalance": 103702.21,
-    "leverage": 3,
-    "trigger": "Guardian-01 Hard Stop: Mean reversion failed at resistance wall",
-    "timestamp": "2026-09-04T08:19:40.000Z",
-    "status": "STOP_LOSS",
-    "direction": "SHORT",
-    "balanceChangePct": -3.08,
-    "instrument": "SOL/USDT",
-    "quantity": 6000,
-    "balanceChange": -185
+    "id": "PT-2026-0903-04",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894217864_ETH/USDT_LONG_autopilotpulselayer1"
   },
   {
     "timestamp": "2026-09-04T08:19:40.000Z",
     "price": 138.4,
-    "accountBalance": 103462.21,
+    "accountBalance": 102449.01,
     "direction": "SHORT",
     "quantity": 8000,
     "balanceChange": -240,
@@ -109,25 +75,13 @@
     "id": "PT-2026-0904-05",
     "trigger": "Guardian-01 Hard Stop: Mean reversion failed at resistance wall",
     "leverage": 3,
-    "instrument": "SOL/USDT"
-  },
-  {
-    "price": 138.2,
-    "balanceChange": 1240.5,
-    "quantity": 15000,
-    "accountBalance": 104702.71,
-    "balanceChangePct": 8.27,
-    "status": "TAKE_PROFIT",
-    "instrument": "NVDAon/USDT",
-    "timestamp": "2026-09-04T16:30:15.000Z",
-    "id": "PT-2026-0904-04",
-    "direction": "LONG",
-    "leverage": 2,
-    "trigger": "Atlas-Macro: Tokenized US Equities 7x24 Weekend Catalyst (rToken)"
+    "instrument": "SOL/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894254990_SOL/USDT_SHORT_guardian01hardstopme"
   },
   {
     "balanceChangePct": 5.96,
-    "accountBalance": 105090.35,
+    "accountBalance": 102836.65,
     "trigger": "Quant-Omega: Orderbook Bid Absorption at $125 Wall",
     "leverage": 2,
     "timestamp": "2026-09-04T16:30:15.000Z",
@@ -137,52 +91,28 @@
     "status": "TAKE_PROFIT",
     "id": "PT-2026-0904-06",
     "instrument": "NVDAon/USDT",
-    "quantity": 6500
-  },
-  {
-    "id": "PT-2026-0905-05",
-    "price": 95410,
-    "status": "TAKE_PROFIT",
-    "instrument": "BTC/USDT",
-    "direction": "LONG",
-    "quantity": 14000,
-    "timestamp": "2026-09-05T02:11:55.000Z",
-    "balanceChange": 920,
-    "trigger": "Quant-Omega: Orderbook Bid Absorption at $95k Wall",
-    "leverage": 4,
-    "accountBalance": 106010.35,
-    "balanceChangePct": 6.57
+    "quantity": 6500,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894269707_NVDAON/USDT_LONG_quantomegaorderbookbi"
   },
   {
     "balanceChange": 674.79,
     "price": 77150,
     "id": "PT-2026-0905-07",
     "leverage": 4,
-    "accountBalance": 106685.14,
+    "accountBalance": 103511.44,
     "timestamp": "2026-09-05T02:11:55.000Z",
     "status": "TAKE_PROFIT",
     "direction": "LONG",
     "balanceChangePct": 6.43,
     "quantity": 10500,
     "instrument": "BTC/USDT",
-    "trigger": "Quant-Omega: Orderbook Bid Absorption on Bitget Spot Gateway"
+    "trigger": "Quant-Omega: Orderbook Bid Absorption on Bitget Spot Gateway",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894287157_BTC/USDT_LONG_quantomegaorderbookbi"
   },
   {
-    "accountBalance": 107525.34,
-    "id": "PT-2026-0906-06",
-    "leverage": 5,
-    "instrument": "SUI/USDT",
-    "price": 3.14,
-    "balanceChange": 840.2,
-    "timestamp": "2026-09-06T09:04:12.000Z",
-    "quantity": 7500,
-    "direction": "LONG",
-    "balanceChangePct": 11.2,
-    "status": "TAKE_PROFIT",
-    "trigger": "Autopilot Pulse: Social Velocity Spike (88.4) + Volume Influx"
-  },
-  {
-    "accountBalance": 107984.6,
+    "accountBalance": 103970.7,
     "price": 3.14,
     "instrument": "SUI/USDT",
     "quantity": 4500,
@@ -193,10 +123,12 @@
     "balanceChange": 459.26,
     "leverage": 4,
     "trigger": "Autopilot Pulse: Social Velocity Spike (88.4) + Volume Influx",
-    "balanceChangePct": 10.21
+    "balanceChangePct": 10.21,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894342726_SUI/USDT_LONG_autopilotpulsesocialv"
   },
   {
-    "accountBalance": 108964.6,
+    "accountBalance": 104950.7,
     "price": 77480,
     "instrument": "BTC/USDT",
     "quantity": 14000,
@@ -207,27 +139,9 @@
     "balanceChange": 980,
     "trigger": "Council Quorum: Unanimous Buy Signal (Omega + Guardian + Atlas)",
     "leverage": 4,
-    "balanceChangePct": 7
-  },
-  {
-    "quantity": 9000,
-    "instrument": "ETH/USDT",
-    "leverage": 3,
-    "accountBalance": 108719.1,
-    "direction": "SHORT",
-    "timestamp": "2026-09-07T14:22:33.000Z",
-    "status": "STOP_LOSS",
-    "trigger": "Guardian-01 Trailing Stop: Fed Policy Speech Macro Ripple",
-    "balanceChange": -245.5,
-    "balanceChangePct": -2.72,
-    "postMortem": {
-      "rootCause": "Sudden rate-volatility spike following unscheduled Fed remarks breached micro-support band.",
-      "adversarialFlag": "NEXUS-RED Trap Detection: High-frequency taker liquidation cascading into orderbook bids.",
-      "policyAdjustment": "Increased pre-announcement macro volatility buffer from 15% to 28% for top-tier crypto assets.",
-      "lessonLearned": "Dynamic trailing stop successfully insulated NAV, capping loss at -2.72% vs an unmitigated -14.2% wick."
-    },
-    "price": 3510.5,
-    "id": "PT-2026-0907-07"
+    "balanceChangePct": 7,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894384460_BTC/USDT_LONG_councilquorumunanimous"
   },
   {
     "balanceChange": 830,
@@ -240,56 +154,32 @@
     "leverage": 2,
     "price": 246.5,
     "id": "PT-2026-0907-10",
-    "accountBalance": 109549.1,
-    "balanceChangePct": 6.92
-  },
-  {
-    "status": "TAKE_PROFIT",
-    "accountBalance": 110699.1,
-    "leverage": 4,
-    "price": 194.2,
-    "balanceChangePct": 10.45,
-    "trigger": "Council Quorum: Unanimous Buy Signal (Omega + Guardian + Atlas)",
-    "instrument": "SOL/USDT",
-    "id": "PT-2026-0908-08",
-    "quantity": 11000,
-    "balanceChange": 1150,
-    "timestamp": "2026-09-08T06:50:41.000Z",
-    "direction": "LONG"
+    "accountBalance": 105780.7,
+    "balanceChangePct": 6.92,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894401427_TSLAON/USDT_LONG_atlasmacrotokenizedst"
   },
   {
     "trigger": "Council Quorum: Quant-Omega Momentum Alignment (94% Conf)",
     "quantity": 9500,
     "status": "TAKE_PROFIT",
     "balanceChangePct": 8.64,
-    "accountBalance": 111520.09,
+    "accountBalance": 106601.69,
     "direction": "LONG",
     "timestamp": "2026-09-08T06:50:41.000Z",
     "price": 139.2,
     "balanceChange": 820.99,
     "leverage": 4,
     "instrument": "SOL/USDT",
-    "id": "PT-2026-0908-11"
-  },
-  {
-    "direction": "LONG",
-    "price": 96800,
-    "timestamp": "2026-09-09T18:14:02.000Z",
-    "accountBalance": 113000.29,
-    "balanceChangePct": 9.25,
-    "quantity": 16000,
-    "status": "TAKE_PROFIT",
-    "instrument": "BTC/USDT",
-    "balanceChange": 1480.2,
-    "leverage": 5,
-    "id": "PT-2026-0909-09",
-    "trigger": "Atlas-Macro: Institutional OTC Outflow Alert on Bitget Gateway"
+    "id": "PT-2026-0908-11",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894425120_SOL/USDT_LONG_councilquorumquantome"
   },
   {
     "direction": "LONG",
     "timestamp": "2026-09-09T18:14:02.000Z",
     "price": 77800,
-    "accountBalance": 113986.61,
+    "accountBalance": 107588.01,
     "id": "PT-2026-0909-12",
     "quantity": 12500,
     "trigger": "Atlas-Macro: Institutional OTC Inflow Alert on Bitget Gateway",
@@ -297,21 +187,9 @@
     "balanceChangePct": 7.89,
     "instrument": "BTC/USDT",
     "leverage": 4,
-    "balanceChange": 986.32
-  },
-  {
-    "price": 242.6,
-    "direction": "LONG",
-    "timestamp": "2026-09-10T12:05:19.000Z",
-    "leverage": 2,
-    "accountBalance": 114666.61,
-    "status": "TAKE_PROFIT",
-    "balanceChangePct": 6.8,
-    "id": "PT-2026-0910-10",
-    "balanceChange": 680,
-    "quantity": 10000,
-    "instrument": "TSLAon/USDT",
-    "trigger": "Council Quorum: Tokenized Stock After-Hours Earnings Momentum (rToken)"
+    "balanceChange": 986.32,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894488821_BTC/USDT_LONG_atlasmacroinstitutiona"
   },
   {
     "quantity": 7500,
@@ -319,27 +197,15 @@
     "balanceChange": 472.27,
     "instrument": "TSLAon/USDT",
     "trigger": "Autopilot Daemon: Tokenized Stock Earnings Velocity Influx",
-    "accountBalance": 115138.88,
+    "accountBalance": 108060.28,
     "price": 248.6,
     "direction": "LONG",
     "balanceChangePct": 6.3,
     "leverage": 2,
     "timestamp": "2026-09-10T12:05:19.000Z",
-    "id": "PT-2026-0910-13"
-  },
-  {
-    "balanceChangePct": 7.42,
-    "id": "PT-2026-0911-11",
-    "accountBalance": 116029.38,
-    "status": "TAKE_PROFIT",
-    "leverage": 4,
-    "price": 3485,
-    "direction": "LONG",
-    "balanceChange": 890.5,
-    "timestamp": "2026-09-11T03:30:45.000Z",
-    "trigger": "Autopilot Daemon: Liquidity Sweep Absorption at $3,480 Support",
-    "quantity": 12000,
-    "instrument": "ETH/USDT"
+    "id": "PT-2026-0910-13",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894520959_TSLAON/USDT_LONG_autopilotdaemontokeniz"
   },
   {
     "direction": "LONG",
@@ -348,17 +214,19 @@
     "price": 2510,
     "balanceChangePct": 7.73,
     "instrument": "ETH/USDT",
-    "accountBalance": 116879.38,
+    "accountBalance": 108910.28,
     "status": "TAKE_PROFIT",
     "trigger": "Autopilot Daemon: Liquidity Sweep Absorption at $2,500 Support",
     "balanceChange": 850,
     "id": "PT-2026-0911-14",
-    "leverage": 4
+    "leverage": 4,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894548722_ETH/USDT_LONG_autopilotdaemonliquidi"
   },
   {
     "timestamp": "2026-09-11T14:18:22.000Z",
     "instrument": "NVDAon/USDT",
-    "accountBalance": 117579.38,
+    "accountBalance": 109610.28,
     "direction": "LONG",
     "balanceChange": 700,
     "quantity": 10000,
@@ -367,7 +235,9 @@
     "status": "TAKE_PROFIT",
     "trigger": "Council Quorum: NVDAon 7x24 tokenized liquidity expansion",
     "balanceChangePct": 7,
-    "leverage": 2
+    "leverage": 2,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894568151_NVDAON/USDT_LONG_councilquorumnvdaon7x"
   },
   {
     "id": "PT-2026-0912-16",
@@ -375,27 +245,15 @@
     "status": "TAKE_PROFIT",
     "leverage": 4,
     "trigger": "Quant-Omega: Orderbook Delta Imbalance (>+72%) ratified",
-    "accountBalance": 118709.38,
+    "accountBalance": 110740.28,
     "instrument": "BTC/USDT",
     "timestamp": "2026-09-12T07:11:04.000Z",
     "direction": "LONG",
     "price": 78150,
     "balanceChange": 1130,
-    "quantity": 14000
-  },
-  {
-    "status": "STOP_LOSS",
-    "accountBalance": 118367.62,
-    "balanceChangePct": -3.74,
-    "price": 184.6,
-    "quantity": 9138,
-    "balanceChange": -341.76,
-    "timestamp": "2026-09-12T10:34:12.529Z",
-    "leverage": 5,
-    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
-    "direction": "LONG",
-    "id": "PT-20260912-12",
-    "instrument": "SOL/USDT"
+    "quantity": 14000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894598532_BTC/USDT_LONG_quantomegaorderbookde"
   },
   {
     "id": "PT-20260912-13",
@@ -407,9 +265,11 @@
     "status": "TAKE_PROFIT",
     "timestamp": "2026-09-12T10:34:41.249Z",
     "direction": "LONG",
-    "accountBalance": 118880.36,
+    "accountBalance": 111253.02,
     "leverage": 2,
-    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation"
+    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894604640_TSLAON/USDT_LONG_councilquorumtslaonus"
   },
   {
     "id": "PT-2026-0912-17",
@@ -419,11 +279,13 @@
     "quantity": 8500,
     "balanceChange": 700,
     "balanceChangePct": 8.24,
-    "accountBalance": 119580.36,
+    "accountBalance": 111953.02,
     "trigger": "Autopilot Pulse: Ecosystem Active Wallets + Social Breakout",
     "price": 142.5,
     "leverage": 4,
-    "instrument": "SOL/USDT"
+    "instrument": "SOL/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894621165_SOL/USDT_LONG_autopilotpulseecosyste"
   },
   {
     "direction": "LONG",
@@ -434,10 +296,12 @@
     "instrument": "ETH/USDT",
     "price": 2525,
     "id": "PT-2026-0913-18",
-    "accountBalance": 119718.26,
+    "accountBalance": 112090.92,
     "quantity": 3500,
     "balanceChangePct": 3.94,
-    "balanceChange": 137.9
+    "balanceChange": 137.9,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894649267_ETH/USDT_LONG_atlasmacropreweeklyo"
   },
   {
     "price": 2479.84,
@@ -448,16 +312,18 @@
     "timestamp": "2026-09-13T22:37:07.034Z",
     "balanceChangePct": 8.27,
     "instrument": "ETH/USDT",
-    "accountBalance": 120445.28,
+    "accountBalance": 112817.94,
     "id": "PT-20260913-14",
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
-    "leverage": 5
+    "leverage": 5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669513_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "balanceChangePct": 4.19,
     "leverage": 2,
     "status": "TAKE_PROFIT",
-    "accountBalance": 121003.39,
+    "accountBalance": 113376.05,
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "direction": "LONG",
     "timestamp": "2026-09-13T22:48:36.314Z",
@@ -465,7 +331,9 @@
     "balanceChange": 558.11,
     "quantity": 13320,
     "instrument": "NVDAon/USDT",
-    "price": 139.4
+    "price": 139.4,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669858_NVDAON/USDT_LONG_councilquorumnvdaonus"
   },
   {
     "id": "PT-20260913-16",
@@ -479,7 +347,9 @@
     "leverage": 3,
     "balanceChangePct": -3.65,
     "status": "STOP_LOSS",
-    "accountBalance": 120486.48
+    "accountBalance": 112859.14,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669865_BTC/USDT_SHORT_guardian01riskvetovo"
   },
   {
     "balanceChange": 585.82,
@@ -490,24 +360,28 @@
     "status": "TAKE_PROFIT",
     "balanceChangePct": 7.61,
     "id": "PT-20260913-17",
-    "accountBalance": 121072.3,
+    "accountBalance": 113444.96,
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "timestamp": "2026-09-13T22:49:05.294Z",
-    "direction": "SHORT"
+    "direction": "SHORT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669872_TSLAON/USDT_SHORT_councilquorumtslaonus"
   },
   {
     "id": "PT-20260913-18",
     "direction": "LONG",
     "status": "STOP_LOSS",
     "price": 100.03,
-    "accountBalance": 120769.54,
+    "accountBalance": 113142.2,
     "timestamp": "2026-09-13T22:49:25.375Z",
     "instrument": "SOL/USDT",
     "leverage": 4,
     "balanceChange": -302.76,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "quantity": 9491,
-    "balanceChangePct": -3.19
+    "balanceChangePct": -3.19,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669882_SOL/USDT_LONG_guardian01riskvetovo"
   },
   {
     "balanceChangePct": 5.42,
@@ -520,22 +394,26 @@
     "price": 248.9,
     "direction": "LONG",
     "timestamp": "2026-09-13T22:49:46.284Z",
-    "accountBalance": 121176.42,
-    "leverage": 2
+    "accountBalance": 113549.08,
+    "leverage": 2,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669893_TSLAON/USDT_LONG_councilquorumtslaonus"
   },
   {
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "status": "STOP_LOSS",
     "quantity": 10106,
     "balanceChangePct": -3.42,
-    "accountBalance": 120830.79,
+    "accountBalance": 113203.45,
     "direction": "LONG",
     "timestamp": "2026-09-13T22:50:00.308Z",
     "price": 248.9,
     "leverage": 2,
     "balanceChange": -345.63,
     "instrument": "TSLAon/USDT",
-    "id": "PT-20260913-20"
+    "id": "PT-20260913-20",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669900_TSLAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "status": "STOP_LOSS",
@@ -547,9 +425,11 @@
     "direction": "LONG",
     "leverage": 5,
     "balanceChange": -308.98,
-    "accountBalance": 120521.81,
+    "accountBalance": 112894.47,
     "balanceChangePct": -2.68,
-    "quantity": 11529
+    "quantity": 11529,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669910_BTC/USDT_LONG_guardian01riskvetovo"
   },
   {
     "leverage": 5,
@@ -557,16 +437,18 @@
     "price": 2478.42,
     "balanceChange": -297.13,
     "instrument": "ETH/USDT",
-    "accountBalance": 120224.68,
+    "accountBalance": 112597.34,
     "quantity": 12698,
     "id": "PT-20260913-22",
     "direction": "SHORT",
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "timestamp": "2026-09-13T22:50:35.289Z",
-    "balanceChangePct": -2.34
+    "balanceChangePct": -2.34,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669917_ETH/USDT_SHORT_guardian01riskvetovo"
   },
   {
-    "accountBalance": 120890.67,
+    "accountBalance": 113263.33,
     "balanceChange": 665.99,
     "leverage": 3,
     "status": "TAKE_PROFIT",
@@ -577,13 +459,15 @@
     "instrument": "ETH/USDT",
     "quantity": 14605,
     "id": "PT-20260913-23",
-    "balanceChangePct": 4.56
+    "balanceChangePct": 4.56,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669925_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "price": 99.93,
     "instrument": "SOL/USDT",
     "balanceChange": -149.22,
-    "accountBalance": 120741.45,
+    "accountBalance": 113114.11,
     "quantity": 7424,
     "status": "STOP_LOSS",
     "balanceChangePct": -2.01,
@@ -591,7 +475,9 @@
     "timestamp": "2026-09-13T22:51:09.355Z",
     "direction": "LONG",
     "leverage": 4,
-    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital"
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669934_SOL/USDT_LONG_guardian01riskvetovo"
   },
   {
     "quantity": 7544,
@@ -604,8 +490,10 @@
     "direction": "LONG",
     "timestamp": "2026-09-13T22:51:29.319Z",
     "balanceChangePct": 5.84,
-    "accountBalance": 121182.02,
-    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption"
+    "accountBalance": 113554.68,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669944_SOL/USDT_LONG_autopilotpulsesolusdt"
   },
   {
     "id": "PT-20260913-26",
@@ -614,12 +502,14 @@
     "status": "STOP_LOSS",
     "balanceChange": -220.74,
     "price": 248.9,
-    "accountBalance": 120961.28,
+    "accountBalance": 113333.94,
     "leverage": 2,
     "timestamp": "2026-09-13T22:51:50.302Z",
     "instrument": "TSLAon/USDT",
     "direction": "LONG",
-    "balanceChangePct": -2.07
+    "balanceChangePct": -2.07,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669955_TSLAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "instrument": "ETH/USDT",
@@ -628,12 +518,14 @@
     "direction": "LONG",
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "balanceChangePct": -2.14,
-    "accountBalance": 120748.86,
+    "accountBalance": 113121.52,
     "leverage": 4,
     "price": 2477.47,
     "balanceChange": -212.42,
     "id": "PT-20260913-27",
-    "status": "STOP_LOSS"
+    "status": "STOP_LOSS",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669963_ETH/USDT_LONG_guardian01riskvetovo"
   },
   {
     "id": "PT-20260913-28",
@@ -645,9 +537,11 @@
     "price": 76716.15,
     "timestamp": "2026-09-13T22:52:23.284Z",
     "balanceChangePct": 6.7,
-    "accountBalance": 121390.05,
+    "accountBalance": 113762.71,
     "balanceChange": 641.19,
-    "leverage": 4
+    "leverage": 4,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669971_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
     "status": "STOP_LOSS",
@@ -660,11 +554,13 @@
     "id": "PT-20260913-29",
     "instrument": "NVDAon/USDT",
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
-    "accountBalance": 121151.49,
-    "quantity": 7796
+    "accountBalance": 113524.15,
+    "quantity": 7796,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669978_NVDAON/USDT_LONG_guardian01riskvetovo"
   },
   {
-    "accountBalance": 122001.53,
+    "accountBalance": 114374.19,
     "timestamp": "2026-09-13T22:52:49.892Z",
     "direction": "LONG",
     "instrument": "BTC/USDT",
@@ -675,7 +571,9 @@
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "price": 76749.87,
     "status": "TAKE_PROFIT",
-    "leverage": 5
+    "leverage": 5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669984_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
     "timestamp": "2026-09-13T22:53:09.291Z",
@@ -683,13 +581,15 @@
     "instrument": "NVDAon/USDT",
     "id": "PT-20260913-31",
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
-    "accountBalance": 121604.87,
+    "accountBalance": 113977.53,
     "status": "STOP_LOSS",
     "balanceChange": -396.66,
     "price": 139.4,
     "quantity": 11049,
     "balanceChangePct": -3.59,
-    "leverage": 2
+    "leverage": 2,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894669994_NVDAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "timestamp": "2026-09-13T22:53:25.311Z",
@@ -700,15 +600,17 @@
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "leverage": 5,
     "balanceChange": -574.2,
-    "accountBalance": 121030.67,
+    "accountBalance": 113403.33,
     "price": 100.03,
     "status": "STOP_LOSS",
-    "quantity": 14648
+    "quantity": 14648,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894670002_SOL/USDT_LONG_guardian01riskvetovo"
   },
   {
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "balanceChange": 623.26,
-    "accountBalance": 121653.93,
+    "accountBalance": 114026.59,
     "quantity": 8266,
     "id": "PT-20260913-33",
     "direction": "LONG",
@@ -717,21 +619,25 @@
     "timestamp": "2026-09-13T23:09:43.242Z",
     "leverage": 2,
     "balanceChangePct": 7.54,
-    "price": 139.4
+    "price": 139.4,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894670491_NVDAON/USDT_LONG_councilquorumnvdaonus"
   },
   {
     "trigger": "Test trade write",
     "instrument": "BTC/USDT",
     "quantity": 5000,
     "balanceChangePct": 5,
-    "accountBalance": 121903.93,
+    "accountBalance": 114276.59,
     "id": "TEST-WRITE-01",
     "status": "TAKE_PROFIT",
     "leverage": 3,
     "balanceChange": 250,
     "direction": "LONG",
     "timestamp": "2026-09-14T01:00:05.070Z",
-    "price": 76800
+    "price": 76800,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894673802_BTC/USDT_LONG_testtradewrite"
   },
   {
     "balanceChange": 250,
@@ -745,12 +651,14 @@
     "price": 76800,
     "direction": "LONG",
     "balanceChangePct": 5,
-    "accountBalance": 122153.93
+    "accountBalance": 114526.59,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894673833_BTC/USDT_LONG_testtrade"
   },
   {
     "timestamp": "2026-09-14T01:58:15.605Z",
     "direction": "LONG",
-    "accountBalance": 122881.93,
+    "accountBalance": 115254.59,
     "balanceChangePct": 5.2,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.2%) ratified on BTC",
     "instrument": "BTC/USDT",
@@ -759,7 +667,9 @@
     "id": "PT-20260914-14",
     "status": "TAKE_PROFIT",
     "price": 78450,
-    "quantity": 14000
+    "quantity": 14000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675547_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "id": "PT-20260914-15",
@@ -770,10 +680,12 @@
     "direction": "LONG",
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-11.55% profit on SOL (Peak: +2.61%)",
     "instrument": "SOL/USDT",
-    "accountBalance": 122506.93,
+    "accountBalance": 114879.59,
     "timestamp": "2026-09-14T01:58:21.706Z",
     "quantity": 12500,
-    "price": 139.5
+    "price": 139.5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675550_SOL/USDT_LONG_breakevenratchettraili"
   },
   {
     "status": "STOP_LOSS",
@@ -792,8 +704,10 @@
     "quantity": 10000,
     "direction": "LONG",
     "timestamp": "2026-09-14T01:58:26.020Z",
-    "accountBalance": 122286.93,
-    "instrument": "TSLA/USDT"
+    "accountBalance": 114659.59,
+    "instrument": "TSLA/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675553_TSLA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "leverage": 3,
@@ -808,12 +722,14 @@
     "id": "PT-20260914-17",
     "price": 113.35,
     "quantity": 10000,
-    "accountBalance": 122026.93,
+    "accountBalance": 114399.59,
     "direction": "LONG",
     "timestamp": "2026-09-14T01:58:36.140Z",
     "instrument": "COIN/USDT",
     "balanceChange": -260,
-    "balanceChangePct": -2.6
+    "balanceChangePct": -2.6,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675558_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "id": "PT-20260914-18",
@@ -826,8 +742,10 @@
     "leverage": 5,
     "timestamp": "2026-09-14T01:58:45.953Z",
     "direction": "LONG",
-    "accountBalance": 122924.11,
-    "balanceChange": 897.18
+    "accountBalance": 115296.77,
+    "balanceChange": 897.18,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675562_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
     "balanceChangePct": 2.06,
@@ -841,7 +759,9 @@
     "balanceChange": 206,
     "quantity": 10000,
     "trigger": "Breakeven Ratchet: Trailing stop locked in +2.06% profit on TSLA (Peak: +19.64%)",
-    "accountBalance": 123130.11
+    "accountBalance": 115502.77,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675568_TSLA/USDT_LONG_breakevenratchettraili"
   },
   {
     "quantity": 11482,
@@ -849,13 +769,15 @@
     "status": "TAKE_PROFIT",
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "instrument": "BTC/USDT",
-    "accountBalance": 124022.26,
+    "accountBalance": 116394.92,
     "leverage": 5,
     "id": "PT-20260914-20",
     "balanceChange": 892.15,
     "balanceChangePct": 7.77,
     "direction": "LONG",
-    "timestamp": "2026-09-14T01:59:09.947Z"
+    "timestamp": "2026-09-14T01:59:09.947Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675574_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on ETH (-10.83%)",
@@ -866,7 +788,7 @@
     "instrument": "ETH/USDT",
     "id": "PT-20260914-21",
     "balanceChangePct": -3,
-    "accountBalance": 123722.26,
+    "accountBalance": 116094.92,
     "leverage": 3,
     "price": 2517.8,
     "quantity": 10000,
@@ -875,7 +797,9 @@
       "policyAdjustment": "Increased minimum orderbook depth requirement before next re-entry",
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 10.83%."
-    }
+    },
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675578_ETH/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "instrument": "AAPL/USDT",
@@ -886,15 +810,17 @@
     "balanceChange": 256,
     "timestamp": "2026-09-14T01:59:24.607Z",
     "status": "TAKE_PROFIT",
-    "accountBalance": 123978.26,
+    "accountBalance": 116350.92,
     "id": "PT-20260914-22",
     "leverage": 3,
-    "price": 230.34
+    "price": 230.34,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675582_AAPL/USDT_LONG_breakevenratchettraili"
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on SOL (-36.45%)",
     "balanceChange": -260,
-    "accountBalance": 123718.26,
+    "accountBalance": 116090.92,
     "timestamp": "2026-09-14T01:59:28.201Z",
     "direction": "LONG",
     "instrument": "SOL/USDT",
@@ -909,11 +835,13 @@
     },
     "quantity": 10000,
     "id": "PT-20260914-23",
-    "status": "STOP_LOSS"
+    "status": "STOP_LOSS",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675584_SOL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "balanceChangePct": -3,
-    "accountBalance": 123418.26,
+    "accountBalance": 115790.92,
     "balanceChange": -300,
     "price": 139.5,
     "direction": "LONG",
@@ -923,7 +851,9 @@
     "id": "PT-20260914-24",
     "status": "TAKE_PROFIT",
     "leverage": 3,
-    "trigger": "Breakeven Ratchet: Trailing stop locked in +-20.48% profit on SOL (Peak: +6.10%)"
+    "trigger": "Breakeven Ratchet: Trailing stop locked in +-20.48% profit on SOL (Peak: +6.10%)",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675588_SOL/USDT_LONG_breakevenratchettraili"
   },
   {
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -936,14 +866,16 @@
     "leverage": 5,
     "timestamp": "2026-09-14T01:59:38.467Z",
     "direction": "SHORT",
-    "accountBalance": 123754.68,
-    "price": 76868.7
+    "accountBalance": 116127.34,
+    "price": 76868.7,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675589_BTC/USDT_SHORT_autopilotpulsebtcusdt"
   },
   {
     "price": 131.75,
     "balanceChangePct": -7.02,
     "quantity": 10000,
-    "accountBalance": 123052.68,
+    "accountBalance": 115425.34,
     "instrument": "NVDA/USDT",
     "leverage": 3,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on NVDA (-7.02%)",
@@ -957,7 +889,9 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap"
     },
     "timestamp": "2026-09-14T01:59:40.159Z",
-    "direction": "LONG"
+    "direction": "LONG",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675590_NVDA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "balanceChangePct": -3,
@@ -974,10 +908,12 @@
       "rootCause": "Macro risk-off correlation wave induced sudden liquidity vacuum"
     },
     "leverage": 3,
-    "accountBalance": 122752.68,
+    "accountBalance": 115125.34,
     "instrument": "SOL/USDT",
     "status": "STOP_LOSS",
-    "balanceChange": -300
+    "balanceChange": -300,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675594_SOL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "price": 133.28,
@@ -985,13 +921,15 @@
     "status": "TAKE_PROFIT",
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+4.5%) ratified on NVDA",
     "instrument": "NVDA/USDT",
-    "accountBalance": 123202.68,
+    "accountBalance": 115575.34,
     "leverage": 3,
     "id": "PT-20260914-28",
     "balanceChange": 450,
     "balanceChangePct": 4.5,
     "direction": "LONG",
-    "timestamp": "2026-09-14T01:59:54.505Z"
+    "timestamp": "2026-09-14T01:59:54.505Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675597_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "STOP_LOSS",
@@ -999,13 +937,15 @@
     "price": 2484.1,
     "quantity": 13511,
     "instrument": "ETH/USDT",
-    "accountBalance": 122736.55,
+    "accountBalance": 115109.21,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "leverage": 3,
     "direction": "LONG",
     "id": "PT-20260914-29",
     "timestamp": "2026-09-14T02:00:00.950Z",
-    "balanceChangePct": -3.45
+    "balanceChangePct": -3.45,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675600_ETH/USDT_LONG_guardian01riskvetovo"
   },
   {
     "balanceChange": 949.68,
@@ -1018,12 +958,14 @@
     "leverage": 5,
     "timestamp": "2026-09-14T02:00:23.452Z",
     "direction": "LONG",
-    "accountBalance": 123686.23,
-    "balanceChangePct": 7.75
+    "accountBalance": 116058.89,
+    "balanceChangePct": 7.75,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675611_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "id": "PT-20260914-31",
-    "accountBalance": 124125.33,
+    "accountBalance": 116497.99,
     "status": "TAKE_PROFIT",
     "quantity": 8998,
     "balanceChangePct": 4.88,
@@ -1033,10 +975,12 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T02:00:50.676Z",
     "leverage": 4,
-    "instrument": "ETH/USDT"
+    "instrument": "ETH/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675625_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
-    "accountBalance": 123743.78,
+    "accountBalance": 116116.44,
     "instrument": "ETH/USDT",
     "timestamp": "2026-09-14T02:01:14.667Z",
     "direction": "SHORT",
@@ -1047,7 +991,9 @@
     "balanceChangePct": -2.66,
     "status": "STOP_LOSS",
     "id": "PT-20260914-32",
-    "leverage": 4
+    "leverage": 4,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675637_ETH/USDT_SHORT_guardian01riskvetovo"
   },
   {
     "status": "TAKE_PROFIT",
@@ -1059,13 +1005,15 @@
     "instrument": "NVDAon/USDT",
     "balanceChange": 1114.01,
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
-    "accountBalance": 124857.79,
+    "accountBalance": 117230.45,
     "leverage": 2,
-    "balanceChangePct": 9.15
+    "balanceChangePct": 9.15,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675647_NVDAON/USDT_SHORT_councilquorumnvdaonus"
   },
   {
     "balanceChangePct": -2.2,
-    "accountBalance": 124582.79,
+    "accountBalance": 116955.45,
     "quantity": 12500,
     "balanceChange": -275,
     "leverage": 3,
@@ -1075,13 +1023,15 @@
     "price": 139.5,
     "id": "PT-20260914-34",
     "status": "TAKE_PROFIT",
-    "direction": "LONG"
+    "direction": "LONG",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675665_SOL/USDT_LONG_breakevenratchettraili"
   },
   {
     "timestamp": "2026-09-14T02:02:11.234Z",
     "direction": "LONG",
     "quantity": 14000,
-    "accountBalance": 125408.79,
+    "accountBalance": 117781.45,
     "instrument": "BTC/USDT",
     "price": 78450,
     "id": "PT-20260914-35",
@@ -1089,7 +1039,9 @@
     "balanceChange": 826,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on BTC",
     "status": "TAKE_PROFIT",
-    "leverage": 3
+    "leverage": 3,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675665_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "timestamp": "2026-09-14T02:02:11.234Z",
@@ -1098,12 +1050,14 @@
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on ETH",
     "balanceChange": 527.65,
     "leverage": 3,
-    "accountBalance": 125936.44,
+    "accountBalance": 118309.1,
     "id": "PT-20260914-36",
     "balanceChangePct": 6.6,
     "instrument": "ETH/USDT",
     "price": 2540,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675665_ETH/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "TAKE_PROFIT",
@@ -1114,24 +1068,28 @@
     "leverage": 3,
     "balanceChangePct": 3.8,
     "id": "PT-20260914-37",
-    "accountBalance": 126316.44,
+    "accountBalance": 118689.1,
     "balanceChange": 380,
     "quantity": 10000,
-    "instrument": "MSTR/USDT"
+    "instrument": "MSTR/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675667_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
     "balanceChange": 965.54,
     "status": "TAKE_PROFIT",
     "price": 106.06,
     "leverage": 3,
-    "accountBalance": 127281.98,
+    "accountBalance": 119654.64,
     "timestamp": "2026-09-14T02:02:20.324Z",
     "direction": "LONG",
     "instrument": "SOL/USDT",
     "balanceChangePct": 4.5,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+4.5%) ratified on SOL",
     "quantity": 21456.42,
-    "id": "PT-20260914-38"
+    "id": "PT-20260914-38",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675670_SOL/USDT_LONG_autopilotenginetarget"
   },
   {
     "postMortem": {
@@ -1147,25 +1105,29 @@
     "direction": "LONG",
     "balanceChangePct": -3.75,
     "instrument": "TSLA/USDT",
-    "accountBalance": 126906.98,
+    "accountBalance": 119279.64,
     "price": 240.29,
     "status": "STOP_LOSS",
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on TSLA (-3.75%)",
-    "balanceChange": -375
+    "balanceChange": -375,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675674_TSLA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "balanceChange": 590,
     "status": "TAKE_PROFIT",
     "price": 147.7,
     "leverage": 3,
-    "accountBalance": 127496.98,
+    "accountBalance": 119869.64,
     "timestamp": "2026-09-14T02:02:34.110Z",
     "direction": "LONG",
     "instrument": "NVDA/USDT",
     "balanceChangePct": 5.9,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on NVDA",
     "quantity": 10000,
-    "id": "PT-20260914-40"
+    "id": "PT-20260914-40",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675677_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "STOP_LOSS",
@@ -1184,22 +1146,26 @@
     "quantity": 10000,
     "price": 131.35,
     "instrument": "MSTR/USDT",
-    "accountBalance": 127236.98,
-    "id": "PT-20260914-41"
+    "accountBalance": 119609.64,
+    "id": "PT-20260914-41",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675685_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "status": "TAKE_PROFIT",
     "balanceChange": 676.28,
     "price": 128.4,
     "leverage": 2,
-    "accountBalance": 127913.26,
+    "accountBalance": 120285.92,
     "timestamp": "2026-09-14T02:02:50.674Z",
     "direction": "SHORT",
     "balanceChangePct": 9.08,
     "instrument": "NVDAon/USDT",
     "quantity": 7448,
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
-    "id": "PT-20260914-42"
+    "id": "PT-20260914-42",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675685_NVDAON/USDT_SHORT_councilquorumnvdaonus"
   },
   {
     "id": "PT-20260914-43",
@@ -1208,7 +1174,7 @@
     "direction": "LONG",
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on NVDA (-46.06%)",
     "status": "STOP_LOSS",
-    "accountBalance": 127693.26,
+    "accountBalance": 120065.92,
     "quantity": 10000,
     "balanceChange": -220,
     "price": 128.4,
@@ -1219,35 +1185,41 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap"
     },
     "leverage": 3,
-    "balanceChangePct": -2.2
+    "balanceChangePct": -2.2,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675688_NVDA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "status": "TAKE_PROFIT",
     "balanceChange": 1039.6,
     "price": 252,
     "leverage": 2,
-    "accountBalance": 128732.86,
+    "accountBalance": 121105.52,
     "timestamp": "2026-09-14T02:03:13.175Z",
     "direction": "LONG",
     "instrument": "TSLAon/USDT",
     "balanceChangePct": 7.36,
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "quantity": 14125,
-    "id": "PT-20260914-44"
+    "id": "PT-20260914-44",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675696_TSLAON/USDT_LONG_councilquorumtslaonus"
   },
   {
     "timestamp": "2026-09-14T02:03:14.441Z",
     "direction": "LONG",
     "leverage": 3,
     "instrument": "BTC/USDT",
-    "accountBalance": 129322.86,
+    "accountBalance": 121695.52,
     "balanceChangePct": 5.9,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on BTC",
     "id": "PT-20260914-45",
     "status": "TAKE_PROFIT",
     "price": 78450,
     "balanceChange": 590,
-    "quantity": 10000
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675697_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "balanceChangePct": 6.6,
@@ -1257,11 +1229,13 @@
     "instrument": "ETH/USDT",
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on ETH",
     "price": 2540,
-    "accountBalance": 129982.86,
+    "accountBalance": 122355.52,
     "id": "PT-20260914-46",
     "direction": "LONG",
     "quantity": 10000,
-    "timestamp": "2026-09-14T02:03:17.744Z"
+    "timestamp": "2026-09-14T02:03:17.744Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675698_ETH/USDT_LONG_autopilotenginetarget"
   },
   {
     "quantity": 10000,
@@ -1279,9 +1253,11 @@
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on SOL (-8.57%)",
     "balanceChangePct": -8.57,
     "instrument": "SOL/USDT",
-    "accountBalance": 129125.86,
+    "accountBalance": 121498.52,
     "price": 99.39,
-    "status": "STOP_LOSS"
+    "status": "STOP_LOSS",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675701_SOL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "balanceChangePct": -3.66,
@@ -1291,11 +1267,13 @@
     "instrument": "BTC/USDT",
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "price": 76803.7,
-    "accountBalance": 128782.04,
+    "accountBalance": 121154.7,
     "id": "PT-20260914-48",
     "direction": "LONG",
     "quantity": 9394,
-    "timestamp": "2026-09-14T02:03:38.684Z"
+    "timestamp": "2026-09-14T02:03:38.684Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675709_BTC/USDT_LONG_guardian01riskvetovo"
   },
   {
     "instrument": "SOL/USDT",
@@ -1309,7 +1287,9 @@
     "price": 102.33,
     "direction": "LONG",
     "timestamp": "2026-09-14T02:03:44.988Z",
-    "accountBalance": 129302.04
+    "accountBalance": 121674.7,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675712_SOL/USDT_LONG_autopilotenginetarget"
   },
   {
     "direction": "LONG",
@@ -1317,18 +1297,20 @@
     "leverage": 3,
     "instrument": "COIN/USDT",
     "trigger": "Breakeven Ratchet: Trailing stop locked in +0.16% profit on COIN (Peak: +12.72%)",
-    "accountBalance": 129318.04,
+    "accountBalance": 121690.7,
     "quantity": 10000,
     "balanceChange": 16,
     "price": 176.23,
     "id": "PT-20260914-50",
     "balanceChangePct": 0.16,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675712_COIN/USDT_LONG_breakevenratchettraili"
   },
   {
     "balanceChangePct": -3,
     "quantity": 10000,
-    "accountBalance": 129018.04,
+    "accountBalance": 121390.7,
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-19.35% profit on COIN (Peak: +2.80%)",
     "balanceChange": -300,
     "timestamp": "2026-09-14T02:03:56.161Z",
@@ -1337,7 +1319,9 @@
     "leverage": 3,
     "instrument": "COIN/USDT",
     "status": "TAKE_PROFIT",
-    "id": "PT-20260914-51"
+    "id": "PT-20260914-51",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675718_COIN/USDT_LONG_breakevenratchettraili"
   },
   {
     "instrument": "NVDAon/USDT",
@@ -1345,13 +1329,15 @@
     "leverage": 2,
     "direction": "LONG",
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
-    "accountBalance": 129672.05,
+    "accountBalance": 122044.71,
     "id": "PT-20260914-52",
     "price": 128.4,
     "balanceChangePct": 5.78,
     "quantity": 11315,
     "status": "TAKE_PROFIT",
-    "balanceChange": 654.01
+    "balanceChange": 654.01,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675720_NVDAON/USDT_LONG_councilquorumnvdaonus"
   },
   {
     "status": "TAKE_PROFIT",
@@ -1363,9 +1349,11 @@
     "balanceChange": 450,
     "direction": "LONG",
     "timestamp": "2026-09-14T02:04:14.216Z",
-    "accountBalance": 130122.05,
+    "accountBalance": 122494.71,
     "quantity": 10000,
-    "id": "PT-20260914-53"
+    "id": "PT-20260914-53",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675727_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "id": "PT-20260914-54",
@@ -1373,13 +1361,15 @@
     "timestamp": "2026-09-14T02:04:17.308Z",
     "direction": "LONG",
     "balanceChangePct": 5.2,
-    "accountBalance": 130642.05,
+    "accountBalance": 123014.71,
     "price": 2540,
     "balanceChange": 520,
     "status": "TAKE_PROFIT",
     "quantity": 10000,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.2%) ratified on ETH",
-    "instrument": "ETH/USDT"
+    "instrument": "ETH/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675728_ETH/USDT_LONG_autopilotenginetarget"
   },
   {
     "instrument": "AAPL/USDT",
@@ -1399,13 +1389,15 @@
       "policyAdjustment": "Tightened trailing volatility buffer by +12% on AAPL"
     },
     "quantity": 10000,
-    "accountBalance": 129997.05
+    "accountBalance": 122369.71,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675732_AAPL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "timestamp": "2026-09-14T02:04:27.782Z",
     "balanceChangePct": -2.6,
     "direction": "LONG",
-    "accountBalance": 129737.05,
+    "accountBalance": 122109.71,
     "id": "PT-20260914-56",
     "postMortem": {
       "policyAdjustment": "Increased minimum orderbook depth requirement before next re-entry",
@@ -1419,25 +1411,29 @@
     "price": 117.28,
     "status": "STOP_LOSS",
     "leverage": 3,
-    "trigger": "Disciplined Risk Cut: Automated stop preserved capital on COIN (-35.68%)"
+    "trigger": "Disciplined Risk Cut: Automated stop preserved capital on COIN (-35.68%)",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675733_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "id": "PT-20260914-57",
     "quantity": 12721,
     "price": 2486.1,
     "balanceChangePct": 4.32,
-    "accountBalance": 130286.6,
+    "accountBalance": 122659.26,
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "status": "TAKE_PROFIT",
     "instrument": "ETH/USDT",
     "direction": "LONG",
     "leverage": 3,
     "timestamp": "2026-09-14T02:04:28.176Z",
-    "balanceChange": 549.55
+    "balanceChange": 549.55,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675734_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "leverage": 3,
-    "accountBalance": 130066.6,
+    "accountBalance": 122439.26,
     "quantity": 10000,
     "instrument": "TSLA/USDT",
     "price": 248,
@@ -1453,7 +1449,9 @@
     "balanceChange": -220,
     "timestamp": "2026-09-14T02:04:32.319Z",
     "balanceChangePct": -2.2,
-    "direction": "LONG"
+    "direction": "LONG",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675736_TSLA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "instrument": "MSTR/USDT",
@@ -1473,7 +1471,9 @@
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-53.18%)",
     "price": 132,
     "quantity": 10000,
-    "accountBalance": 129806.6
+    "accountBalance": 122179.26,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675740_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "balanceChange": 590,
@@ -1481,16 +1481,18 @@
     "leverage": 3,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on COIN",
     "instrument": "COIN/USDT",
-    "price": 263.19,
+    "price": 165,
     "timestamp": "2026-09-14T02:04:47.902Z",
-    "accountBalance": 130396.6,
+    "accountBalance": 122769.26,
     "direction": "LONG",
     "status": "TAKE_PROFIT",
     "quantity": 10000,
-    "balanceChangePct": 5.9
+    "balanceChangePct": 5.9,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675743_COIN/USDT_LONG_autopilotenginetarget"
   },
   {
-    "accountBalance": 130882.88,
+    "accountBalance": 123255.54,
     "id": "PT-20260914-61",
     "balanceChange": 486.28,
     "leverage": 2,
@@ -1501,7 +1503,9 @@
     "timestamp": "2026-09-14T02:04:52.176Z",
     "price": 128.4,
     "instrument": "NVDAon/USDT",
-    "quantity": 7998
+    "quantity": 7998,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675746_NVDAON/USDT_LONG_councilquorumnvdaonus"
   },
   {
     "quantity": 10000,
@@ -1518,15 +1522,17 @@
       "policyAdjustment": "Mandated 15-minute cool-down period before any new long proposal on TSLA"
     },
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on TSLA (-13.77%)",
-    "accountBalance": 130622.88,
+    "accountBalance": 122995.54,
     "balanceChange": -260,
     "direction": "LONG",
-    "timestamp": "2026-09-14T02:05:04.822Z"
+    "timestamp": "2026-09-14T02:05:04.822Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675752_TSLA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "id": "PT-20260914-63",
     "timestamp": "2026-09-14T02:05:08.674Z",
-    "accountBalance": 130322.88,
+    "accountBalance": 122695.54,
     "leverage": 3,
     "direction": "LONG",
     "balanceChange": -300,
@@ -1541,10 +1547,12 @@
     "balanceChangePct": -3,
     "instrument": "COIN/USDT",
     "price": 175.35,
-    "status": "STOP_LOSS"
+    "status": "STOP_LOSS",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675754_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
-    "accountBalance": 130773.49,
+    "accountBalance": 123146.15,
     "quantity": 8061,
     "instrument": "BTC/USDT",
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -1555,7 +1563,9 @@
     "balanceChangePct": 5.59,
     "timestamp": "2026-09-14T02:05:11.669Z",
     "id": "PT-20260914-64",
-    "direction": "LONG"
+    "direction": "LONG",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675755_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
     "status": "STOP_LOSS",
@@ -1572,13 +1582,15 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap"
     },
     "id": "PT-20260914-65",
-    "accountBalance": 130513.49,
+    "accountBalance": 122886.15,
     "leverage": 3,
     "direction": "LONG",
-    "timestamp": "2026-09-14T02:05:17.216Z"
+    "timestamp": "2026-09-14T02:05:17.216Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675758_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
-    "accountBalance": 131173.49,
+    "accountBalance": 123546.15,
     "quantity": 10000,
     "price": 248,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on TSLA",
@@ -1589,7 +1601,9 @@
     "balanceChangePct": 6.6,
     "timestamp": "2026-09-14T02:05:30.555Z",
     "id": "PT-20260914-66",
-    "direction": "LONG"
+    "direction": "LONG",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675765_TSLA/USDT_LONG_autopilotenginetarget"
   },
   {
     "leverage": 3,
@@ -1599,11 +1613,13 @@
     "id": "PT-20260914-67",
     "status": "TAKE_PROFIT",
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+3.8%) ratified on SOL",
-    "accountBalance": 131553.49,
+    "accountBalance": 123926.15,
     "instrument": "SOL/USDT",
     "direction": "LONG",
     "balanceChange": 380,
-    "timestamp": "2026-09-14T02:05:39.224Z"
+    "timestamp": "2026-09-14T02:05:39.224Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675769_SOL/USDT_LONG_autopilotenginetarget"
   },
   {
     "id": "PT-20260914-68",
@@ -1620,10 +1636,12 @@
     "timestamp": "2026-09-14T02:05:45.385Z",
     "direction": "LONG",
     "balanceChange": -260,
-    "accountBalance": 131293.49,
+    "accountBalance": 123666.15,
     "instrument": "AAPL/USDT",
     "price": 228.44,
-    "status": "STOP_LOSS"
+    "status": "STOP_LOSS",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675772_AAPL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "leverage": 3,
@@ -1635,9 +1653,11 @@
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.2%) ratified on AAPL",
     "direction": "LONG",
     "instrument": "AAPL/USDT",
-    "accountBalance": 131813.49,
+    "accountBalance": 124186.15,
     "timestamp": "2026-09-14T02:05:51.834Z",
-    "balanceChange": 520
+    "balanceChange": 520,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675775_AAPL/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "STOP_LOSS",
@@ -1649,9 +1669,11 @@
     "balanceChange": -291.62,
     "direction": "LONG",
     "timestamp": "2026-09-14T02:05:57.982Z",
-    "accountBalance": 131521.87,
+    "accountBalance": 123894.53,
     "quantity": 7903,
-    "id": "PT-20260914-70"
+    "id": "PT-20260914-70",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675778_TSLAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "leverage": 3,
@@ -1659,13 +1681,15 @@
     "price": 102.12,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on SOL",
     "balanceChangePct": 6.6,
-    "accountBalance": 132181.87,
+    "accountBalance": 124554.53,
     "quantity": 10000,
     "status": "TAKE_PROFIT",
     "balanceChange": 660,
     "direction": "LONG",
     "id": "PT-20260914-71",
-    "timestamp": "2026-09-14T02:06:01.736Z"
+    "timestamp": "2026-09-14T02:06:01.736Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894675780_SOL/USDT_LONG_autopilotenginetarget"
   },
   {
     "balanceChange": -385.24,
@@ -1675,11 +1699,13 @@
     "timestamp": "2026-09-14T07:01:46.632Z",
     "balanceChangePct": -3.28,
     "direction": "LONG",
-    "accountBalance": 131796.63,
+    "accountBalance": 124169.29,
     "price": 2485.6,
     "leverage": 3,
     "status": "STOP_LOSS",
-    "instrument": "ETH/USDT"
+    "instrument": "ETH/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894684653_ETH/USDT_LONG_guardian01riskvetovo"
   },
   {
     "price": 139.5,
@@ -1688,12 +1714,14 @@
     "balanceChange": -953.94,
     "instrument": "SOL/USDT",
     "status": "TAKE_PROFIT",
-    "accountBalance": 130842.69,
+    "accountBalance": 123215.35,
     "leverage": 3,
     "direction": "LONG",
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-7.63% profit on SOL (Peak: +2.27%)",
     "balanceChangePct": -7.63,
-    "timestamp": "2026-09-14T08:09:44.114Z"
+    "timestamp": "2026-09-14T08:09:44.114Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686692_SOL/USDT_LONG_breakevenratchettraili"
   },
   {
     "leverage": 3,
@@ -1702,12 +1730,14 @@
     "timestamp": "2026-09-14T08:09:57.005Z",
     "status": "TAKE_PROFIT",
     "id": "PT-20260914-74",
-    "accountBalance": 130218.69,
+    "accountBalance": 122591.35,
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-12.39% profit on BTC (Peak: +2.20%)",
     "quantity": 24000,
     "instrument": "BTC/USDT",
     "price": 67438.31,
-    "balanceChangePct": -2.6
+    "balanceChangePct": -2.6,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686698_BTC/USDT_LONG_breakevenratchettraili"
   },
   {
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
@@ -1718,14 +1748,16 @@
     "status": "TAKE_PROFIT",
     "direction": "LONG",
     "timestamp": "2026-09-14T08:10:01.425Z",
-    "accountBalance": 131092.3,
+    "accountBalance": 123464.96,
     "quantity": 14182,
     "price": 252,
-    "balanceChangePct": 6.16
+    "balanceChangePct": 6.16,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686700_TSLAON/USDT_LONG_councilquorumtslaonus"
   },
   {
     "id": "PT-20260914-76",
-    "accountBalance": 130796.4,
+    "accountBalance": 123169.06,
     "balanceChange": -295.9,
     "instrument": "BTC/USDT",
     "status": "STOP_LOSS",
@@ -1741,7 +1773,9 @@
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on BTC (-80.09%)",
     "quantity": 13450,
     "price": 77587.59,
-    "balanceChangePct": -2.2
+    "balanceChangePct": -2.2,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686702_BTC/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "instrument": "MSTR/USDT",
@@ -1755,18 +1789,20 @@
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 55.62%."
     },
     "price": 132,
-    "accountBalance": 130574.62,
+    "accountBalance": 122947.28,
     "balanceChangePct": -2.6,
     "timestamp": "2026-09-14T08:10:21.803Z",
     "status": "STOP_LOSS",
     "balanceChange": -221.78,
     "direction": "LONG",
-    "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-55.62%)"
+    "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-55.62%)",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686710_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "balanceChangePct": 4.6,
     "quantity": 14132,
-    "accountBalance": 131224.69,
+    "accountBalance": 123597.35,
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "balanceChange": 650.07,
     "price": 2525.93,
@@ -1775,7 +1811,9 @@
     "direction": "SHORT",
     "status": "TAKE_PROFIT",
     "instrument": "ETH/USDT",
-    "id": "PT-20260914-78"
+    "id": "PT-20260914-78",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686712_ETH/USDT_SHORT_autopilotpulseethusdt"
   },
   {
     "quantity": 7249.93,
@@ -1788,32 +1826,36 @@
     "balanceChange": -159.5,
     "id": "PT-20260914-79",
     "leverage": 3,
-    "price": 96.31,
-    "accountBalance": 131065.19,
+    "price": 132.5,
+    "accountBalance": 123437.85,
     "instrument": "NVDA/USDT",
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on NVDA (-27.37%)",
     "timestamp": "2026-09-14T08:10:42.208Z",
     "direction": "LONG",
     "balanceChangePct": -2.2,
-    "status": "STOP_LOSS"
+    "status": "STOP_LOSS",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686721_NVDA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "balanceChangePct": 5.9,
     "quantity": 11277.67,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on AAPL",
-    "accountBalance": 131730.57,
+    "accountBalance": 124103.23,
     "balanceChange": 665.38,
     "timestamp": "2026-09-14T08:10:42.210Z",
-    "price": 288.66,
+    "price": 228.5,
     "direction": "LONG",
     "leverage": 3,
     "status": "TAKE_PROFIT",
     "instrument": "AAPL/USDT",
-    "id": "PT-20260914-80"
+    "id": "PT-20260914-80",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686721_AAPL/USDT_LONG_autopilotenginetarget"
   },
   {
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-5.65% profit on COIN (Peak: +18.78%)",
-    "accountBalance": 131229.67,
+    "accountBalance": 123602.33,
     "quantity": 8861.03,
     "id": "PT-20260914-81",
     "timestamp": "2026-09-14T08:10:46.833Z",
@@ -1823,21 +1865,25 @@
     "instrument": "COIN/USDT",
     "leverage": 3,
     "balanceChange": -500.9,
-    "balanceChangePct": -5.65
+    "balanceChangePct": -5.65,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686723_COIN/USDT_LONG_breakevenratchettraili"
   },
   {
     "quantity": 11642.93,
     "id": "PT-20260914-82",
     "trigger": "Breakeven Ratchet: Trailing stop locked in +0.94% profit on NVDA (Peak: +17.87%)",
     "status": "TAKE_PROFIT",
-    "accountBalance": 131338.75,
+    "accountBalance": 123711.41,
     "price": 133.59,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:10:46.837Z",
     "balanceChangePct": 0.94,
     "leverage": 3,
     "balanceChange": 109.08,
-    "instrument": "NVDA/USDT"
+    "instrument": "NVDA/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686723_NVDA/USDT_LONG_breakevenratchettraili"
   },
   {
     "price": 132,
@@ -1845,24 +1891,26 @@
     "balanceChange": -231.98,
     "status": "TAKE_PROFIT",
     "id": "PT-20260914-83",
-    "accountBalance": 131106.77,
+    "accountBalance": 123479.43,
     "timestamp": "2026-09-14T08:11:05.072Z",
     "direction": "LONG",
     "balanceChangePct": -2.6,
     "leverage": 3,
     "instrument": "MSTR/USDT",
-    "trigger": "Breakeven Ratchet: Trailing stop locked in +-38.97% profit on MSTR (Peak: +8.44%)"
+    "trigger": "Breakeven Ratchet: Trailing stop locked in +-38.97% profit on MSTR (Peak: +8.44%)",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686732_MSTR/USDT_LONG_breakevenratchettraili"
   },
   {
     "quantity": 6549.29,
     "timestamp": "2026-09-14T08:11:05.074Z",
-    "accountBalance": 130910.29,
+    "accountBalance": 123282.95,
     "direction": "LONG",
     "id": "PT-20260914-84",
     "instrument": "TSLA/USDT",
     "leverage": 3,
     "status": "STOP_LOSS",
-    "price": 159.6,
+    "price": 248,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on TSLA (-36.32%)",
     "balanceChange": -196.48,
     "balanceChangePct": -3,
@@ -1871,7 +1919,9 @@
       "rootCause": "Adversarial red-team alert: Momentum trap triggered stop cluster",
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 36.32%."
-    }
+    },
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686732_TSLA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "price": 228.5,
@@ -1879,13 +1929,15 @@
     "quantity": 9030.88,
     "status": "TAKE_PROFIT",
     "id": "PT-20260914-85",
-    "accountBalance": 131443.11,
+    "accountBalance": 123815.77,
     "timestamp": "2026-09-14T08:11:07.419Z",
     "direction": "LONG",
     "balanceChangePct": 5.9,
     "leverage": 3,
     "instrument": "AAPL/USDT",
-    "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on AAPL"
+    "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on AAPL",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686733_AAPL/USDT_LONG_autopilotenginetarget"
   },
   {
     "timestamp": "2026-09-14T08:11:16.901Z",
@@ -1894,17 +1946,19 @@
     "price": 209.06,
     "leverage": 3,
     "balanceChangePct": 6.6,
-    "accountBalance": 132103.73,
+    "accountBalance": 124476.39,
     "status": "TAKE_PROFIT",
     "instrument": "MSTR/USDT",
     "balanceChange": 660.62,
     "quantity": 10009.45,
-    "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on MSTR"
+    "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on MSTR",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686738_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
-    "price": 309.9,
+    "price": 165,
     "quantity": 7151.84,
-    "accountBalance": 132375.5,
+    "accountBalance": 124748.16,
     "id": "PT-20260914-87",
     "timestamp": "2026-09-14T08:11:24.763Z",
     "direction": "LONG",
@@ -1913,7 +1967,9 @@
     "status": "TAKE_PROFIT",
     "leverage": 3,
     "balanceChangePct": 3.8,
-    "instrument": "COIN/USDT"
+    "instrument": "COIN/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686742_COIN/USDT_LONG_autopilotenginetarget"
   },
   {
     "leverage": 3,
@@ -1924,10 +1980,12 @@
     "balanceChange": 651.26,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+4.5%) ratified on COIN",
     "quantity": 14472.55,
-    "accountBalance": 133026.76,
+    "accountBalance": 125399.42,
     "id": "PT-20260914-88",
     "balanceChangePct": 4.5,
-    "price": 214.16
+    "price": 214.16,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686745_COIN/USDT_LONG_autopilotenginetarget"
   },
   {
     "direction": "LONG",
@@ -1939,9 +1997,11 @@
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.2%) ratified on BTC",
     "instrument": "BTC/USDT",
     "balanceChangePct": 5.2,
-    "accountBalance": 133634,
+    "accountBalance": 126006.66,
     "price": 78450,
-    "leverage": 3
+    "leverage": 3,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686747_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "price": 2540,
@@ -1959,16 +2019,18 @@
     "quantity": 16329.55,
     "balanceChangePct": -3,
     "instrument": "ETH/USDT",
-    "accountBalance": 133144.11,
+    "accountBalance": 125516.77,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on ETH (-35.38%)",
-    "id": "PT-20260914-90"
+    "id": "PT-20260914-90",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686749_ETH/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "status": "STOP_LOSS",
     "instrument": "MSTR/USDT",
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-34.26%)",
     "direction": "LONG",
-    "accountBalance": 132893.01,
+    "accountBalance": 125265.67,
     "timestamp": "2026-09-14T08:11:46.134Z",
     "balanceChange": -251.1,
     "id": "PT-20260914-91",
@@ -1981,7 +2043,9 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap"
     },
     "leverage": 3,
-    "balanceChangePct": -2.2
+    "balanceChangePct": -2.2,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686753_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "timestamp": "2026-09-14T08:11:51.722Z",
@@ -1992,7 +2056,7 @@
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on COIN (-57.11%)",
     "quantity": 12488.57,
     "id": "PT-20260914-92",
-    "accountBalance": 132568.31,
+    "accountBalance": 124940.97,
     "balanceChangePct": -2.6,
     "status": "STOP_LOSS",
     "postMortem": {
@@ -2001,14 +2065,16 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
       "policyAdjustment": "Calibrated Nexus-Red adversarial cross-check threshold to 0.75"
     },
-    "price": 80.19
+    "price": 165,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686755_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "timestamp": "2026-09-14T08:11:57.285Z",
     "direction": "LONG",
     "balanceChangePct": -3,
     "leverage": 3,
-    "accountBalance": 132094.44,
+    "accountBalance": 124467.1,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on SOL (-97.88%)",
     "quantity": 15795.61,
     "postMortem": {
@@ -2021,10 +2087,12 @@
     "balanceChange": -473.87,
     "id": "PT-20260914-93",
     "instrument": "SOL/USDT",
-    "price": 139.5
+    "price": 139.5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686758_SOL/USDT_LONG_disciplinedriskcutaut"
   },
   {
-    "accountBalance": 132758.93,
+    "accountBalance": 125131.59,
     "balanceChange": 664.49,
     "id": "PT-20260914-94",
     "balanceChangePct": 5.2,
@@ -2035,7 +2103,9 @@
     "price": 2540,
     "instrument": "ETH/USDT",
     "status": "TAKE_PROFIT",
-    "leverage": 3
+    "leverage": 3,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686761_ETH/USDT_LONG_autopilotenginetarget"
   },
   {
     "quantity": 17984.26,
@@ -2048,17 +2118,19 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap"
     },
     "leverage": 3,
-    "accountBalance": 132291.34,
+    "accountBalance": 124664,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on AAPL (-42.34%)",
     "direction": "LONG",
     "status": "STOP_LOSS",
     "timestamp": "2026-09-14T08:12:28.305Z",
     "price": 228.5,
     "instrument": "AAPL/USDT",
-    "id": "PT-20260914-95"
+    "id": "PT-20260914-95",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686774_AAPL/USDT_LONG_disciplinedriskcutaut"
   },
   {
-    "accountBalance": 133009.15,
+    "accountBalance": 125381.81,
     "balanceChange": 717.81,
     "id": "PT-20260914-96",
     "balanceChangePct": 6.6,
@@ -2066,13 +2138,15 @@
     "timestamp": "2026-09-14T08:12:33.002Z",
     "direction": "LONG",
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on COIN",
-    "price": 288.96,
+    "price": 165,
     "instrument": "COIN/USDT",
     "leverage": 3,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686776_COIN/USDT_LONG_autopilotenginetarget"
   },
   {
-    "accountBalance": 132254.02,
+    "accountBalance": 124626.68,
     "id": "PT-20260914-97",
     "leverage": 3,
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-7.28% profit on MSTR (Peak: +2.19%)",
@@ -2083,24 +2157,28 @@
     "quantity": 10378.65,
     "balanceChange": -755.13,
     "balanceChangePct": -7.28,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686780_MSTR/USDT_LONG_breakevenratchettraili"
   },
   {
     "quantity": 7522,
     "id": "PT-20260914-98",
     "status": "TAKE_PROFIT",
     "instrument": "ETH/USDT",
-    "accountBalance": 132884.36,
+    "accountBalance": 125257.02,
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "leverage": 5,
     "price": 2522.19,
     "balanceChange": 630.34,
     "balanceChangePct": 8.38,
     "direction": "LONG",
-    "timestamp": "2026-09-14T08:12:47.926Z"
+    "timestamp": "2026-09-14T08:12:47.926Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686783_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
-    "accountBalance": 134298.18,
+    "accountBalance": 126670.84,
     "quantity": 11607.91,
     "balanceChange": 1413.82,
     "balanceChangePct": 12.18,
@@ -2111,11 +2189,13 @@
     "id": "PT-20260914-99",
     "instrument": "NVDA/USDT",
     "status": "TAKE_PROFIT",
-    "price": 135.3
+    "price": 135.3,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686786_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on SOL (-11.49%)",
-    "accountBalance": 133953.56,
+    "accountBalance": 126326.22,
     "balanceChangePct": -2.2,
     "status": "STOP_LOSS",
     "id": "PT-20260914-100",
@@ -2131,12 +2211,14 @@
       "policyAdjustment": "Increased minimum orderbook depth requirement before next re-entry"
     },
     "direction": "LONG",
-    "timestamp": "2026-09-14T08:13:03.018Z"
+    "timestamp": "2026-09-14T08:13:03.018Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686791_SOL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on BTC",
     "balanceChange": 1191.76,
-    "accountBalance": 135145.32,
+    "accountBalance": 127517.98,
     "quantity": 18056.93,
     "id": "PT-20260914-101",
     "status": "TAKE_PROFIT",
@@ -2145,7 +2227,9 @@
     "timestamp": "2026-09-14T08:13:03.983Z",
     "leverage": 3,
     "balanceChangePct": 6.6,
-    "price": 78450
+    "price": 78450,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686791_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "price": 175.84,
@@ -2165,13 +2249,15 @@
     "leverage": 3,
     "status": "STOP_LOSS",
     "balanceChange": -300,
-    "accountBalance": 134845.32
+    "accountBalance": 127217.98,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686795_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "balanceChange": -214.12,
     "quantity": 11450,
-    "accountBalance": 134631.2,
+    "accountBalance": 127003.86,
     "id": "PT-20260914-103",
     "direction": "LONG",
     "instrument": "NVDAon/USDT",
@@ -2179,7 +2265,9 @@
     "timestamp": "2026-09-14T08:13:11.924Z",
     "leverage": 2,
     "balanceChangePct": -1.87,
-    "price": 128.4
+    "price": 128.4,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686795_NVDAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "instrument": "ETH/USDT",
@@ -2191,7 +2279,7 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 21.56%."
     },
-    "accountBalance": 134371.2,
+    "accountBalance": 126743.86,
     "id": "PT-20260914-104",
     "status": "STOP_LOSS",
     "leverage": 3,
@@ -2199,13 +2287,15 @@
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on ETH (-21.56%)",
     "direction": "LONG",
     "timestamp": "2026-09-14T08:13:16.681Z",
-    "quantity": 10000
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686798_ETH/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on MSTR",
     "balanceChange": 590,
     "quantity": 10000,
-    "accountBalance": 134961.2,
+    "accountBalance": 127333.86,
     "id": "PT-20260914-105",
     "status": "TAKE_PROFIT",
     "direction": "LONG",
@@ -2213,7 +2303,9 @@
     "timestamp": "2026-09-14T08:13:28.146Z",
     "leverage": 3,
     "balanceChangePct": 5.9,
-    "price": 189.31
+    "price": 189.31,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686804_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
     "balanceChangePct": 7.83,
@@ -2225,26 +2317,30 @@
     "direction": "LONG",
     "price": 2538.35,
     "quantity": 10000,
-    "accountBalance": 135744.2,
+    "accountBalance": 128116.86,
     "id": "PT-20260914-106",
-    "instrument": "ETH/USDT"
+    "instrument": "ETH/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686804_ETH/USDT_LONG_autopilotenginetarget"
   },
   {
     "direction": "LONG",
     "status": "TAKE_PROFIT",
     "timestamp": "2026-09-14T08:13:35.596Z",
     "price": 228.5,
-    "accountBalance": 136124.2,
+    "accountBalance": 128496.86,
     "quantity": 10000,
     "balanceChange": 380,
     "balanceChangePct": 3.8,
     "instrument": "AAPL/USDT",
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+3.8%) ratified on AAPL",
     "leverage": 3,
-    "id": "PT-20260914-107"
+    "id": "PT-20260914-107",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686807_AAPL/USDT_LONG_autopilotenginetarget"
   },
   {
-    "accountBalance": 136507.26,
+    "accountBalance": 128879.92,
     "price": 2522.68,
     "leverage": 3,
     "balanceChange": 383.06,
@@ -2255,7 +2351,9 @@
     "direction": "SHORT",
     "status": "TAKE_PROFIT",
     "instrument": "ETH/USDT",
-    "quantity": 7997
+    "quantity": 7997,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686807_ETH/USDT_SHORT_autopilotpulseethusdt"
   },
   {
     "direction": "LONG",
@@ -2274,11 +2372,13 @@
     "balanceChange": -220,
     "leverage": 3,
     "balanceChangePct": -2.2,
-    "accountBalance": 136287.26,
-    "quantity": 10000
+    "accountBalance": 128659.92,
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686815_ETH/USDT_LONG_disciplinedriskcutaut"
   },
   {
-    "accountBalance": 137165.91,
+    "accountBalance": 129538.57,
     "price": 2522.42,
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "leverage": 5,
@@ -2289,7 +2389,9 @@
     "direction": "LONG",
     "status": "TAKE_PROFIT",
     "instrument": "ETH/USDT",
-    "quantity": 10337
+    "quantity": 10337,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686817_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "quantity": 10000,
@@ -2298,17 +2400,19 @@
     "balanceChangePct": -3,
     "leverage": 3,
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-19.84% profit on MSTR (Peak: +3.84%)",
-    "accountBalance": 136865.91,
+    "accountBalance": 129238.57,
     "balanceChange": -300,
     "id": "PT-20260914-111",
     "instrument": "MSTR/USDT",
     "direction": "LONG",
-    "timestamp": "2026-09-14T08:14:00.069Z"
+    "timestamp": "2026-09-14T08:14:00.069Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686820_MSTR/USDT_LONG_breakevenratchettraili"
   },
   {
     "id": "PT-20260914-112",
     "quantity": 10000,
-    "accountBalance": 137245.91,
+    "accountBalance": 129618.57,
     "balanceChangePct": 3.8,
     "balanceChange": 380,
     "leverage": 3,
@@ -2317,10 +2421,12 @@
     "price": 232.49,
     "timestamp": "2026-09-14T08:14:02.748Z",
     "status": "TAKE_PROFIT",
-    "direction": "LONG"
+    "direction": "LONG",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686821_COIN/USDT_LONG_autopilotenginetarget"
   },
   {
-    "accountBalance": 137695.91,
+    "accountBalance": 130068.57,
     "price": 248.55,
     "quantity": 10000,
     "instrument": "TSLA/USDT",
@@ -2331,7 +2437,9 @@
     "leverage": 3,
     "balanceChangePct": 4.5,
     "timestamp": "2026-09-14T08:14:11.944Z",
-    "direction": "LONG"
+    "direction": "LONG",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686825_TSLA/USDT_LONG_autopilotenginetarget"
   },
   {
     "instrument": "AAPL/USDT",
@@ -2351,28 +2459,32 @@
       "rootCause": "Orderbook bid wall spoof pulled on Bitget spot feed ($211.98)",
       "policyAdjustment": "Tightened trailing volatility buffer by +12% on AAPL"
     },
-    "accountBalance": 136910.91
+    "accountBalance": 129283.57,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686828_AAPL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "status": "TAKE_PROFIT",
     "quantity": 7422,
     "balanceChangePct": 6.06,
-    "accountBalance": 137360.68,
+    "accountBalance": 129733.34,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:14:19.411Z",
     "price": 252,
     "balanceChange": 449.77,
     "leverage": 2,
     "instrument": "TSLAon/USDT",
-    "id": "PT-20260914-115"
+    "id": "PT-20260914-115",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686829_TSLAON/USDT_LONG_councilquorumtslaonus"
   },
   {
     "status": "STOP_LOSS",
     "leverage": 3,
     "balanceChangePct": -2.6,
     "price": 132,
-    "accountBalance": 137100.68,
+    "accountBalance": 129473.34,
     "balanceChange": -260,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-65.60%)",
     "postMortem": {
@@ -2385,35 +2497,41 @@
     "id": "PT-20260914-116",
     "direction": "LONG",
     "timestamp": "2026-09-14T08:14:23.515Z",
-    "instrument": "MSTR/USDT"
+    "instrument": "MSTR/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686831_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+7.87%) ratified on SOL",
     "status": "TAKE_PROFIT",
     "quantity": 10000,
     "balanceChangePct": 7.87,
-    "accountBalance": 137887.68,
+    "accountBalance": 130260.34,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:14:35.791Z",
     "price": 107.83,
     "leverage": 3,
     "balanceChange": 787,
     "instrument": "SOL/USDT",
-    "id": "PT-20260914-117"
+    "id": "PT-20260914-117",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686837_SOL/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "TAKE_PROFIT",
     "id": "PT-20260914-118",
     "price": 248,
     "leverage": 3,
-    "accountBalance": 138337.68,
+    "accountBalance": 130710.34,
     "balanceChangePct": 4.5,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+4.5%) ratified on TSLA",
     "quantity": 10000,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:14:39.764Z",
     "balanceChange": 450,
-    "instrument": "TSLA/USDT"
+    "instrument": "TSLA/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686839_TSLA/USDT_LONG_autopilotenginetarget"
   },
   {
     "postMortem": {
@@ -2422,7 +2540,7 @@
       "rootCause": "Aggressive taker selling breached short-term VWAP support band",
       "policyAdjustment": "Calibrated Nexus-Red adversarial cross-check threshold to 0.75"
     },
-    "accountBalance": 138077.68,
+    "accountBalance": 130450.34,
     "leverage": 3,
     "balanceChangePct": -2.6,
     "status": "STOP_LOSS",
@@ -2433,25 +2551,29 @@
     "price": 251.65,
     "timestamp": "2026-09-14T08:15:01.195Z",
     "direction": "LONG",
-    "trigger": "Disciplined Risk Cut: Automated stop preserved capital on TSLA (-43.87%)"
+    "trigger": "Disciplined Risk Cut: Automated stop preserved capital on TSLA (-43.87%)",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686850_TSLA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "status": "TAKE_PROFIT",
     "id": "PT-20260914-120",
     "price": 78450,
     "leverage": 3,
-    "accountBalance": 138667.68,
+    "accountBalance": 131040.34,
     "balanceChangePct": 5.9,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on BTC",
     "direction": "LONG",
     "quantity": 10000,
     "timestamp": "2026-09-14T08:15:06.346Z",
     "balanceChange": 590,
-    "instrument": "BTC/USDT"
+    "instrument": "BTC/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686853_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "instrument": "COIN/USDT",
-    "accountBalance": 138447.68,
+    "accountBalance": 130820.34,
     "price": 160.74,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on COIN (-42.10%)",
     "quantity": 10000,
@@ -2467,27 +2589,31 @@
     "timestamp": "2026-09-14T08:15:11.954Z",
     "id": "PT-20260914-121",
     "status": "STOP_LOSS",
-    "leverage": 3
+    "leverage": 3,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686855_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "status": "TAKE_PROFIT",
     "id": "PT-20260914-122",
     "price": 132.36,
     "leverage": 3,
-    "accountBalance": 138827.68,
+    "accountBalance": 131200.34,
     "balanceChangePct": 3.8,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+3.8%) ratified on NVDA",
     "quantity": 10000,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:15:25.621Z",
     "balanceChange": 380,
-    "instrument": "NVDA/USDT"
+    "instrument": "NVDA/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686862_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
     "leverage": 3,
     "balanceChange": -300,
     "quantity": 10000,
-    "accountBalance": 138527.68,
+    "accountBalance": 130900.34,
     "instrument": "AAPL/USDT",
     "direction": "LONG",
     "price": 229.92,
@@ -2501,7 +2627,9 @@
       "rootCause": "Orderbook bid wall spoof pulled on Bitget spot feed ($229.92)",
       "policyAdjustment": "Increased minimum orderbook depth requirement before next re-entry",
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 20.00%."
-    }
+    },
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686863_AAPL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "timestamp": "2026-09-14T08:15:35.211Z",
@@ -2512,7 +2640,7 @@
     "balanceChange": -428,
     "status": "STOP_LOSS",
     "id": "PT-20260914-124",
-    "accountBalance": 138099.68,
+    "accountBalance": 130472.34,
     "quantity": 10000,
     "postMortem": {
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 4.28%.",
@@ -2521,7 +2649,9 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap"
     },
     "leverage": 3,
-    "trigger": "Disciplined Risk Cut: Automated stop preserved capital on NVDA (-4.28%)"
+    "trigger": "Disciplined Risk Cut: Automated stop preserved capital on NVDA (-4.28%)",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686867_NVDA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "id": "PT-20260914-125",
@@ -2531,11 +2661,13 @@
     "quantity": 10000,
     "timestamp": "2026-09-14T08:15:48.260Z",
     "balanceChangePct": 5.9,
-    "accountBalance": 138689.68,
+    "accountBalance": 131062.34,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on AAPL",
     "price": 267.28,
     "leverage": 3,
-    "instrument": "AAPL/USDT"
+    "instrument": "AAPL/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686874_AAPL/USDT_LONG_autopilotenginetarget"
   },
   {
     "id": "PT-20260914-148",
@@ -2546,10 +2678,12 @@
     "instrument": "TSLAon/USDT",
     "direction": "LONG",
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
-    "accountBalance": 138368.73,
+    "accountBalance": 130741.39,
     "timestamp": "2026-09-14T08:16:07.829Z",
     "quantity": 11887,
-    "price": 252
+    "price": 252,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686883_TSLAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "postMortem": {
@@ -2569,10 +2703,12 @@
     "timestamp": "2026-09-14T08:16:07.862Z",
     "balanceChange": -453,
     "balanceChangePct": -4.53,
-    "accountBalance": 137915.73
+    "accountBalance": 130288.39,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686883_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
-    "accountBalance": 138365.73,
+    "accountBalance": 130738.39,
     "leverage": 3,
     "status": "TAKE_PROFIT",
     "balanceChange": 450,
@@ -2583,7 +2719,9 @@
     "balanceChangePct": 4.5,
     "id": "PT-20260914-150",
     "quantity": 10000,
-    "price": 78450
+    "price": 78450,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686886_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "timestamp": "2026-09-14T08:16:13.946Z",
@@ -2594,10 +2732,12 @@
     "leverage": 3,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.2%) ratified on ETH",
     "price": 2540,
-    "accountBalance": 138885.73,
+    "accountBalance": 131258.39,
     "instrument": "ETH/USDT",
     "id": "PT-20260914-151",
-    "quantity": 10000
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686886_ETH/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "TAKE_PROFIT",
@@ -2605,7 +2745,7 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T08:16:22.525Z",
     "instrument": "NVDAon/USDT",
-    "accountBalance": 140054.12,
+    "accountBalance": 132426.78,
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "quantity": 13523,
     "balanceChange": 1168.39,
@@ -2617,7 +2757,9 @@
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 5.00%.",
       "policyAdjustment": "Calibrated Nexus-Red adversarial cross-check threshold to 0.75"
     },
-    "price": 128.4
+    "price": 128.4,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686891_NVDAON/USDT_LONG_councilquorumnvdaonus"
   },
   {
     "timestamp": "2026-09-14T08:16:59.528Z",
@@ -2628,10 +2770,12 @@
     "leverage": 2,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "price": 128.4,
-    "accountBalance": 139630.69,
+    "accountBalance": 132003.35,
     "instrument": "NVDAon/USDT",
     "id": "PT-20260914-153",
-    "quantity": 13615
+    "quantity": 13615,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686909_NVDAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "balanceChangePct": -3.94,
@@ -2640,18 +2784,20 @@
     "instrument": "TSLAon/USDT",
     "id": "PT-20260914-154",
     "price": 252,
-    "accountBalance": 139045.44,
+    "accountBalance": 131418.1,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "balanceChange": -585.25,
     "timestamp": "2026-09-14T08:17:11.520Z",
     "direction": "LONG",
-    "leverage": 2
+    "leverage": 2,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894686915_TSLAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "quantity": 24000,
     "status": "TAKE_PROFIT",
     "instrument": "BTC/USDT",
-    "accountBalance": 139301.08,
+    "accountBalance": 131673.74,
     "balanceChangePct": 1.07,
     "id": "PT-20260914-155",
     "trigger": "Autopilot Engine: Target Profit Ratified on BTC (+1.07%)",
@@ -2659,7 +2805,9 @@
     "price": 77799.35,
     "balanceChange": 255.64,
     "direction": "LONG",
-    "timestamp": "2026-09-14T08:20:17.464Z"
+    "timestamp": "2026-09-14T08:20:17.464Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687008_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "id": "PT-20260914-156",
@@ -2671,9 +2819,11 @@
     "price": 101.9,
     "leverage": 3,
     "status": "TAKE_PROFIT",
-    "accountBalance": 139376.36,
+    "accountBalance": 131749.02,
     "instrument": "SOL/USDT",
-    "balanceChange": 75.28
+    "balanceChange": 75.28,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687010_SOL/USDT_LONG_autopilotenginetarget"
   },
   {
     "balanceChangePct": -3,
@@ -2693,7 +2843,9 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
       "policyAdjustment": "Tightened trailing volatility buffer by +12% on AAPL"
     },
-    "accountBalance": 138954.98
+    "accountBalance": 131327.64,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687017_AAPL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "id": "PT-20260914-158",
@@ -2706,8 +2858,10 @@
     "leverage": 3,
     "status": "TAKE_PROFIT",
     "instrument": "NVDA/USDT",
-    "accountBalance": 139336.1,
-    "balanceChange": 381.12
+    "accountBalance": 131708.76,
+    "balanceChange": 381.12,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687019_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "STOP_LOSS",
@@ -2718,7 +2872,7 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
       "policyAdjustment": "Mandated 15-minute cool-down period before any new long proposal on ETH"
     },
-    "accountBalance": 138931.11,
+    "accountBalance": 131303.77,
     "quantity": 11036.4,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on ETH (-3.67%)",
     "id": "PT-20260914-159",
@@ -2727,7 +2881,9 @@
     "timestamp": "2026-09-14T08:20:38.507Z",
     "leverage": 3,
     "instrument": "ETH/USDT",
-    "balanceChange": -404.99
+    "balanceChange": -404.99,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687019_ETH/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "direction": "LONG",
@@ -2741,27 +2897,31 @@
     "leverage": 3,
     "price": 132.41,
     "quantity": 12718.83,
-    "accountBalance": 139754.42
+    "accountBalance": 132127.08,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687019_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
     "leverage": 3,
     "balanceChangePct": 5.15,
     "price": 239.15,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.15%) ratified on AAPL",
-    "accountBalance": 140465.42,
+    "accountBalance": 132838.08,
     "timestamp": "2026-09-14T08:20:43.030Z",
     "quantity": 13809.52,
     "direction": "LONG",
     "instrument": "AAPL/USDT",
     "status": "TAKE_PROFIT",
     "balanceChange": 711,
-    "id": "PT-20260914-161"
+    "id": "PT-20260914-161",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687021_AAPL/USDT_LONG_autopilotenginetarget"
   },
   {
     "timestamp": "2026-09-14T08:20:43.033Z",
     "id": "PT-20260914-162",
     "balanceChange": 872.96,
-    "accountBalance": 141338.38,
+    "accountBalance": 133711.04,
     "direction": "LONG",
     "leverage": 3,
     "balanceChangePct": 5.9,
@@ -2769,10 +2929,12 @@
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on MSTR",
     "status": "TAKE_PROFIT",
     "price": 165.27,
-    "quantity": 14795.91
+    "quantity": 14795.91,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687021_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
-    "accountBalance": 140900.53,
+    "accountBalance": 133273.19,
     "id": "PT-20260914-163",
     "balanceChangePct": -3,
     "quantity": 14594.92,
@@ -2789,14 +2951,16 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 32.44%.",
       "policyAdjustment": "Tightened trailing volatility buffer by +12% on TSLA"
-    }
+    },
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687023_TSLA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "direction": "LONG",
     "timestamp": "2026-09-14T08:20:46.341Z",
     "status": "STOP_LOSS",
     "instrument": "SOL/USDT",
-    "accountBalance": 140648.25,
+    "accountBalance": 133020.91,
     "balanceChangePct": -2.2,
     "price": 139.5,
     "quantity": 11467.43,
@@ -2809,10 +2973,12 @@
       "policyAdjustment": "Calibrated Nexus-Red adversarial cross-check threshold to 0.75",
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 27.56%.",
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap"
-    }
+    },
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687023_SOL/USDT_LONG_disciplinedriskcutaut"
   },
   {
-    "accountBalance": 141211.92,
+    "accountBalance": 133584.58,
     "balanceChangePct": 4.5,
     "balanceChange": 563.67,
     "leverage": 3,
@@ -2823,7 +2989,9 @@
     "price": 137.28,
     "id": "PT-20260914-165",
     "quantity": 12526.08,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687024_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
     "instrument": "SOL/USDT",
@@ -2833,16 +3001,18 @@
     "status": "STOP_LOSS",
     "direction": "SHORT",
     "timestamp": "2026-09-14T08:23:54.756Z",
-    "accountBalance": 140810.79,
+    "accountBalance": 133183.45,
     "balanceChange": -401.13,
     "balanceChangePct": -3.62,
     "leverage": 5,
-    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital"
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687117_SOL/USDT_SHORT_guardian01riskvetovo"
   },
   {
     "timestamp": "2026-09-14T08:24:20.590Z",
     "direction": "SHORT",
-    "accountBalance": 140458.79,
+    "accountBalance": 132831.45,
     "balanceChangePct": -2.63,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "instrument": "TSLAon/USDT",
@@ -2851,10 +3021,12 @@
     "id": "PT-20260914-167",
     "price": 252,
     "status": "STOP_LOSS",
-    "quantity": 13384
+    "quantity": 13384,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687130_TSLAON/USDT_SHORT_guardian01riskvetovo"
   },
   {
-    "accountBalance": 140780.11,
+    "accountBalance": 133152.77,
     "quantity": 7993,
     "instrument": "SOL/USDT",
     "id": "PT-20260914-168",
@@ -2865,13 +3037,15 @@
     "balanceChange": 321.32,
     "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "status": "TAKE_PROFIT",
-    "leverage": 5
+    "leverage": 5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687142_SOL/USDT_SHORT_autopilotpulsesolusdt"
   },
   {
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "quantity": 8510,
     "status": "TAKE_PROFIT",
-    "accountBalance": 141391.13,
+    "accountBalance": 133763.79,
     "balanceChange": 611.02,
     "id": "PT-20260914-169",
     "price": 2522.09,
@@ -2879,21 +3053,25 @@
     "balanceChangePct": 7.18,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:44:08.615Z",
-    "leverage": 5
+    "leverage": 5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687724_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "quantity": 10886,
     "status": "TAKE_PROFIT",
     "balanceChange": 900.27,
-    "accountBalance": 142291.4,
+    "accountBalance": 134664.06,
     "id": "PT-20260914-170",
     "instrument": "ETH/USDT",
     "price": 2522.32,
     "balanceChangePct": 8.27,
     "direction": "LONG",
     "leverage": 5,
-    "timestamp": "2026-09-14T08:45:25.479Z"
+    "timestamp": "2026-09-14T08:45:25.479Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687762_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.42%) ratified on COIN",
@@ -2904,10 +3082,12 @@
     "instrument": "COIN/USDT",
     "leverage": 3,
     "balanceChangePct": 6.42,
-    "accountBalance": 142868.68,
+    "accountBalance": 135241.34,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:45:37.590Z",
-    "price": 186.44
+    "price": 186.44,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687768_COIN/USDT_LONG_autopilotenginetarget"
   },
   {
     "leverage": 3,
@@ -2921,7 +3101,9 @@
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on BNB",
     "balanceChange": 707.19,
     "instrument": "BNB/USDT",
-    "accountBalance": 143575.87
+    "accountBalance": 135948.53,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687768_BNB/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "TAKE_PROFIT",
@@ -2934,11 +3116,13 @@
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on SOL",
     "id": "PT-20260914-173",
     "instrument": "SOL/USDT",
-    "accountBalance": 144170.38,
-    "balanceChange": 594.51
+    "accountBalance": 136543.04,
+    "balanceChange": 594.51,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687768_SOL/USDT_LONG_autopilotenginetarget"
   },
   {
-    "accountBalance": 143756.59,
+    "accountBalance": 136129.25,
     "balanceChange": -413.79,
     "instrument": "COIN/USDT",
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on COIN (-20.58%)",
@@ -2955,7 +3139,9 @@
     "quantity": 15914.93,
     "id": "PT-20260914-174",
     "leverage": 3,
-    "price": 176.66
+    "price": 176.66,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687776_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "id": "PT-20260914-175",
@@ -2975,7 +3161,9 @@
     "instrument": "TSLA/USDT",
     "balanceChange": -277.75,
     "balanceChangePct": -3,
-    "accountBalance": 143478.84
+    "accountBalance": 135851.5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687779_TSLA/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "status": "STOP_LOSS",
@@ -2984,7 +3172,7 @@
     "timestamp": "2026-09-14T08:46:05.067Z",
     "id": "PT-20260914-176",
     "leverage": 3,
-    "accountBalance": 143194.57,
+    "accountBalance": 135567.23,
     "postMortem": {
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 14.77%.",
@@ -2995,7 +3183,9 @@
     "balanceChangePct": -2.2,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-14.77%)",
     "balanceChange": -284.27,
-    "instrument": "MSTR/USDT"
+    "instrument": "MSTR/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687782_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "instrument": "BTC/USDT",
@@ -3004,12 +3194,14 @@
     "balanceChange": 826.71,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:46:19.650Z",
-    "accountBalance": 144021.28,
+    "accountBalance": 136393.94,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on BTC",
     "leverage": 3,
     "id": "PT-20260914-177",
     "status": "TAKE_PROFIT",
-    "price": 78450
+    "price": 78450,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687789_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+4.41%) ratified on MSTR",
@@ -3022,8 +3214,10 @@
     "leverage": 3,
     "timestamp": "2026-09-14T08:46:19.653Z",
     "direction": "LONG",
-    "accountBalance": 144450.19,
-    "balanceChange": 428.91
+    "accountBalance": 136822.85,
+    "balanceChange": 428.91,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687789_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
     "quantity": 10000,
@@ -3041,9 +3235,11 @@
       "policyAdjustment": "Increased minimum orderbook depth requirement before next re-entry",
       "rootCause": "Aggressive taker selling breached short-term VWAP support band"
     },
-    "accountBalance": 144230.19,
+    "accountBalance": 136602.85,
     "timestamp": "2026-09-14T08:46:35.584Z",
-    "direction": "LONG"
+    "direction": "LONG",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687797_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "instrument": "AAPL/USDT",
@@ -3057,13 +3253,15 @@
       "rootCause": "Orderbook bid wall spoof pulled on Bitget spot feed ($228.34)"
     },
     "leverage": 3,
-    "accountBalance": 143970.19,
+    "accountBalance": 136342.85,
     "timestamp": "2026-09-14T08:46:56.468Z",
     "direction": "LONG",
     "balanceChange": -260,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on AAPL (-42.09%)",
     "balanceChangePct": -2.6,
-    "quantity": 10000
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687808_AAPL/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "leverage": 3,
@@ -3082,14 +3280,16 @@
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 4.18%."
     },
     "balanceChangePct": -4.18,
-    "accountBalance": 143552.19,
-    "status": "STOP_LOSS"
+    "accountBalance": 135924.85,
+    "status": "STOP_LOSS",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687810_ETH/USDT_LONG_disciplinedriskcutaut"
   },
   {
-    "accountBalance": 144142.19,
+    "accountBalance": 136514.85,
     "instrument": "NVDA/USDT",
     "id": "PT-20260914-182",
-    "price": 219.95,
+    "price": 132.5,
     "balanceChange": 590,
     "balanceChangePct": 5.9,
     "quantity": 10000,
@@ -3097,12 +3297,14 @@
     "timestamp": "2026-09-14T08:47:03.333Z",
     "direction": "LONG",
     "leverage": 3,
-    "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on NVDA"
+    "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on NVDA",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687811_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-20.55% profit on COIN (Peak: +2.77%)",
     "leverage": 3,
-    "accountBalance": 143882.19,
+    "accountBalance": 136254.85,
     "balanceChange": -260,
     "instrument": "COIN/USDT",
     "status": "TAKE_PROFIT",
@@ -3111,7 +3313,9 @@
     "price": 138.92,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:47:12.371Z",
-    "balanceChangePct": -2.6
+    "balanceChangePct": -2.6,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687816_COIN/USDT_LONG_breakevenratchettraili"
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-8.09%)",
@@ -3119,7 +3323,7 @@
     "instrument": "MSTR/USDT",
     "balanceChange": -809,
     "status": "STOP_LOSS",
-    "accountBalance": 143073.19,
+    "accountBalance": 135445.85,
     "postMortem": {
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 8.09%.",
       "policyAdjustment": "Tightened trailing volatility buffer by +12% on MSTR",
@@ -3131,12 +3335,14 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T08:47:17.913Z",
     "leverage": 3,
-    "price": 128.84
+    "price": 128.84,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687818_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "leverage": 2,
-    "accountBalance": 142756.76,
+    "accountBalance": 135129.42,
     "balanceChange": -316.43,
     "instrument": "TSLAon/USDT",
     "status": "STOP_LOSS",
@@ -3145,24 +3351,28 @@
     "price": 252,
     "direction": "LONG",
     "balanceChangePct": -3.04,
-    "timestamp": "2026-09-14T08:47:19.481Z"
+    "timestamp": "2026-09-14T08:47:19.481Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687819_TSLAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "quantity": 10000,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.2%) ratified on NVDA",
     "status": "TAKE_PROFIT",
-    "price": 175.01,
+    "price": 132.5,
     "balanceChange": 520,
     "leverage": 3,
     "balanceChangePct": 5.2,
-    "accountBalance": 143276.76,
+    "accountBalance": 135649.42,
     "direction": "LONG",
     "instrument": "NVDA/USDT",
     "id": "PT-20260914-186",
-    "timestamp": "2026-09-14T08:47:27.961Z"
+    "timestamp": "2026-09-14T08:47:27.961Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687823_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
-    "accountBalance": 142976.76,
+    "accountBalance": 135349.42,
     "timestamp": "2026-09-14T08:47:30.890Z",
     "direction": "LONG",
     "postMortem": {
@@ -3179,14 +3389,16 @@
     "leverage": 3,
     "price": 155.2,
     "status": "STOP_LOSS",
-    "quantity": 10000
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687825_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "instrument": "BTC/USDT",
     "balanceChangePct": -2.2,
     "price": 78450,
     "status": "STOP_LOSS",
-    "accountBalance": 142756.76,
+    "accountBalance": 135129.42,
     "timestamp": "2026-09-14T08:47:41.223Z",
     "direction": "LONG",
     "postMortem": {
@@ -3199,7 +3411,9 @@
     "leverage": 3,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on BTC (-16.03%)",
     "id": "PT-20260914-188",
-    "quantity": 10000
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687830_BTC/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "instrument": "MSTR/USDT",
@@ -3211,7 +3425,7 @@
     "direction": "LONG",
     "status": "STOP_LOSS",
     "timestamp": "2026-09-14T08:47:43.741Z",
-    "accountBalance": 142089.76,
+    "accountBalance": 134462.42,
     "price": 123.61,
     "postMortem": {
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap",
@@ -3219,7 +3433,9 @@
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 6.67%.",
       "rootCause": "Macro risk-off correlation wave induced sudden liquidity vacuum"
     },
-    "leverage": 3
+    "leverage": 3,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687831_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "price": 101.41,
@@ -3231,9 +3447,11 @@
     "direction": "LONG",
     "id": "PT-20260914-190",
     "timestamp": "2026-09-14T08:47:46.467Z",
-    "accountBalance": 142543.6,
+    "accountBalance": 134916.26,
     "leverage": 3,
-    "balanceChange": 453.84
+    "balanceChange": 453.84,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687833_SOL/USDT_LONG_autopilotpulsesolusdt"
   },
   {
     "status": "STOP_LOSS",
@@ -3252,8 +3470,10 @@
     "quantity": 10000,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:47:50.004Z",
-    "accountBalance": 142323.6,
-    "instrument": "ETH/USDT"
+    "accountBalance": 134696.26,
+    "instrument": "ETH/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687835_ETH/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "postMortem": {
@@ -3269,11 +3489,13 @@
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-28.38%)",
     "status": "STOP_LOSS",
     "instrument": "MSTR/USDT",
-    "accountBalance": 142063.6,
+    "accountBalance": 134436.26,
     "quantity": 10000,
     "timestamp": "2026-09-14T08:47:57.217Z",
     "direction": "LONG",
-    "leverage": 3
+    "leverage": 3,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687838_MSTR/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "direction": "LONG",
@@ -3285,13 +3507,15 @@
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on COIN",
     "instrument": "COIN/USDT",
     "quantity": 10000,
-    "accountBalance": 142723.6,
+    "accountBalance": 135096.26,
     "status": "TAKE_PROFIT",
-    "price": 249.06
+    "price": 249.06,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687841_COIN/USDT_LONG_autopilotenginetarget"
   },
   {
     "balanceChange": 519.87,
-    "accountBalance": 143243.47,
+    "accountBalance": 135616.13,
     "instrument": "TSLAon/USDT",
     "id": "PT-20260914-194",
     "leverage": 2,
@@ -3301,7 +3525,9 @@
     "price": 252,
     "balanceChangePct": 4.86,
     "quantity": 10697,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687844_TSLAON/USDT_SHORT_councilquorumtslaonus"
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+4.5%) ratified on MSTR",
@@ -3310,18 +3536,20 @@
     "balanceChangePct": 4.5,
     "status": "TAKE_PROFIT",
     "instrument": "MSTR/USDT",
-    "accountBalance": 143693.47,
+    "accountBalance": 136066.13,
     "price": 209,
     "direction": "LONG",
     "id": "PT-20260914-195",
     "leverage": 3,
-    "timestamp": "2026-09-14T08:48:10.946Z"
+    "timestamp": "2026-09-14T08:48:10.946Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687845_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
     "status": "TAKE_PROFIT",
     "price": 132.73,
     "leverage": 3,
-    "accountBalance": 144213.47,
+    "accountBalance": 136586.13,
     "direction": "LONG",
     "instrument": "NVDA/USDT",
     "timestamp": "2026-09-14T08:48:41.905Z",
@@ -3329,7 +3557,9 @@
     "balanceChangePct": 5.2,
     "quantity": 10000,
     "id": "PT-20260914-196",
-    "balanceChange": 520
+    "balanceChange": 520,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687860_NVDA/USDT_LONG_autopilotenginetarget"
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on BTC",
@@ -3340,10 +3570,12 @@
     "status": "TAKE_PROFIT",
     "direction": "LONG",
     "timestamp": "2026-09-14T08:48:44.121Z",
-    "accountBalance": 144803.47,
+    "accountBalance": 137176.13,
     "id": "PT-20260914-197",
     "price": 78450,
-    "quantity": 10000
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687862_BTC/USDT_LONG_autopilotenginetarget"
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on COIN (-67.65%)",
@@ -3354,7 +3586,7 @@
       "policyAdjustment": "Tightened trailing volatility buffer by +12% on COIN"
     },
     "balanceChange": -260,
-    "accountBalance": 144543.47,
+    "accountBalance": 136916.13,
     "id": "PT-20260914-198",
     "direction": "LONG",
     "timestamp": "2026-09-14T08:48:51.349Z",
@@ -3363,7 +3595,9 @@
     "status": "STOP_LOSS",
     "balanceChangePct": -2.6,
     "quantity": 10000,
-    "price": 165
+    "price": 165,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687865_COIN/USDT_LONG_disciplinedriskcutaut"
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+3.25%) ratified on AAPL",
@@ -3374,10 +3608,12 @@
     "status": "TAKE_PROFIT",
     "direction": "LONG",
     "timestamp": "2026-09-14T08:48:53.385Z",
-    "accountBalance": 144868.47,
+    "accountBalance": 137241.13,
     "id": "PT-20260914-199",
     "price": 235.17,
-    "quantity": 10000
+    "quantity": 10000,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687866_AAPL/USDT_LONG_autopilotenginetarget"
   },
   {
     "timestamp": "2026-09-14T08:49:05.202Z",
@@ -3385,13 +3621,15 @@
     "direction": "LONG",
     "balanceChange": -220,
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-20.97% profit on AAPL (Peak: +2.16%)",
-    "accountBalance": 144648.47,
+    "accountBalance": 137021.13,
     "instrument": "AAPL/USDT",
     "id": "PT-20260914-200",
     "leverage": 3,
-    "price": 180.17,
+    "price": 228.5,
     "balanceChangePct": -2.2,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687872_AAPL/USDT_LONG_breakevenratchettraili"
   },
   {
     "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -3402,30 +3640,34 @@
     "id": "PT-20260914-201",
     "status": "TAKE_PROFIT",
     "leverage": 4,
-    "accountBalance": 145248.28,
+    "accountBalance": 137620.94,
     "balanceChange": 599.81,
     "price": 101.38,
-    "balanceChangePct": 5.28
+    "balanceChangePct": 5.28,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687872_SOL/USDT_LONG_autopilotpulsesolusdt"
   },
   {
     "quantity": 10000,
     "id": "PT-20260914-202",
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on COIN",
     "status": "TAKE_PROFIT",
-    "accountBalance": 145838.28,
+    "accountBalance": 138210.94,
     "price": 242.99,
     "direction": "LONG",
     "timestamp": "2026-09-14T08:49:07.202Z",
     "leverage": 3,
     "balanceChangePct": 5.9,
     "balanceChange": 590,
-    "instrument": "COIN/USDT"
+    "instrument": "COIN/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687873_COIN/USDT_LONG_autopilotenginetarget"
   },
   {
     "price": 134.01,
     "status": "TAKE_PROFIT",
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on MSTR",
-    "accountBalance": 146498.28,
+    "accountBalance": 138870.94,
     "quantity": 10000,
     "balanceChange": 660,
     "instrument": "MSTR/USDT",
@@ -3433,7 +3675,9 @@
     "leverage": 3,
     "timestamp": "2026-09-14T08:49:14.049Z",
     "balanceChangePct": 6.6,
-    "id": "PT-20260914-203"
+    "id": "PT-20260914-203",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687877_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
     "timestamp": "2026-09-14T08:49:21.599Z",
@@ -3444,14 +3688,16 @@
     "instrument": "MSTR/USDT",
     "balanceChange": 342,
     "status": "TAKE_PROFIT",
-    "accountBalance": 146840.28,
+    "accountBalance": 139212.94,
     "balanceChangePct": 3.42,
     "leverage": 3,
-    "id": "PT-20260914-204"
+    "id": "PT-20260914-204",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687880_MSTR/USDT_LONG_autopilotenginetarget"
   },
   {
     "leverage": 2,
-    "accountBalance": 146492.93,
+    "accountBalance": 138865.59,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "balanceChange": -347.35,
     "instrument": "TSLAon/USDT",
@@ -3461,7 +3707,9 @@
     "direction": "LONG",
     "price": 252,
     "status": "STOP_LOSS",
-    "balanceChangePct": -3.63
+    "balanceChangePct": -3.63,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687926_TSLAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "quantity": 8638,
@@ -3474,8 +3722,10 @@
     "direction": "SHORT",
     "instrument": "SOL/USDT",
     "balanceChange": 359.34,
-    "accountBalance": 146852.27,
-    "balanceChangePct": 4.16
+    "accountBalance": 139224.93,
+    "balanceChangePct": 4.16,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894687960_SOL/USDT_SHORT_autopilotpulsesolusdt"
   },
   {
     "balanceChangePct": -3.93,
@@ -3487,12 +3737,14 @@
     "timestamp": "2026-09-14T08:54:00.528Z",
     "direction": "SHORT",
     "price": 252,
-    "accountBalance": 146360.9,
+    "accountBalance": 138733.56,
     "balanceChange": -491.37,
-    "leverage": 2
+    "leverage": 2,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688020_TSLAON/USDT_SHORT_guardian01riskvetovo"
   },
   {
-    "accountBalance": 146988.49,
+    "accountBalance": 139361.15,
     "id": "PT-20260914-208",
     "balanceChange": 627.59,
     "balanceChangePct": 6.13,
@@ -3503,13 +3755,15 @@
     "price": 101.44,
     "timestamp": "2026-09-14T08:55:55.529Z",
     "leverage": 5,
-    "instrument": "SOL/USDT"
+    "instrument": "SOL/USDT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688077_SOL/USDT_SHORT_autopilotpulsesolusdt"
   },
   {
     "instrument": "BTC/USDT",
     "quantity": 8887,
     "price": 77692.01,
-    "accountBalance": 147566.14,
+    "accountBalance": 139938.8,
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "timestamp": "2026-09-14T08:57:59.520Z",
     "id": "PT-20260914-209",
@@ -3517,13 +3771,15 @@
     "balanceChange": 577.65,
     "balanceChangePct": 6.5,
     "leverage": 4,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688139_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
     "instrument": "BTC/USDT",
     "quantity": 12953,
     "price": 77728.8,
-    "accountBalance": 148682.69,
+    "accountBalance": 141055.35,
     "id": "PT-20260914-210",
     "timestamp": "2026-09-14T08:59:59.521Z",
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -3531,7 +3787,9 @@
     "balanceChange": 1116.55,
     "balanceChangePct": 8.62,
     "leverage": 5,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688199_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
     "id": "PT-20260914-211",
@@ -3544,8 +3802,10 @@
     "timestamp": "2026-09-14T09:01:58.528Z",
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "quantity": 9999,
-    "accountBalance": 149256.63,
-    "balanceChange": 573.94
+    "accountBalance": 141629.29,
+    "balanceChange": 573.94,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688259_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "instrument": "TSLAon/USDT",
@@ -3556,10 +3816,12 @@
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "status": "TAKE_PROFIT",
     "quantity": 14187,
-    "accountBalance": 150566.09,
+    "accountBalance": 142938.75,
     "direction": "LONG",
     "balanceChangePct": 9.23,
-    "timestamp": "2026-09-14T09:05:21.541Z"
+    "timestamp": "2026-09-14T09:05:21.541Z",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688360_TSLAON/USDT_LONG_councilquorumtslaonus"
   },
   {
     "balanceChangePct": 5.16,
@@ -3568,16 +3830,18 @@
     "quantity": 11148,
     "direction": "LONG",
     "timestamp": "2026-09-14T09:05:21.553Z",
-    "accountBalance": 151141.33,
+    "accountBalance": 143513.99,
     "price": 101.55,
     "instrument": "SOL/USDT",
     "balanceChange": 575.24,
     "leverage": 4,
-    "id": "PT-20260914-213"
+    "id": "PT-20260914-213",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688360_SOL/USDT_LONG_autopilotpulsesolusdt"
   },
   {
     "leverage": 3,
-    "accountBalance": 151516.62,
+    "accountBalance": 143889.28,
     "price": 77751.09,
     "instrument": "BTC/USDT",
     "id": "PT-20260914-214",
@@ -3587,13 +3851,15 @@
     "status": "TAKE_PROFIT",
     "balanceChange": 375.29,
     "timestamp": "2026-09-14T09:05:57.517Z",
-    "direction": "SHORT"
+    "direction": "SHORT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688378_BTC/USDT_SHORT_autopilotpulsebtcusdt"
   },
   {
     "instrument": "BTC/USDT",
     "direction": "SHORT",
     "price": 77708.01,
-    "accountBalance": 152491.96,
+    "accountBalance": 144864.62,
     "timestamp": "2026-09-14T09:08:52.540Z",
     "leverage": 5,
     "id": "PT-20260914-215",
@@ -3601,7 +3867,9 @@
     "status": "TAKE_PROFIT",
     "quantity": 11625,
     "balanceChangePct": 8.39,
-    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption"
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688466_BTC/USDT_SHORT_autopilotpulsebtcusdt"
   },
   {
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
@@ -3609,13 +3877,15 @@
     "quantity": 8041,
     "price": 77805.06,
     "instrument": "BTC/USDT",
-    "accountBalance": 152211.33,
+    "accountBalance": 144583.99,
     "id": "PT-20260914-216",
     "direction": "SHORT",
     "leverage": 5,
     "timestamp": "2026-09-14T09:09:58.525Z",
     "balanceChange": -280.63,
-    "balanceChangePct": -3.49
+    "balanceChangePct": -3.49,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688499_BTC/USDT_SHORT_guardian01riskvetovo"
   },
   {
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -3626,13 +3896,15 @@
     "timestamp": "2026-09-14T09:13:23.324Z",
     "balanceChange": 658.83,
     "status": "TAKE_PROFIT",
-    "accountBalance": 152870.16,
+    "accountBalance": 145242.82,
     "id": "PT-20260914-235",
     "leverage": 5,
-    "price": 2515.23
+    "price": 2515.23,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688601_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
-    "accountBalance": 154198.11,
+    "accountBalance": 146570.77,
     "id": "PT-20260914-236",
     "leverage": 2,
     "balanceChangePct": 9.08,
@@ -3643,7 +3915,9 @@
     "instrument": "NVDAon/USDT",
     "quantity": 14625,
     "price": 218.29,
-    "status": "TAKE_PROFIT"
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688617_NVDAON/USDT_LONG_councilquorumnvdaonus"
   },
   {
     "direction": "LONG",
@@ -3653,17 +3927,19 @@
     "quantity": 12190,
     "price": 77727.47,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
-    "accountBalance": 153798.28,
+    "accountBalance": 146170.94,
     "status": "STOP_LOSS",
     "id": "PT-20260914-237",
     "leverage": 4,
-    "balanceChangePct": -3.28
+    "balanceChangePct": -3.28,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688630_BTC/USDT_LONG_guardian01riskvetovo"
   },
   {
     "price": 218.29,
     "instrument": "NVDAon/USDT",
     "leverage": 2,
-    "accountBalance": 153470.71,
+    "accountBalance": 145843.37,
     "id": "PT-20260914-238",
     "balanceChange": -327.57,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
@@ -3671,12 +3947,14 @@
     "timestamp": "2026-09-14T09:14:21.862Z",
     "direction": "LONG",
     "balanceChangePct": -2.65,
-    "quantity": 12361
+    "quantity": 12361,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688630_NVDAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "balanceChangePct": 6.47,
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
-    "accountBalance": 154259.66,
+    "accountBalance": 146632.32,
     "leverage": 2,
     "status": "TAKE_PROFIT",
     "direction": "SHORT",
@@ -3685,7 +3963,9 @@
     "id": "PT-20260914-239",
     "price": 218.29,
     "quantity": 12194,
-    "balanceChange": 788.95
+    "balanceChange": 788.95,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688666_NVDAON/USDT_SHORT_councilquorumnvdaonus"
   },
   {
     "quantity": 13925,
@@ -3696,10 +3976,12 @@
     "leverage": 4,
     "status": "TAKE_PROFIT",
     "direction": "LONG",
-    "accountBalance": 155238.59,
+    "accountBalance": 147611.25,
     "timestamp": "2026-09-14T09:15:57.826Z",
     "id": "PT-20260914-240",
-    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption"
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688678_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
     "quantity": 14283,
@@ -3707,16 +3989,18 @@
     "status": "TAKE_PROFIT",
     "instrument": "BTC/USDT",
     "price": 77674.99,
-    "accountBalance": 156412.65,
+    "accountBalance": 148785.31,
     "leverage": 3,
     "direction": "LONG",
     "balanceChangePct": 8.22,
     "timestamp": "2026-09-14T09:16:29.334Z",
     "balanceChange": 1174.06,
-    "id": "PT-20260914-241"
+    "id": "PT-20260914-241",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688694_BTC/USDT_LONG_autopilotpulsebtcusdt"
   },
   {
-    "accountBalance": 157192.52,
+    "accountBalance": 149565.18,
     "id": "PT-20260914-242",
     "balanceChange": 779.87,
     "balanceChangePct": 6.12,
@@ -3727,25 +4011,13 @@
     "leverage": 2,
     "price": 218.29,
     "timestamp": "2026-09-14T09:16:48.831Z",
-    "instrument": "NVDAon/USDT"
-  },
-  {
-    "balanceChange": -148.8,
-    "id": "PT-20260914-243",
-    "leverage": 2,
-    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
-    "price": 218.29,
     "instrument": "NVDAon/USDT",
-    "timestamp": "2026-09-14T09:16:48.842Z",
-    "accountBalance": 157043.72,
-    "direction": "SHORT",
-    "status": "STOP_LOSS",
-    "quantity": 7957,
-    "balanceChangePct": -1.87
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688704_NVDAON/USDT_SHORT_councilquorumnvdaonus"
   },
   {
     "quantity": 12507,
-    "accountBalance": 158226.88,
+    "accountBalance": 150748.34,
     "balanceChangePct": 9.46,
     "status": "TAKE_PROFIT",
     "balanceChange": 1183.16,
@@ -3755,27 +4027,15 @@
     "timestamp": "2026-09-14T09:17:09.835Z",
     "leverage": 2,
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
-    "instrument": "NVDAon/USDT"
-  },
-  {
-    "id": "PT-20260914-245",
-    "leverage": 2,
-    "status": "TAKE_PROFIT",
-    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
-    "balanceChange": 579.14,
-    "balanceChangePct": 4.71,
     "instrument": "NVDAon/USDT",
-    "quantity": 12296,
-    "price": 218.29,
-    "timestamp": "2026-09-14T09:17:09.841Z",
-    "accountBalance": 158806.02,
-    "direction": "LONG"
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688714_NVDAON/USDT_SHORT_councilquorumnvdaonus"
   },
   {
     "id": "PT-20260914-246",
     "quantity": 8979,
     "price": 365.55,
-    "accountBalance": 159251.38,
+    "accountBalance": 151193.7,
     "balanceChangePct": 4.96,
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "instrument": "TSLAon/USDT",
@@ -3783,7 +4043,9 @@
     "leverage": 2,
     "direction": "SHORT",
     "timestamp": "2026-09-14T09:18:05.324Z",
-    "balanceChange": 445.36
+    "balanceChange": 445.36,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688742_TSLAON/USDT_SHORT_councilquorumtslaonus"
   },
   {
     "leverage": 2,
@@ -3796,8 +4058,10 @@
     "direction": "LONG",
     "status": "STOP_LOSS",
     "balanceChangePct": -1.88,
-    "accountBalance": 159069.92,
-    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital"
+    "accountBalance": 151012.24,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688756_NVDAON/USDT_LONG_guardian01riskvetovo"
   },
   {
     "instrument": "TSLAon/USDT",
@@ -3811,7 +4075,9 @@
     "balanceChangePct": 5.73,
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "status": "TAKE_PROFIT",
-    "accountBalance": 159607.85
+    "accountBalance": 151550.17,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688756_TSLAON/USDT_LONG_councilquorumtslaonus"
   },
   {
     "balanceChangePct": 8.51,
@@ -3820,12 +4086,14 @@
     "timestamp": "2026-09-14T09:19:58.526Z",
     "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "direction": "LONG",
-    "accountBalance": 160213.85,
+    "accountBalance": 152156.17,
     "price": 101.5,
     "leverage": 3,
     "status": "TAKE_PROFIT",
     "id": "PT-20260914-249",
-    "balanceChange": 606
+    "balanceChange": 606,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688799_SOL/USDT_LONG_autopilotpulsesolusdt"
   },
   {
     "id": "PT-20260914-250",
@@ -3837,9 +4105,11 @@
     "balanceChange": 1024.96,
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "status": "TAKE_PROFIT",
-    "accountBalance": 161238.81,
+    "accountBalance": 153181.13,
     "instrument": "ETH/USDT",
-    "leverage": 5
+    "leverage": 5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688829_ETH/USDT_SHORT_autopilotpulseethusdt"
   },
   {
     "id": "PT-20260914-251",
@@ -3848,12 +4118,14 @@
     "leverage": 2,
     "instrument": "NVDAon/USDT",
     "status": "TAKE_PROFIT",
-    "accountBalance": 161701.97,
+    "accountBalance": 153644.29,
     "balanceChange": 463.16,
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "quantity": 9982,
     "balanceChangePct": 4.64,
-    "price": 218.62
+    "price": 218.62,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688888_NVDAON/USDT_LONG_councilquorumnvdaonus"
   },
   {
     "status": "TAKE_PROFIT",
@@ -3862,12 +4134,14 @@
     "price": 218.54,
     "instrument": "NVDAon/USDT",
     "balanceChange": 604.21,
-    "accountBalance": 162306.18,
+    "accountBalance": 154248.5,
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "quantity": 8357,
     "timestamp": "2026-09-14T09:24:56.522Z",
     "balanceChangePct": 7.23,
-    "direction": "SHORT"
+    "direction": "SHORT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894688948_NVDAON/USDT_SHORT_councilquorumnvdaonus"
   },
   {
     "leverage": 5,
@@ -3881,7 +4155,9 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T09:26:57.527Z",
     "balanceChange": -433.38,
-    "accountBalance": 161872.8
+    "accountBalance": 153815.12,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894689008_SOL/USDT_LONG_guardian01riskvetovo"
   },
   {
     "balanceChangePct": 8.2,
@@ -3894,8 +4170,10 @@
     "quantity": 12586,
     "status": "TAKE_PROFIT",
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
-    "accountBalance": 162904.85,
-    "balanceChange": 1032.05
+    "accountBalance": 154847.17,
+    "balanceChange": 1032.05,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894689036_ETH/USDT_LONG_autopilotpulseethusdt"
   },
   {
     "id": "PT-20260914-255",
@@ -3908,8 +4186,10 @@
     "leverage": 3,
     "balanceChange": -483.98,
     "price": 101.35,
-    "accountBalance": 162420.87,
-    "status": "STOP_LOSS"
+    "accountBalance": 154363.19,
+    "status": "STOP_LOSS",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894689056_SOL/USDT_LONG_guardian01riskvetovo"
   },
   {
     "direction": "LONG",
@@ -3918,11 +4198,781 @@
     "id": "PT-20260914-256",
     "price": 364.58,
     "quantity": 13384,
-    "accountBalance": 163451.44,
+    "accountBalance": 155393.76,
     "status": "TAKE_PROFIT",
     "balanceChange": 1030.57,
     "balanceChangePct": 7.7,
     "leverage": 2,
-    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation"
+    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894689069_TSLAON/USDT_LONG_councilquorumtslaonus"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2527.37,
+    "quantity": 7971,
+    "leverage": 3,
+    "balanceChange": 648.84,
+    "balanceChangePct": 8.14,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-257",
+    "timestamp": "2026-09-14T17:46:16.526Z",
+    "accountBalance": 156042.6,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894703988_ETH/USDT_LONG_autopilotpulseethusdt"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 212.48,
+    "quantity": 12635,
+    "leverage": 2,
+    "balanceChange": 1187.69,
+    "balanceChangePct": 9.4,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-258",
+    "timestamp": "2026-09-14T17:46:16.542Z",
+    "accountBalance": 157230.29,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894703988_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "SHORT",
+    "price": 2529.51,
+    "quantity": 11101,
+    "leverage": 4,
+    "balanceChange": -391.87,
+    "balanceChangePct": -3.53,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-259",
+    "timestamp": "2026-09-14T17:46:42.039Z",
+    "accountBalance": 156838.42,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704001_ETH/USDT_SHORT_guardian01riskvetovo"
+  },
+  {
+    "instrument": "TSLAon/USDT",
+    "direction": "SHORT",
+    "price": 362.45,
+    "quantity": 7604,
+    "leverage": 2,
+    "balanceChange": 485.9,
+    "balanceChangePct": 6.39,
+    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-260",
+    "timestamp": "2026-09-14T17:46:42.056Z",
+    "accountBalance": 157324.32,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704001_TSLAON/USDT_SHORT_councilquorumtslaonus"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 212.52,
+    "quantity": 9645,
+    "leverage": 2,
+    "balanceChange": 509.26,
+    "balanceChangePct": 5.28,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-261",
+    "timestamp": "2026-09-14T17:47:15.053Z",
+    "accountBalance": 157833.58,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704017_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "LONG",
+    "price": 103,
+    "quantity": 10537,
+    "leverage": 4,
+    "balanceChange": 854.55,
+    "balanceChangePct": 8.11,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-262",
+    "timestamp": "2026-09-14T17:47:15.074Z",
+    "accountBalance": 158688.13,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704017_SOL/USDT_LONG_autopilotpulsesolusdt"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "LONG",
+    "price": 102.93,
+    "quantity": 14313,
+    "leverage": 5,
+    "balanceChange": -379.29,
+    "balanceChangePct": -2.65,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-263",
+    "timestamp": "2026-09-14T17:47:37.537Z",
+    "accountBalance": 158308.84,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704028_SOL/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "BTC/USDT",
+    "direction": "LONG",
+    "price": 78889.9,
+    "quantity": 11665,
+    "leverage": 4,
+    "balanceChange": 898.21,
+    "balanceChangePct": 7.7,
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-265",
+    "timestamp": "2026-09-14T17:48:07.558Z",
+    "accountBalance": 159207.05,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704043_BTC/USDT_LONG_autopilotpulsebtcusdt"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "LONG",
+    "price": 103.04,
+    "quantity": 8335,
+    "leverage": 3,
+    "balanceChange": 725.14,
+    "balanceChangePct": 8.7,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-266",
+    "timestamp": "2026-09-14T17:48:07.583Z",
+    "accountBalance": 159932.19,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704043_SOL/USDT_LONG_autopilotpulsesolusdt"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2530.57,
+    "quantity": 7772,
+    "leverage": 3,
+    "balanceChange": -192.75,
+    "balanceChangePct": -2.48,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-267",
+    "timestamp": "2026-09-14T17:48:42.047Z",
+    "accountBalance": 159739.44,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704061_ETH/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 182.54,
+    "quantity": 14127,
+    "leverage": 2,
+    "balanceChange": -262.76,
+    "balanceChangePct": -1.86,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-268",
+    "timestamp": "2026-09-14T17:48:42.068Z",
+    "accountBalance": 159476.68,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704061_NVDAON/USDT_SHORT_guardian01riskvetovo"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 212.54,
+    "quantity": 12044,
+    "leverage": 2,
+    "balanceChange": 666.03,
+    "balanceChangePct": 5.53,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-269",
+    "timestamp": "2026-09-14T17:49:09.316Z",
+    "accountBalance": 160142.71,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704074_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 212.57,
+    "quantity": 14986,
+    "leverage": 2,
+    "balanceChange": 1132.94,
+    "balanceChangePct": 7.56,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-271",
+    "timestamp": "2026-09-14T17:49:30.045Z",
+    "accountBalance": 161275.65,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704085_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "BTC/USDT",
+    "direction": "LONG",
+    "price": 78979.86,
+    "quantity": 13060,
+    "leverage": 4,
+    "balanceChange": 959.91,
+    "balanceChangePct": 7.35,
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-272",
+    "timestamp": "2026-09-14T17:49:30.065Z",
+    "accountBalance": 162235.56,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704085_BTC/USDT_LONG_autopilotpulsebtcusdt"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "SHORT",
+    "price": 2530.64,
+    "quantity": 12622,
+    "leverage": 3,
+    "balanceChange": 928.98,
+    "balanceChangePct": 7.36,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-273",
+    "timestamp": "2026-09-14T17:50:01.552Z",
+    "accountBalance": 163164.54,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704100_ETH/USDT_SHORT_autopilotpulseethusdt"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 212.54,
+    "quantity": 7639,
+    "leverage": 2,
+    "balanceChange": 564.52,
+    "balanceChangePct": 7.39,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-275",
+    "timestamp": "2026-09-14T17:50:22.538Z",
+    "accountBalance": 163729.06,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704111_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "TSLAon/USDT",
+    "direction": "LONG",
+    "price": 362.62,
+    "quantity": 11748,
+    "leverage": 2,
+    "balanceChange": 653.19,
+    "balanceChangePct": 5.56,
+    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-276",
+    "timestamp": "2026-09-14T17:50:22.558Z",
+    "accountBalance": 164382.25,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704111_TSLAON/USDT_LONG_councilquorumtslaonus"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "LONG",
+    "price": 103.01,
+    "quantity": 11501,
+    "leverage": 5,
+    "balanceChange": -317.43,
+    "balanceChangePct": -2.76,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-277",
+    "timestamp": "2026-09-14T17:50:48.043Z",
+    "accountBalance": 164064.82,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704124_SOL/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "SHORT",
+    "price": 102.95,
+    "quantity": 13930,
+    "leverage": 4,
+    "balanceChange": 619.89,
+    "balanceChangePct": 4.45,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-279",
+    "timestamp": "2026-09-14T17:51:10.529Z",
+    "accountBalance": 164684.71,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704135_SOL/USDT_SHORT_autopilotpulsesolusdt"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2528.48,
+    "quantity": 7366,
+    "leverage": 3,
+    "balanceChange": -167.21,
+    "balanceChangePct": -2.27,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-280",
+    "timestamp": "2026-09-14T17:51:10.545Z",
+    "accountBalance": 164517.5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704135_ETH/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "LONG",
+    "price": 212.69,
+    "quantity": 11331,
+    "leverage": 2,
+    "balanceChange": 653.8,
+    "balanceChangePct": 5.77,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-281",
+    "timestamp": "2026-09-14T17:51:34.527Z",
+    "accountBalance": 165171.3,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704147_NVDAON/USDT_LONG_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2529.62,
+    "quantity": 9867,
+    "leverage": 5,
+    "balanceChange": 653.2,
+    "balanceChangePct": 6.62,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-282",
+    "timestamp": "2026-09-14T17:51:34.542Z",
+    "accountBalance": 165824.5,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704147_ETH/USDT_LONG_autopilotpulseethusdt"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 212.66,
+    "quantity": 11450,
+    "leverage": 2,
+    "balanceChange": 1017.91,
+    "balanceChangePct": 8.89,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-283",
+    "timestamp": "2026-09-14T17:52:01.530Z",
+    "accountBalance": 166842.41,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704160_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "BTC/USDT",
+    "direction": "LONG",
+    "price": 78958.92,
+    "quantity": 8882,
+    "leverage": 5,
+    "balanceChange": 738.98,
+    "balanceChangePct": 8.32,
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-285",
+    "timestamp": "2026-09-14T17:52:34.528Z",
+    "accountBalance": 167581.39,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704177_BTC/USDT_LONG_autopilotpulsebtcusdt"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "SHORT",
+    "price": 2530.4,
+    "quantity": 11781,
+    "leverage": 4,
+    "balanceChange": -384.06,
+    "balanceChangePct": -3.26,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-287",
+    "timestamp": "2026-09-14T17:53:03.037Z",
+    "accountBalance": 167197.33,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704191_ETH/USDT_SHORT_guardian01riskvetovo"
+  },
+  {
+    "instrument": "BTC/USDT",
+    "direction": "SHORT",
+    "price": 78954.99,
+    "quantity": 13324,
+    "leverage": 4,
+    "balanceChange": 915.36,
+    "balanceChangePct": 6.87,
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-288",
+    "timestamp": "2026-09-14T17:53:03.057Z",
+    "accountBalance": 168112.69,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704191_BTC/USDT_SHORT_autopilotpulsebtcusdt"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "SHORT",
+    "price": 2528.91,
+    "quantity": 10813,
+    "leverage": 4,
+    "balanceChange": 937.49,
+    "balanceChangePct": 8.67,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-289",
+    "timestamp": "2026-09-14T17:53:36.036Z",
+    "accountBalance": 169050.18,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704208_ETH/USDT_SHORT_autopilotpulseethusdt"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2531.52,
+    "quantity": 8508,
+    "leverage": 3,
+    "balanceChange": 545.36,
+    "balanceChangePct": 6.41,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-291",
+    "timestamp": "2026-09-14T17:54:04.531Z",
+    "accountBalance": 169595.54,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704222_ETH/USDT_LONG_autopilotpulseethusdt"
+  },
+  {
+    "instrument": "TSLAon/USDT",
+    "direction": "LONG",
+    "price": 362.14,
+    "quantity": 10666,
+    "leverage": 2,
+    "balanceChange": -424.51,
+    "balanceChangePct": -3.98,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-292",
+    "timestamp": "2026-09-14T17:54:04.552Z",
+    "accountBalance": 169171.03,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704222_TSLAON/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "BTC/USDT",
+    "direction": "LONG",
+    "price": 78979.99,
+    "quantity": 11203,
+    "leverage": 3,
+    "balanceChange": 775.25,
+    "balanceChangePct": 6.92,
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-293",
+    "timestamp": "2026-09-14T17:54:39.046Z",
+    "accountBalance": 169946.28,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704239_BTC/USDT_LONG_autopilotpulsebtcusdt"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 212.56,
+    "quantity": 14625,
+    "leverage": 2,
+    "balanceChange": 1345.5,
+    "balanceChangePct": 9.2,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-294",
+    "timestamp": "2026-09-14T17:54:39.067Z",
+    "accountBalance": 171291.78,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704239_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2533.58,
+    "quantity": 13070,
+    "leverage": 5,
+    "balanceChange": 1006.39,
+    "balanceChangePct": 7.7,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-295",
+    "timestamp": "2026-09-14T17:55:12.036Z",
+    "accountBalance": 172298.17,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704256_ETH/USDT_LONG_autopilotpulseethusdt"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "LONG",
+    "price": 212.52,
+    "quantity": 14939,
+    "leverage": 2,
+    "balanceChange": 1148.81,
+    "balanceChangePct": 7.69,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-296",
+    "timestamp": "2026-09-14T17:55:12.063Z",
+    "accountBalance": 173446.98,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704256_NVDAON/USDT_LONG_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "LONG",
+    "price": 212.51,
+    "quantity": 12257,
+    "leverage": 2,
+    "balanceChange": -393.45,
+    "balanceChangePct": -3.21,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-297",
+    "timestamp": "2026-09-14T17:55:31.553Z",
+    "accountBalance": 173053.53,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704265_NVDAON/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "BTC/USDT",
+    "direction": "LONG",
+    "price": 79014.7,
+    "quantity": 10783,
+    "leverage": 5,
+    "balanceChange": 930.57,
+    "balanceChangePct": 8.63,
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-298",
+    "timestamp": "2026-09-14T17:55:31.579Z",
+    "accountBalance": 173984.1,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704265_BTC/USDT_LONG_autopilotpulsebtcusdt"
+  },
+  {
+    "instrument": "TSLAon/USDT",
+    "direction": "LONG",
+    "price": 362.35,
+    "quantity": 14416,
+    "leverage": 2,
+    "balanceChange": 1048.04,
+    "balanceChangePct": 7.27,
+    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-299",
+    "timestamp": "2026-09-14T17:56:01.895Z",
+    "accountBalance": 175032.14,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704280_TSLAON/USDT_LONG_councilquorumtslaonus"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "SHORT",
+    "price": 212.51,
+    "quantity": 13292,
+    "leverage": 2,
+    "balanceChange": 878.6,
+    "balanceChangePct": 6.61,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-300",
+    "timestamp": "2026-09-14T17:56:01.924Z",
+    "accountBalance": 175910.74,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704280_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "LONG",
+    "price": 103.18,
+    "quantity": 13090,
+    "leverage": 3,
+    "balanceChange": 1219.99,
+    "balanceChangePct": 9.32,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-301",
+    "timestamp": "2026-09-14T17:56:28.552Z",
+    "accountBalance": 177130.73,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704294_SOL/USDT_LONG_autopilotpulsesolusdt"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2533,
+    "quantity": 12642,
+    "leverage": 4,
+    "balanceChange": 1112.5,
+    "balanceChangePct": 8.8,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-302",
+    "timestamp": "2026-09-14T17:56:28.577Z",
+    "accountBalance": 178243.23,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704294_ETH/USDT_LONG_autopilotpulseethusdt"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2532.88,
+    "quantity": 14158,
+    "leverage": 4,
+    "balanceChange": 770.2,
+    "balanceChangePct": 5.44,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-303",
+    "timestamp": "2026-09-14T17:56:52.544Z",
+    "accountBalance": 179013.43,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704306_ETH/USDT_LONG_autopilotpulseethusdt"
+  },
+  {
+    "instrument": "BTC/USDT",
+    "direction": "LONG",
+    "price": 78950.33,
+    "quantity": 14743,
+    "leverage": 5,
+    "balanceChange": -271.27,
+    "balanceChangePct": -1.84,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-304",
+    "timestamp": "2026-09-14T17:56:52.575Z",
+    "accountBalance": 178742.16,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704306_BTC/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2532.86,
+    "quantity": 7737,
+    "leverage": 3,
+    "balanceChange": -283.17,
+    "balanceChangePct": -3.66,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-305",
+    "timestamp": "2026-09-14T17:57:16.545Z",
+    "accountBalance": 178458.99,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704318_ETH/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "SHORT",
+    "price": 103.11,
+    "quantity": 14463,
+    "leverage": 5,
+    "balanceChange": 911.17,
+    "balanceChangePct": 6.3,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-307",
+    "timestamp": "2026-09-14T17:57:37.548Z",
+    "accountBalance": 179370.16,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704328_SOL/USDT_SHORT_autopilotpulsesolusdt"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "LONG",
+    "price": 103.07,
+    "quantity": 12270,
+    "leverage": 5,
+    "balanceChange": -326.38,
+    "balanceChangePct": -2.66,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-309",
+    "timestamp": "2026-09-14T17:57:58.532Z",
+    "accountBalance": 179043.78,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704339_SOL/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2533.65,
+    "quantity": 11971,
+    "leverage": 5,
+    "balanceChange": -368.71,
+    "balanceChangePct": -3.08,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-311",
+    "timestamp": "2026-09-14T17:58:25.530Z",
+    "accountBalance": 178675.07,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704352_ETH/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "LONG",
+    "price": 103.09,
+    "quantity": 10385,
+    "leverage": 5,
+    "balanceChange": 969.96,
+    "balanceChangePct": 9.34,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-312",
+    "timestamp": "2026-09-14T17:58:25.557Z",
+    "accountBalance": 179645.03,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704352_SOL/USDT_LONG_autopilotpulsesolusdt"
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "LONG",
+    "price": 212.4,
+    "quantity": 14057,
+    "leverage": 2,
+    "balanceChange": -365.48,
+    "balanceChangePct": -2.6,
+    "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
+    "status": "STOP_LOSS",
+    "id": "PT-20260914-313",
+    "timestamp": "2026-09-14T17:58:52.546Z",
+    "accountBalance": 179279.55,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704366_NVDAON/USDT_LONG_guardian01riskvetovo"
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2531.9,
+    "quantity": 7411,
+    "leverage": 3,
+    "balanceChange": 369.81,
+    "balanceChangePct": 4.99,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "id": "PT-20260914-314",
+    "timestamp": "2026-09-14T17:58:52.573Z",
+    "accountBalance": 179649.36,
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "894704366_ETH/USDT_LONG_autopilotpulseethusdt"
   }
 ]

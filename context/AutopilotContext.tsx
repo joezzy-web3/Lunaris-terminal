@@ -630,6 +630,8 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         postMortem: postMortemData,
         timestamp: sellEntry.utcTimestamp,
+        idempotencyKey: `close_${normTicker}_${Math.floor(new Date(sellEntry.utcTimestamp).getTime() / 2000)}`,
+        sourceHandler: 'AUTOPILOT_DAEMON',
       });
     } catch (err) {
       console.warn('Failed to record audit log on sell:', err);
@@ -816,6 +818,8 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               trigger: `Autopilot Engine: Target Profit Auto-Exit (+${pnlPct.toFixed(2)}%) ratified on ${t}`,
               status: 'TAKE_PROFIT',
               timestamp: exitUtcTime,
+              idempotencyKey: `tp_${t}_${Math.floor(new Date(exitUtcTime).getTime() / 2000)}`,
+              sourceHandler: 'AUTOPILOT_DAEMON',
             });
           } catch (e) {
             console.warn('Audit record error:', e);
@@ -866,6 +870,8 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               trigger: `Breakeven Ratchet: Trailing stop locked in +${pnlPct.toFixed(2)}% profit on ${t} (Peak: +${currentPeakPnlPct.toFixed(2)}%)`,
               status: 'TAKE_PROFIT',
               timestamp: exitUtcTime,
+              idempotencyKey: `ts_${t}_${Math.floor(new Date(exitUtcTime).getTime() / 2000)}`,
+              sourceHandler: 'AUTOPILOT_DAEMON',
             });
           } catch (e) {
             console.warn('Audit record error:', e);
@@ -918,6 +924,8 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               status: 'STOP_LOSS',
               postMortem,
               timestamp: exitUtcTime,
+              idempotencyKey: `sl_${t}_${Math.floor(new Date(exitUtcTime).getTime() / 2000)}`,
+              sourceHandler: 'AUTOPILOT_DAEMON',
             });
           } catch (e) {
             console.warn('Audit record error:', e);

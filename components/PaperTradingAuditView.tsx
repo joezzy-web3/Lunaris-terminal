@@ -176,38 +176,60 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     };
   }, []);
 
-  // Continuous 7x24 Autonomous Paper-Trading Loop
+  const quotesRef = useRef(quotes);
+  quotesRef.current = quotes;
+  const isExecutingRef = useRef(false);
+
+  // 1-second countdown timer for auto-ticking UI
   useEffect(() => {
     if (!isAutoTicking) return;
 
     const timer = setInterval(() => {
       setSecondsUntilNextTick((prev) => {
         if (prev <= 1) {
-          // Fire automatic paper trade using live Bitget prices
-          const scenario = generateAutonomousTradeScenario(quotes);
-          const baseTicker = scenario.instrument.split('/')[0];
-          if (quotes[baseTicker]?.price) {
-            scenario.price = quotes[baseTicker].price;
-          }
-
-          const record = recordNewPaperTrade(scenario);
-          setTrades(getSavedPaperTrades());
-          setLatestTradeId(record.id);
-
-          if (record.balanceChange >= 0) {
-            playTradeApprovedChime();
-          } else {
-            playRiskVetoTone();
-          }
-
-          return Math.floor(Math.random() * 8) + 12; // 12-20s interval
+          return Math.floor(Math.random() * 8) + 12; // Reset interval: 12-20s
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isAutoTicking, quotes]);
+  }, [isAutoTicking]);
+
+  // Continuous 7x24 Autonomous Paper-Trading Loop: executes once when timer hits 1
+  useEffect(() => {
+    if (!isAutoTicking || secondsUntilNextTick !== 1) return;
+    if (isExecutingRef.current) return;
+
+    isExecutingRef.current = true;
+    try {
+      const liveQuotes = quotesRef.current;
+      const scenario = generateAutonomousTradeScenario(liveQuotes);
+      const baseTicker = scenario.instrument.split('/')[0];
+      if (liveQuotes[baseTicker]?.price) {
+        scenario.price = liveQuotes[baseTicker].price;
+      }
+
+      const record = recordNewPaperTrade({
+        ...scenario,
+        sourceHandler: 'AUDIT_SIM',
+      });
+      setTrades(getSavedPaperTrades());
+      setLatestTradeId(record.id);
+
+      if (record.balanceChange >= 0) {
+        playTradeApprovedChime();
+      } else {
+        playRiskVetoTone();
+      }
+    } catch (err) {
+      console.warn('Paper trading auto-tick execution error:', err);
+    } finally {
+      setTimeout(() => {
+        isExecutingRef.current = false;
+      }, 1500);
+    }
+  }, [secondsUntilNextTick, isAutoTicking]);
 
   // Clear highlight flash after 3s
   useEffect(() => {
@@ -223,13 +245,17 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   // Manual Trigger
   const handleTriggerManualTrade = () => {
     playCyberClick();
-    const scenario = generateAutonomousTradeScenario(quotes);
+    const liveQuotes = quotesRef.current;
+    const scenario = generateAutonomousTradeScenario(liveQuotes);
     const baseTicker = scenario.instrument.split('/')[0];
-    if (quotes[baseTicker]?.price) {
-      scenario.price = quotes[baseTicker].price;
+    if (liveQuotes[baseTicker]?.price) {
+      scenario.price = liveQuotes[baseTicker].price;
     }
 
-    const record = recordNewPaperTrade(scenario);
+    const record = recordNewPaperTrade({
+      ...scenario,
+      sourceHandler: 'MANUAL',
+    });
     setTrades(getSavedPaperTrades());
     setLatestTradeId(record.id);
 
@@ -342,7 +368,12 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
 
   const handleDownloadCsv = () => {
     playCyberClick();
-    const csv = generateCsvExport(trades);
+    // Reconcile and deduplicate so downloaded CSV has zero duplicate rows and mathematically clean PnL
+    const canonicalTrades = reconcileTradeCollection(trades);
+    if (canonicalTrades.length !== trades.length) {
+      setTrades(canonicalTrades);
+    }
+    const csv = generateCsvExport(canonicalTrades);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -355,11 +386,15 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
 
   const handleCopyJson = () => {
     playCyberClick();
+    const canonicalTrades = reconcileTradeCollection(trades);
+    if (canonicalTrades.length !== trades.length) {
+      setTrades(canonicalTrades);
+    }
     const data = {
       hackathon: 'Bitget AI Base Camp Hackathon S2',
       track: 'Track 2 - Agentic Trading (Agent Trading)',
-      metrics,
-      auditLog: trades,
+      metrics: calculateAuditMetrics(canonicalTrades),
+      auditLog: canonicalTrades,
     };
     navigator.clipboard.writeText(JSON.stringify(data, null, 2));
     setCopied(true);

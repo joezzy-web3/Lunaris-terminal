@@ -1,0 +1,6 @@
+{
+  "quotaExceeded": true,
+  "date": "2026-09-14",
+  "updatedAt": "2026-09-14T18:00:00.000Z",
+  "message": "Free daily write units per project (free tier database) limit reached for today. Server disk ledger active."
+}
