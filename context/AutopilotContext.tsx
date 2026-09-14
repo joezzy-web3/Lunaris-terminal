@@ -690,10 +690,10 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (!p || !Number.isFinite(p.amount) || p.amount <= 0) return;
 
         const snap = updatedPortfolio[t];
-        let newPrice = snap && Number.isFinite(snap.price) && snap.price > 0 ? snap.price : p.currentPrice;
-
-        const drift = 1 + (Math.random() * 0.007 - 0.002);
-        newPrice = Number((newPrice * drift).toFixed(2));
+        const basePrice = snap && Number.isFinite(snap.price) && snap.price > 0 ? snap.price : p.entryPrice;
+        // Tightly clamp micro-drift to ±0.8% of real base quote, preventing runaway simulation drift
+        const microNoise = 1 + (Math.random() * 0.008 - 0.004);
+        let newPrice = Number((basePrice * microNoise).toFixed(basePrice < 10 ? 4 : 2));
 
         const entry = Number.isFinite(p.entryPrice) && p.entryPrice > 0 ? p.entryPrice : newPrice;
         const amount = p.amount;

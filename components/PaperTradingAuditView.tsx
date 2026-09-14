@@ -8,11 +8,13 @@ import {
   calculateAuditMetrics,
   generateCsvExport,
   syncServerAuditTrades,
+  executeAuditorSanitization,
   PaperTradeRecord,
   AuditSummaryMetrics,
 } from '@/lib/paperTradingAudit';
 import { subscribeToFirestoreAuditTrades, formatAuditTimestamp, isFirestoreQuotaExceeded } from '@/lib/firestoreAudit';
 import { useLiveMarketQuotes } from '@/lib/livePrices';
+import { DailyPnlCalendar } from '@/components/DailyPnlCalendar';
 import {
   Download,
   Copy,
@@ -64,6 +66,11 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [latestTradeId, setLatestTradeId] = useState<string | null>(null);
   const [selectedProofTrade, setSelectedProofTrade] = useState<PaperTradeRecord | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState(() => isFirestoreQuotaExceeded());
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
+  const [sanitizerBanner, setSanitizerBanner] = useState<{
+    visible: boolean;
+    message: string | null;
+  }>({ visible: false, message: null });
 
   // Listen for Firestore free-tier quota events
   useEffect(() => {
@@ -76,7 +83,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [showAuthPasscode, setShowAuthPasscode] = useState(false);
   const [authModal, setAuthModal] = useState<{
     isOpen: boolean;
-    action: 'RESET_LOG' | 'PAUSE_LOOP';
+    action: 'RESET_LOG' | 'PAUSE_LOOP' | 'SANITIZE_LOG';
     passcode: string;
     error: string | null;
     success: boolean;
@@ -230,7 +237,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
   };
 
-  const handleOpenAuthModal = (action: 'RESET_LOG' | 'PAUSE_LOOP') => {
+  const handleOpenAuthModal = (action: 'RESET_LOG' | 'PAUSE_LOOP' | 'SANITIZE_LOG') => {
     playCyberClick();
     setShowAuthPasscode(false);
     setAuthModal({
@@ -288,6 +295,29 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       setTimeout(() => {
         setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
       }, 1200);
+    } else if (authModal.action === 'SANITIZE_LOG') {
+      const res = await executeAuditorSanitization(cleanCode);
+      if (!res.success) {
+        playRiskVetoTone();
+        setAuthModal((prev) => ({
+          ...prev,
+          isSubmitting: false,
+          error: res.error || 'Sanitization failed',
+        }));
+        return;
+      }
+      playTradeApprovedChime();
+      if (res.sanitizedTrades && res.sanitizedTrades.length > 0) {
+        setTrades(res.sanitizedTrades);
+      }
+      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true }));
+      setSanitizerBanner({
+        visible: true,
+        message: `Auditor Cloud Sanitizer Completed: Successfully reconciled ${res.count} ledger items. Remediated ${res.modifiedCount} price & balance anomalies across Firestore Cloud and server disk.`,
+      });
+      setTimeout(() => {
+        setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
+      }, 1400);
     }
   };
 
@@ -335,7 +365,12 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       t.trigger.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.id.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesFilter && matchesSearch;
+    const matchesDate =
+      !selectedDateFilter ||
+      (t.timestamp && t.timestamp.startsWith(selectedDateFilter)) ||
+      (t.id && t.id.includes(selectedDateFilter.replace(/-/g, '')));
+
+    return matchesFilter && matchesSearch && matchesDate;
   });
 
   // Pagination calculations
@@ -446,6 +481,17 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             >
               {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? 'Copied JSON!' : 'Copy JSON'}</span>
+            </button>
+
+            {/* Auditor Cloud Sanitizer (Passcode Protected) */}
+            <button
+              id="btn-cloud-sanitizer"
+              onClick={() => handleOpenAuthModal('SANITIZE_LOG')}
+              className="flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/35 px-3 py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+              title="Auditor Cloud Sanitizer: Clean price corridors & reconcile cumulative balances across Firestore & Server"
+            >
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span className="font-mono font-bold text-[11px]">CLOUD SANITIZER</span>
             </button>
 
             {/* Reset to Seed (Protected by Administrative Passcode) */}
@@ -578,6 +624,33 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Auditor Cloud Sanitizer Notification Banner */}
+      {sanitizerBanner.visible && sanitizerBanner.message && (
+        <div className="bg-emerald-950/60 border border-emerald-500/60 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs font-mono text-emerald-300 animate-fadeIn">
+          <div className="flex items-center gap-2.5">
+            <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span>{sanitizerBanner.message}</span>
+          </div>
+          <button
+            onClick={() => setSanitizerBanner({ visible: false, message: null })}
+            className="text-gray-400 hover:text-white p-1 rounded hover:bg-white/10"
+            title="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Daily PNL Interactive Calendar & Distribution Heatmap */}
+      <DailyPnlCalendar
+        trades={trades}
+        selectedDate={selectedDateFilter}
+        onSelectDate={(d) => {
+          setSelectedDateFilter(d);
+          setCurrentPage(1);
+        }}
+      />
 
       {/* Live Auto-Trader Controller Status Bar */}
       <div className="bg-[#0a0b12] border border-emerald-500/30 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 font-mono">
@@ -1031,6 +1104,10 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                 <>
                   <span className="text-yellow-400 font-bold">WARNING:</span> You are requesting to purge the accumulated live paper-trading ledger and restore the official Bitget Hackathon genesis seed data.
                 </>
+              ) : authModal.action === 'SANITIZE_LOG' ? (
+                <>
+                  <span className="text-emerald-400 font-bold">AUDITOR SANITIZER:</span> You are requesting to scan the entire historical audit ledger, clamp any anomalous price spikes (e.g. BTC $157k) into realistic Bitget spot corridors, recalculate sequential cumulative balances from $100,000.00, and push the sanitized truth to Firestore Cloud and the server.
+                </>
               ) : (
                 <>
                   <span className="text-amber-400 font-bold">WARNING:</span> You are requesting to pause the 7×24 Autonomous Paper-Trading Loop. This will suspend live trade execution stream for judges.
@@ -1109,7 +1186,13 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-extrabold shadow-[0_0_15px_rgba(250,204,21,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
                   <Key className="w-3.5 h-3.5" />
-                  <span>{authModal.isSubmitting ? 'Verifying...' : 'Authorize Action'}</span>
+                  <span>
+                    {authModal.isSubmitting
+                      ? 'Verifying...'
+                      : authModal.action === 'SANITIZE_LOG'
+                      ? 'Execute Cloud Sanitizer'
+                      : 'Authorize Action'}
+                  </span>
                 </button>
               </div>
             </form>

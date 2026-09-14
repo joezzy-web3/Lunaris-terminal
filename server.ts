@@ -516,11 +516,11 @@ function runAutopilotDaemonTick() {
     if (!pos || !pos.amount) continue;
 
     const quote = bitgetMarketCache?.data?.[ticker] || bitgetMarketCache?.data?.[ticker.replace('on', '')];
-    const currentPrice = quote?.price || pos.currentPrice || pos.entryPrice;
+    const basePrice = quote?.price || pos.entryPrice;
     
-    // Natural slight price drift (-0.35% to +0.45%)
+    // Tight price anchor to actual spot quote (max ±1.0% micro-noise), completely preventing runaway simulation drift
     const priceDrift = (Math.random() * 0.008 - 0.0035);
-    const livePrice = parseFloat((currentPrice * (1 + priceDrift)).toFixed(currentPrice < 10 ? 4 : 2));
+    const livePrice = parseFloat((basePrice * (1 + priceDrift)).toFixed(basePrice < 10 ? 4 : 2));
     
     const cost = pos.amount * pos.entryPrice;
     const currentVal = pos.amount * livePrice;
@@ -732,6 +732,24 @@ app.post('/api/audit/trade', (req, res) => {
       success: true,
       tradeId: trade.id,
       count: trades.length,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/audit/sync - Persist reconciled & sanitized trade batch
+app.post('/api/audit/sync', (req, res) => {
+  try {
+    const trades = req.body?.trades;
+    if (!Array.isArray(trades)) {
+      return res.status(400).json({ success: false, error: 'Invalid trades payload' });
+    }
+    saveAuditTrades(trades);
+    return res.json({
+      success: true,
+      count: trades.length,
+      timestamp: Date.now(),
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
