@@ -427,9 +427,11 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   }
 
   // 3. Primary Cloud Source: Firestore Cloud Database
+  let cloudTradesCount = 0;
   try {
     const cloudTrades = await fetchFirestoreAuditTrades();
     if (Array.isArray(cloudTrades) && cloudTrades.length > 0) {
+      cloudTradesCount = cloudTrades.length;
       for (const t of cloudTrades) {
         if (t && t.id && !isAnomalousTrade(t)) {
           tradeMap.set(t.id, normalizeTradeRecord(t));
@@ -453,6 +455,14 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   }
 
   const reconciled = reconcileTradeCollection(Array.from(tradeMap.values()));
+
+  // 5. If Firestore has refreshed quota and has fewer records than our authoritative server ledger,
+  // back-populate Firestore so cloud is fully synchronized across all devices
+  if (!isFirestoreQuotaExceeded() && cloudTradesCount < reconciled.length && reconciled.length > 0) {
+    seedFirestoreAuditTrades(reconciled).catch((err) =>
+      console.warn('⚠️ Cloud catch-up sync notice:', err)
+    );
+  }
 
   inMemoryTradesCache = reconciled;
   if (typeof window !== 'undefined') {
