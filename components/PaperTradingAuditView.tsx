@@ -17,7 +17,6 @@ import {
 import {
   subscribeToFirestoreAuditTrades,
   formatAuditTimestamp,
-  isFirestoreQuotaExceeded,
   reconcileTradeCollection,
 } from '@/lib/firestoreAudit';
 import { useLiveMarketQuotes } from '@/lib/livePrices';
@@ -73,19 +72,11 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [secondsUntilNextTick, setSecondsUntilNextTick] = useState(14);
   const [latestTradeId, setLatestTradeId] = useState<string | null>(null);
   const [selectedProofTrade, setSelectedProofTrade] = useState<PaperTradeRecord | null>(null);
-  const [quotaExceeded, setQuotaExceeded] = useState(() => isFirestoreQuotaExceeded());
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
   const [sanitizerBanner, setSanitizerBanner] = useState<{
     visible: boolean;
     message: string | null;
   }>({ visible: false, message: null });
-
-  // Listen for Firestore free-tier quota events
-  useEffect(() => {
-    const onQuotaEvent = () => setQuotaExceeded(true);
-    window.addEventListener('lunaris-firestore-quota-exceeded', onQuotaEvent);
-    return () => window.removeEventListener('lunaris-firestore-quota-exceeded', onQuotaEvent);
-  }, []);
 
   // Security Access Verification Modal
   const [showAuthPasscode, setShowAuthPasscode] = useState(false);
@@ -553,36 +544,11 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
               <span className="text-[10px] bg-[#00F0FF]/15 border border-[#00F0FF]/40 text-[#00F0FF] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 Track 2 Agentic Trading Compliant
               </span>
-              {quotaExceeded ? (
-                <span className="text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5" title="Free daily write quota reached on Firebase Spark plan. Operating on persistent local & server ledger.">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  PERSISTENT LEDGER SYNC (SPARK TIER)
-                </span>
-              ) : (
-                <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  LIVE FIRESTORE CLOUD SYNC
-                </span>
-              )}
+              <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                LIVE AUDIT CLOUD SYNC
+              </span>
             </div>
-            {quotaExceeded && (
-              <div className="bg-amber-950/30 border border-amber-500/30 rounded-lg px-3 py-1.5 text-[11px] text-amber-200/90 flex items-center justify-between gap-2 max-w-3xl">
-                <div className="flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span>
-                    Firestore daily write quota reached (Spark Free Plan). Audit logs are 100% preserved in the persistent server ledger and will resume cloud writes tomorrow.
-                  </span>
-                </div>
-                <a
-                  href="https://console.firebase.google.com/project/gen-lang-client-0422269194/firestore/databases/ai-studio-lunaristerminal-a46b0af1-1948-4697-be4b-f2df2f1bb25b/data?openUpgradeDialog=true"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline text-amber-300 hover:text-white shrink-0 font-medium"
-                >
-                  Upgrade Database
-                </a>
-              </div>
-            )}
             <p className="text-xs text-gray-300 max-w-3xl leading-relaxed">
               Official real-time paper-trading audit stream satisfying Bitget AI Base Camp S2 criteria: Continuous 7×24
               autonomous execution with verified UTC timestamps, instruments (including <strong>NVDAon/USDT</strong> & <strong>TSLAon/USDT</strong> tokenized equities),
