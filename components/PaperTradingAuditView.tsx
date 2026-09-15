@@ -10,6 +10,7 @@ import {
   syncServerAuditTrades,
   executeAuditorSanitization,
   purgeCorruptLocalStorageTrades,
+  resolveTradePrices,
   PaperTradeRecord,
   AuditSummaryMetrics,
 } from '@/lib/paperTradingAudit';
@@ -196,40 +197,37 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     return () => clearInterval(timer);
   }, [isAutoTicking]);
 
-  // Continuous 7x24 Autonomous Paper-Trading Loop: executes once when timer hits 1
+  // Continuous 7x24 Autonomous Paper-Trading Loop: Syncs authoritative 24/7 server daemon trades
   useEffect(() => {
     if (!isAutoTicking || secondsUntilNextTick !== 1) return;
     if (isExecutingRef.current) return;
 
     isExecutingRef.current = true;
-    try {
-      const liveQuotes = quotesRef.current;
-      const scenario = generateAutonomousTradeScenario(liveQuotes);
-      const baseTicker = scenario.instrument.split('/')[0];
-      if (liveQuotes[baseTicker]?.price) {
-        scenario.price = liveQuotes[baseTicker].price;
+    (async () => {
+      try {
+        const previousCount = trades.length;
+        const serverTrades = await syncServerAuditTrades();
+        if (serverTrades && serverTrades.length > 0) {
+          setTrades(serverTrades);
+          if (serverTrades.length > previousCount) {
+            const newest = serverTrades[0];
+            setLatestTradeId(newest.id);
+            if (newest.balanceChange >= 0) {
+              playTradeApprovedChime();
+            } else {
+              playRiskVetoTone();
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Paper trading auto-tick sync notice:', err);
+      } finally {
+        setTimeout(() => {
+          isExecutingRef.current = false;
+        }, 1200);
       }
-
-      const record = recordNewPaperTrade({
-        ...scenario,
-        sourceHandler: 'AUDIT_SIM',
-      });
-      setTrades(getSavedPaperTrades());
-      setLatestTradeId(record.id);
-
-      if (record.balanceChange >= 0) {
-        playTradeApprovedChime();
-      } else {
-        playRiskVetoTone();
-      }
-    } catch (err) {
-      console.warn('Paper trading auto-tick execution error:', err);
-    } finally {
-      setTimeout(() => {
-        isExecutingRef.current = false;
-      }, 1500);
-    }
-  }, [secondsUntilNextTick, isAutoTicking]);
+    })();
+  }, [secondsUntilNextTick, isAutoTicking, trades.length]);
 
   // Clear highlight flash after 3s
   useEffect(() => {
@@ -242,9 +240,31 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   // Metrics dynamic recalculation
   const metrics: AuditSummaryMetrics = calculateAuditMetrics(trades);
 
-  // Manual Trigger
-  const handleTriggerManualTrade = () => {
+  // Authoritative Agentic Trade Trigger (delegates to server daemon to maintain unified multi-browser state)
+  const handleTriggerManualTrade = async () => {
     playCyberClick();
+    try {
+      const res = await fetch('/api/audit/trigger-daemon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (data.success && data.trade) {
+        const updated = await syncServerAuditTrades();
+        setTrades(updated);
+        setLatestTradeId(data.trade.id);
+        if (data.trade.balanceChange >= 0) {
+          playTradeApprovedChime();
+        } else {
+          playRiskVetoTone();
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn('Server trade trigger network notice, fallback to local simulator:', e);
+    }
+
+    // Offline / fallback execution
     const liveQuotes = quotesRef.current;
     const scenario = generateAutonomousTradeScenario(liveQuotes);
     const baseTicker = scenario.instrument.split('/')[0];
@@ -858,7 +878,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                 <th className="py-3 px-3.5">ID / Timestamp (UTC)</th>
                 <th className="py-3 px-3.5">Instrument</th>
                 <th className="py-3 px-3.5">Direction</th>
-                <th className="py-3 px-3.5 text-right">Exec Price</th>
+                <th className="py-3 px-3.5 text-right">Entry / Exit Price</th>
                 <th className="py-3 px-3.5 text-right">Size (USDT)</th>
                 <th className="py-3 px-3.5 text-right">Balance Change</th>
                 <th className="py-3 px-3.5 text-right">Settled Balance</th>
@@ -927,21 +947,36 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                         {trade.direction} {trade.leverage}x
                       </span>
                     </td>
-                    <td className="py-3 px-3.5 text-right font-medium text-gray-200 whitespace-nowrap">
-                      <div className="font-mono text-white">
-                        ${trade.price.toLocaleString(undefined, { minimumFractionDigits: trade.price < 10 ? 4 : 2 })}
-                      </div>
+                    <td className="py-3 px-3.5 text-right font-medium whitespace-nowrap">
                       {(() => {
+                        const { entryPrice, exitPrice, priceDelta, priceDeltaPct } = resolveTradePrices(trade);
+                        const isWin = trade.balanceChange >= 0;
+                        const decimals = entryPrice < 10 ? 4 : 2;
                         const base = trade.instrument.split('/')[0];
                         const live = quotes[base]?.price;
-                        if (live) {
-                          return (
-                            <div className="text-[10px] text-gray-400 font-mono font-normal">
-                              Live: ${live.toLocaleString(undefined, { minimumFractionDigits: live < 10 ? 4 : 2 })}
+
+                        return (
+                          <div className="flex flex-col items-end">
+                            <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                              <span className="text-gray-400 text-[9px] uppercase px-1 py-0.2 bg-white/5 rounded border border-white/10">In</span>
+                              <span className="text-gray-200 font-semibold">${entryPrice.toLocaleString(undefined, { minimumFractionDigits: decimals })}</span>
                             </div>
-                          );
-                        }
-                        return null;
+                            <div className="flex items-center gap-1.5 font-mono text-[11px] mt-0.5">
+                              <span className="text-gray-400 text-[9px] uppercase px-1 py-0.2 bg-white/5 rounded border border-white/10">Out</span>
+                              <span className={`font-bold ${isWin ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                ${exitPrice.toLocaleString(undefined, { minimumFractionDigits: decimals })}
+                              </span>
+                            </div>
+                            <div className="text-[9.5px] font-mono flex items-center gap-1 mt-0.5">
+                              <span className={priceDelta >= 0 ? 'text-emerald-400/90' : 'text-rose-400/90'}>
+                                {priceDelta >= 0 ? '▲ +' : '▼ -'}${Math.abs(priceDelta).toFixed(decimals)} ({priceDeltaPct >= 0 ? '+' : ''}{priceDeltaPct.toFixed(2)}%)
+                              </span>
+                              {live && (
+                                <span className="text-gray-500 font-normal">| Live: ${live.toLocaleString(undefined, { minimumFractionDigits: decimals })}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
                       })()}
                     </td>
                     <td className="py-3 px-3.5 text-right text-gray-300 whitespace-nowrap">

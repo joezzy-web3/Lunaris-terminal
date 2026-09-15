@@ -19,7 +19,11 @@ export interface PaperTradeRecord {
   timestamp: string; // ISO 8601 UTC
   instrument: string; // e.g., BTC/USDT, ETH/USDT, SOL/USDT, NVDAon/USDT, TSLAon/USDT
   direction: 'LONG' | 'SHORT';
-  price: number;
+  price: number; // Primary entry / execution price
+  entryPrice?: number; // Explicit entry execution price
+  exitPrice?: number; // Explicit exit / close execution price
+  priceDelta?: number; // Dollar difference: exitPrice - entryPrice
+  priceDeltaPct?: number; // Price movement percentage
   quantity: number; // in USDT
   leverage: number;
   balanceChange: number; // Realized PnL ($)
@@ -30,6 +34,46 @@ export interface PaperTradeRecord {
   postMortem?: TradePostMortem;
   idempotencyKey?: string;
   sourceHandler?: 'AUTOPILOT_DAEMON' | 'COUNCIL_SIGNAL' | 'PULSE_RADAR' | 'MANUAL' | 'AUDIT_SIM';
+}
+
+/**
+ * Universal resolver to guarantee every trade has crystal-clear execution entry price,
+ * exit settlement price, dollar price delta, and price move percentage.
+ */
+export function resolveTradePrices(trade: Partial<PaperTradeRecord>): {
+  entryPrice: number;
+  exitPrice: number;
+  priceDelta: number;
+  priceDeltaPct: number;
+} {
+  const entryPrice = Number(trade.entryPrice) || Number(trade.price) || 100;
+  const leverage = Math.min(10, Math.max(1, Number(trade.leverage) || 1));
+  const pnlPct = Number(trade.balanceChangePct) || 0;
+  const direction = trade.direction === 'SHORT' ? 'SHORT' : 'LONG';
+
+  let exitPrice = Number(trade.exitPrice);
+  if (!exitPrice || !Number.isFinite(exitPrice) || exitPrice <= 0) {
+    if (direction === 'SHORT') {
+      // For SHORT: loss means price rose, win means price fell
+      exitPrice = entryPrice * (1 - pnlPct / (100 * leverage));
+    } else {
+      // For LONG: win means price rose, loss means price fell
+      exitPrice = entryPrice * (1 + pnlPct / (100 * leverage));
+    }
+  }
+
+  const decimals = entryPrice < 10 ? 4 : 2;
+  const finalEntry = parseFloat(entryPrice.toFixed(decimals));
+  const finalExit = parseFloat(exitPrice.toFixed(decimals));
+  const priceDelta = parseFloat((finalExit - finalEntry).toFixed(decimals));
+  const priceDeltaPct = parseFloat((((finalExit - finalEntry) / (finalEntry || 1)) * 100).toFixed(2));
+
+  return {
+    entryPrice: finalEntry,
+    exitPrice: finalExit,
+    priceDelta,
+    priceDeltaPct,
+  };
 }
 
 export interface AuditSummaryMetrics {
@@ -688,9 +732,23 @@ export function sanitizeAuditTrades(trades: PaperTradeRecord[]): {
       modifiedCount++;
     }
 
-    return {
+    const prices = resolveTradePrices({
       ...t,
       price,
+      quantity,
+      balanceChangePct,
+      balanceChange,
+      direction: t.direction,
+      leverage: t.leverage,
+    });
+
+    return {
+      ...t,
+      price: prices.entryPrice,
+      entryPrice: prices.entryPrice,
+      exitPrice: prices.exitPrice,
+      priceDelta: prices.priceDelta,
+      priceDeltaPct: prices.priceDeltaPct,
       quantity,
       balanceChangePct,
       balanceChange,
@@ -875,7 +933,9 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
     'Timestamp (UTC)',
     'Instrument',
     'Direction',
-    'Execution Price ($)',
+    'Entry Price ($)',
+    'Exit Price ($)',
+    'Price Movement ($)',
     'Quantity / Sizing ($)',
     'Leverage',
     'PnL / Balance Change ($)',
@@ -884,9 +944,10 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
     'Council Quorum / Trigger Rationale',
     'Status',
   ];
-  const rows = trades.map((t) =>
-    `"${t.id}","${t.timestamp}","${t.instrument}","${t.direction}",${t.price},${t.quantity},${t.leverage}x,${t.balanceChange > 0 ? '+' : ''}${t.balanceChange},${t.balanceChangePct > 0 ? '+' : ''}${t.balanceChangePct}%,${t.accountBalance},"${t.trigger.replace(/"/g, '""')}","${t.status}"`
-  );
+  const rows = trades.map((t) => {
+    const prices = resolveTradePrices(t);
+    return `"${t.id}","${t.timestamp}","${t.instrument}","${t.direction}",${prices.entryPrice},${prices.exitPrice},${prices.priceDelta > 0 ? '+' : ''}${prices.priceDelta},${t.quantity},${t.leverage}x,${t.balanceChange > 0 ? '+' : ''}${t.balanceChange},${t.balanceChangePct > 0 ? '+' : ''}${t.balanceChangePct}%,${t.accountBalance},"${t.trigger.replace(/"/g, '""')}","${t.status}"`;
+  });
   return [headers.join(','), ...rows].join('\n');
 }
 
@@ -927,7 +988,7 @@ export function generateAutonomousTradeScenario(
 
   // Micro price deviation relative to current real Bitget market price (within 0.2%)
   const priceVariation = (Math.random() * 0.004 - 0.002) * currentLivePrice;
-  const execPrice = parseFloat((currentLivePrice + priceVariation).toFixed(currentLivePrice < 10 ? 4 : 2));
+  const entryPrice = parseFloat((currentLivePrice + priceVariation).toFixed(currentLivePrice < 10 ? 4 : 2));
 
   let pnlPct: number;
   let status: 'TAKE_PROFIT' | 'STOP_LOSS';
@@ -949,10 +1010,26 @@ export function generateAutonomousTradeScenario(
 
   const pnlDollar = parseFloat(((quantity * (pnlPct / 100))).toFixed(2));
 
+  // Compute exact exit price according to market position mechanics
+  let exitPrice: number;
+  if (direction === 'SHORT') {
+    exitPrice = entryPrice * (1 - pnlPct / (100 * leverage));
+  } else {
+    exitPrice = entryPrice * (1 + pnlPct / (100 * leverage));
+  }
+  const decimals = entryPrice < 10 ? 4 : 2;
+  const finalExitPrice = parseFloat(exitPrice.toFixed(decimals));
+  const priceDelta = parseFloat((finalExitPrice - entryPrice).toFixed(decimals));
+  const priceDeltaPct = parseFloat((((finalExitPrice - entryPrice) / entryPrice) * 100).toFixed(2));
+
   return {
     instrument: selectedInst.name,
     direction,
-    price: execPrice,
+    price: entryPrice,
+    entryPrice,
+    exitPrice: finalExitPrice,
+    priceDelta,
+    priceDeltaPct,
     quantity,
     leverage,
     balanceChange: pnlDollar,

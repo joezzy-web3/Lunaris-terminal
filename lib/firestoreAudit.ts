@@ -9,7 +9,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { PaperTradeRecord, SEED_PAPER_TRADES } from './paperTradingAudit';
+import { PaperTradeRecord, SEED_PAPER_TRADES, resolveTradePrices } from './paperTradingAudit';
 
 const TRADES_COLLECTION = 'audit_trades';
 const STATE_COLLECTION = 'autopilot_state';
@@ -343,18 +343,32 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
     balanceChange = expectedPnl;
   }
 
+  const leverage = Math.min(5, Math.max(1, Number(data?.leverage) || 3));
+  const direction: 'LONG' | 'SHORT' = data?.direction === 'SHORT' ? 'SHORT' : 'LONG';
+  const prices = resolveTradePrices({
+    ...data,
+    price,
+    leverage,
+    balanceChangePct,
+    direction,
+  });
+
   const normalized: PaperTradeRecord = {
     ...data,
     id,
     timestamp,
-    price,
+    price: prices.entryPrice,
+    entryPrice: prices.entryPrice,
+    exitPrice: prices.exitPrice,
+    priceDelta: prices.priceDelta,
+    priceDeltaPct: prices.priceDeltaPct,
     quantity,
-    leverage: Math.min(5, Math.max(1, Number(data?.leverage) || 3)),
+    leverage,
     balanceChange,
     balanceChangePct,
     accountBalance,
     instrument,
-    direction: data?.direction === 'SHORT' ? 'SHORT' : 'LONG',
+    direction,
     trigger: data?.trigger || 'Autonomous Council Execution',
     status: data?.status || (balanceChange >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS'),
     sourceHandler: data?.sourceHandler || 'AUTOPILOT_DAEMON',
