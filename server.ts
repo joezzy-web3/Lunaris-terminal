@@ -11,6 +11,7 @@ import {
   normalizeTradeRecord,
   generateTradeIdempotencyKey,
 } from './lib/firestoreAudit';
+import { evaluateTradeRisk, TradeProposal } from './lib/riskVeto';
 
 dotenv.config();
 
@@ -539,6 +540,55 @@ function saveAutopilotState(state: Partial<ServerAutopilotState>) {
   }
 }
 
+function getServerPrice(ticker: string): { price: number; assetClass: 'CX' | 'EQ' } {
+  const normTicker = String(ticker || 'BTC').toUpperCase().trim();
+  const sym = normTicker.replace('/USDT', '');
+  const clean = sym.replace('ON', '');
+
+  const quote =
+    bitgetMarketCache?.data?.[sym] ||
+    bitgetMarketCache?.data?.[clean] ||
+    bitgetMarketCache?.data?.[normTicker];
+
+  if (quote && Number.isFinite(quote.price) && quote.price > 0) {
+    return {
+      price: quote.price,
+      assetClass: (quote.class || (sym.includes('ON') ? 'EQ' : 'CX')) as 'CX' | 'EQ',
+    };
+  }
+
+  const fallbackPrices: Record<string, { price: number; class: 'CX' | 'EQ' }> = {
+    BTC: { price: 77250.0, class: 'CX' },
+    ETH: { price: 2512.5, class: 'CX' },
+    SOL: { price: 101.5, class: 'CX' },
+    SUI: { price: 3.18, class: 'CX' },
+    NVDAON: { price: 182.5, class: 'EQ' },
+    TSLAON: { price: 242.0, class: 'EQ' },
+    NVDA: { price: 182.5, class: 'EQ' },
+    TSLA: { price: 242.0, class: 'EQ' },
+    AAPL: { price: 228.5, class: 'EQ' },
+    MSTR: { price: 310.0, class: 'EQ' },
+    COIN: { price: 204.0, class: 'EQ' },
+  };
+
+  const fb = fallbackPrices[sym] || fallbackPrices[clean] || { price: 100.0, class: 'CX' };
+  return { price: fb.price, assetClass: fb.class };
+}
+
+function calculateTotalPortfolioValue(state: ServerAutopilotState): number {
+  let posValue = 0;
+  if (state.positions) {
+    Object.keys(state.positions).forEach((ticker) => {
+      const pos = state.positions[ticker];
+      if (pos && pos.amount > 0) {
+        const p = pos.currentPrice || pos.entryPrice;
+        posValue += pos.amount * p;
+      }
+    });
+  }
+  return Number((state.cashBalance + posValue).toFixed(2));
+}
+
 // Background Server-Side Autopilot Daemon
 let autopilotDaemonTimer: NodeJS.Timeout | null = null;
 
@@ -1028,14 +1078,53 @@ app.get('/api/autopilot/state', (req, res) => {
   });
 });
 
-// POST /api/autopilot/state - Update state
+// POST /api/autopilot/state - Update state (sanitized to prevent client race conditions overwriting server portfolio)
 app.post('/api/autopilot/state', (req, res) => {
   try {
     const payload = req.body?.state || {};
-    const updated = saveAutopilotState(payload);
+    const safeUpdate: Partial<ServerAutopilotState> = {};
+    if (typeof payload.autoExitPct === 'number') safeUpdate.autoExitPct = payload.autoExitPct;
+    if (typeof payload.maxOpenPositions === 'number') safeUpdate.maxOpenPositions = payload.maxOpenPositions;
+    if (typeof payload.isTurbo === 'boolean') safeUpdate.isTurbo = payload.isTurbo;
+    if (typeof payload.isExecuting === 'boolean') safeUpdate.isExecuting = payload.isExecuting;
+
+    const updated = saveAutopilotState(safeUpdate);
     res.json({ success: true, state: updated });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/autopilot/config - Update configuration parameters
+app.post('/api/autopilot/config', (req, res) => {
+  try {
+    const { autoExitPct, maxOpenPositions, isTurbo, isExecuting } = req.body || {};
+    const state = getAutopilotState();
+
+    if (autoExitPct !== undefined && Number.isFinite(Number(autoExitPct))) {
+      state.autoExitPct = Math.max(1, Number(autoExitPct));
+    }
+    if (maxOpenPositions !== undefined && Number.isFinite(Number(maxOpenPositions))) {
+      state.maxOpenPositions = Math.min(5, Math.max(1, Number(maxOpenPositions)));
+    }
+    if (typeof isTurbo === 'boolean') {
+      state.isTurbo = isTurbo;
+      startAutopilotDaemon();
+    }
+    if (typeof isExecuting === 'boolean') {
+      state.isExecuting = isExecuting;
+      if (isExecuting) {
+        startAutopilotDaemon();
+      } else {
+        stopAutopilotDaemon();
+      }
+    }
+
+    state.lastUpdated = new Date().toISOString();
+    const updated = saveAutopilotState(state);
+    return res.json({ success: true, state: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -1061,15 +1150,458 @@ app.post('/api/autopilot/stop', (req, res) => {
   }
 });
 
-// POST /api/autopilot/reset - Reset cash balance and positions to initial seed
+// POST /api/autopilot/manual-trade - Authoritative server execution of manual buy/sell orders
+app.post('/api/autopilot/manual-trade', (req, res) => {
+  try {
+    const rawTicker = req.body?.ticker;
+    const action = req.body?.action;
+    const requestedUsd = Number(req.body?.usdAmount);
+
+    if (!rawTicker || (action !== 'BUY' && action !== 'SELL')) {
+      return res.status(400).json({ success: false, error: 'Valid ticker and action (BUY or SELL) required' });
+    }
+
+    const normTicker = String(rawTicker).toUpperCase().replace('/USDT', '');
+    const { price, assetClass } = getServerPrice(normTicker);
+    const state = getAutopilotState();
+    const nowUtc = new Date().toISOString();
+    const timeStr = new Date().toLocaleTimeString();
+
+    if (action === 'BUY') {
+      const currentCash = Number(state.cashBalance) || 0;
+      if (currentCash < 20) {
+        return res.status(400).json({ success: false, error: 'Insufficient cash balance (< $20)' });
+      }
+
+      const currentOpenCount = Object.keys(state.positions || {}).length;
+      const isAlreadyHeld = Boolean(state.positions?.[normTicker]);
+      const maxLimit = state.maxOpenPositions || 3;
+
+      if (!isAlreadyHeld && currentOpenCount >= maxLimit) {
+        return res.status(400).json({
+          success: false,
+          error: `Capacity limit reached (${currentOpenCount}/${maxLimit} positions active).`,
+        });
+      }
+
+      const tradeUsd = Math.min(currentCash, Math.max(20, Number.isFinite(requestedUsd) && requestedUsd > 0 ? requestedUsd : 3000));
+      const units = parseFloat((tradeUsd / price).toFixed(price < 10 ? 2 : 4));
+      const actualCost = parseFloat((units * price).toFixed(2));
+
+      if (actualCost > currentCash) {
+        return res.status(400).json({ success: false, error: 'Insufficient deployable cash balance' });
+      }
+
+      const prevCash = state.cashBalance;
+      state.cashBalance = parseFloat((state.cashBalance - actualCost).toFixed(2));
+
+      if (state.positions[normTicker]) {
+        const existing = state.positions[normTicker];
+        const totUnits = existing.amount + units;
+        const avgEntry = parseFloat(((existing.amount * existing.entryPrice + actualCost) / totUnits).toFixed(price < 10 ? 4 : 2));
+        state.positions[normTicker] = {
+          ...existing,
+          amount: totUnits,
+          entryPrice: avgEntry,
+          currentPrice: price,
+          unrealizedPnl: parseFloat(((price - avgEntry) * totUnits).toFixed(2)),
+          unrealizedPnlPct: parseFloat((((price - avgEntry) / avgEntry) * 100).toFixed(2)),
+        };
+      } else {
+        state.positions[normTicker] = {
+          ticker: normTicker,
+          amount: units,
+          entryPrice: price,
+          currentPrice: price,
+          unrealizedPnl: 0,
+          unrealizedPnlPct: 0,
+          class: assetClass,
+        };
+      }
+
+      const ledgerEntry = {
+        id: `manual-buy-${Date.now()}-${normTicker}`,
+        timestamp: timeStr,
+        utcTimestamp: nowUtc,
+        type: 'MANUAL_INTERVENTION',
+        ticker: normTicker,
+        amount: units,
+        price,
+        totalUsd: actualCost,
+        balanceBefore: prevCash,
+        balanceAfter: state.cashBalance,
+        realizedPnl: 0,
+        realizedPnlPct: 0,
+        notes: `Manual Order: Executed BUY on ${units.toFixed(4)} ${normTicker} at $${price.toLocaleString()} ($${actualCost.toLocaleString()} deployed).`,
+      };
+      state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
+      state.lastUpdated = nowUtc;
+      const updated = saveAutopilotState(state);
+
+      return res.json({
+        success: true,
+        state: updated,
+        ledgerEntry,
+      });
+    } else {
+      // SELL
+      const pos = state.positions?.[normTicker];
+      if (!pos || !pos.amount) {
+        return res.status(400).json({
+          success: false,
+          error: `Cannot SELL ${normTicker}: position is not currently held in active portfolio`,
+        });
+      }
+
+      const proceeds = parseFloat((pos.amount * price).toFixed(2));
+      const cost = parseFloat((pos.amount * pos.entryPrice).toFixed(2));
+      const pnl = parseFloat((proceeds - cost).toFixed(2));
+      const pnlPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
+      const prevCash = state.cashBalance;
+      state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
+      delete state.positions[normTicker];
+
+      const ledgerEntry = {
+        id: `manual-sell-${Date.now()}-${normTicker}`,
+        timestamp: timeStr,
+        utcTimestamp: nowUtc,
+        type: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        ticker: normTicker,
+        amount: pos.amount,
+        price,
+        totalUsd: proceeds,
+        balanceBefore: prevCash,
+        balanceAfter: state.cashBalance,
+        realizedPnl: pnl,
+        realizedPnlPct: pnlPct,
+        notes: `Manual Order: Closed ${pos.amount.toFixed(4)} ${normTicker} at $${price.toLocaleString()}. Proceeds +$${proceeds.toFixed(2)} credited to balance.`,
+      };
+      state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
+
+      // Append to audit_trades.json
+      const trades = getAuditTrades();
+      const count = trades.length + 1;
+      const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${count.toString().padStart(2, '0')}`;
+      const priceDelta = parseFloat((price - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
+      const priceDeltaPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
+
+      const normalizedTrade = normalizeTradeRecord({
+        id: newTradeId,
+        timestamp: nowUtc,
+        instrument: `${normTicker}/USDT`,
+        direction: 'LONG',
+        price: pos.entryPrice,
+        entryPrice: pos.entryPrice,
+        exitPrice: price,
+        priceDelta,
+        priceDeltaPct,
+        quantity: cost,
+        leverage: 3,
+        balanceChange: pnl,
+        balanceChangePct: pnlPct,
+        accountBalance: 100000,
+        trigger: `Manual Terminal Close: ${pnl >= 0 ? 'Profit realized' : 'Stop loss taken'} on ${normTicker} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)`,
+        status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        sourceHandler: 'MANUAL',
+      }, newTradeId);
+      trades.push(normalizedTrade);
+      saveAuditTrades(reconcileTradeCollection(trades));
+
+      state.lastUpdated = nowUtc;
+      const updated = saveAutopilotState(state);
+
+      return res.json({
+        success: true,
+        state: updated,
+        ledgerEntry,
+        pnl,
+        pnlPct,
+      });
+    }
+  } catch (err: any) {
+    console.error('Manual trade error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/autopilot/council-signal - Authoritative server execution of Council Trade Proposals
+app.post('/api/autopilot/council-signal', (req, res) => {
+  try {
+    const proposal: TradeProposal = req.body?.proposal;
+    if (!proposal || !proposal.asset || !proposal.action) {
+      return res.status(400).json({ success: false, error: 'Invalid council proposal' });
+    }
+
+    const state = getAutopilotState();
+    const normTicker = proposal.asset.toUpperCase().replace('/USDT', '');
+    const { price, assetClass } = getServerPrice(normTicker);
+    const existingPos = state.positions?.[normTicker];
+    const isAssetHeld = Boolean(existingPos && existingPos.amount > 0);
+    const activePositionsCount = Object.keys(state.positions || {}).length;
+    const totalVal = calculateTotalPortfolioValue(state);
+
+    const vetoResult = evaluateTradeRisk(proposal, totalVal, existingPos?.unrealizedPnlPct, {
+      activePositionsCount,
+      maxAllowedPositions: state.maxOpenPositions || 3,
+      isAssetHeld,
+      availableDeployableCash: state.cashBalance,
+    });
+
+    if (!vetoResult.approved) {
+      return res.json({
+        success: false,
+        vetoed: true,
+        reason: vetoResult.reason,
+        overrideCode: vetoResult.overrideCode,
+        state,
+      });
+    }
+
+    const nowUtc = new Date().toISOString();
+    const timeStr = new Date().toLocaleTimeString();
+
+    if (proposal.action === 'BUY') {
+      const validSizePct = Math.min(15, Math.max(1, Number(proposal.size_pct) || 5));
+      let tradeUsd = Math.min(state.cashBalance, (totalVal * validSizePct) / 100);
+      tradeUsd = Math.min(tradeUsd, 25000);
+      if (tradeUsd < 20) {
+        return res.json({
+          success: false,
+          vetoed: true,
+          reason: 'Insufficient cash reserve for council trade sizing',
+          state,
+        });
+      }
+
+      const units = parseFloat((tradeUsd / price).toFixed(price < 10 ? 2 : 4));
+      const actualCost = parseFloat((units * price).toFixed(2));
+      const prevCash = state.cashBalance;
+      state.cashBalance = parseFloat((state.cashBalance - actualCost).toFixed(2));
+
+      if (state.positions[normTicker]) {
+        const existing = state.positions[normTicker];
+        const totUnits = existing.amount + units;
+        const avgEntry = parseFloat(((existing.amount * existing.entryPrice + actualCost) / totUnits).toFixed(price < 10 ? 4 : 2));
+        state.positions[normTicker] = {
+          ...existing,
+          amount: totUnits,
+          entryPrice: avgEntry,
+          currentPrice: price,
+          unrealizedPnl: parseFloat(((price - avgEntry) * totUnits).toFixed(2)),
+          unrealizedPnlPct: parseFloat((((price - avgEntry) / avgEntry) * 100).toFixed(2)),
+        };
+      } else {
+        state.positions[normTicker] = {
+          ticker: normTicker,
+          amount: units,
+          entryPrice: price,
+          currentPrice: price,
+          unrealizedPnl: 0,
+          unrealizedPnlPct: 0,
+          class: assetClass,
+        };
+      }
+
+      const ledgerEntry = {
+        id: `council-buy-${Date.now()}-${normTicker}`,
+        timestamp: timeStr,
+        utcTimestamp: nowUtc,
+        type: 'BUY',
+        ticker: normTicker,
+        amount: units,
+        price,
+        totalUsd: actualCost,
+        balanceBefore: prevCash,
+        balanceAfter: state.cashBalance,
+        realizedPnl: 0,
+        realizedPnlPct: 0,
+        notes: `Council Quorum BUY: ${normTicker} [${proposal.confidence}% Conf] — ${proposal.reasoning}`,
+      };
+      state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
+      state.lastUpdated = nowUtc;
+      const updated = saveAutopilotState(state);
+
+      return res.json({
+        success: true,
+        approved: true,
+        state: updated,
+        ledgerEntry,
+        log: {
+          id: `council-log-${Date.now()}`,
+          timestamp: timeStr,
+          ticker: normTicker,
+          action: 'BUY',
+          sizePct: validSizePct,
+          text: `BUY ${normTicker} [${validSizePct}% | $${actualCost.toFixed(0)} | Conf: ${proposal.confidence}%] — ${proposal.reasoning}`,
+          status: 'APPROVED',
+          source: 'AUTONOMOUS',
+        },
+      });
+    } else if (proposal.action === 'SELL') {
+      const pos = state.positions[normTicker];
+      if (!pos) {
+        return res.json({
+          success: false,
+          vetoed: true,
+          reason: `Cannot SELL ${normTicker}: asset not held`,
+          state,
+        });
+      }
+
+      const proceeds = parseFloat((pos.amount * price).toFixed(2));
+      const cost = parseFloat((pos.amount * pos.entryPrice).toFixed(2));
+      const pnl = parseFloat((proceeds - cost).toFixed(2));
+      const pnlPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
+      const prevCash = state.cashBalance;
+      state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
+      delete state.positions[normTicker];
+
+      const ledgerEntry = {
+        id: `council-sell-${Date.now()}-${normTicker}`,
+        timestamp: timeStr,
+        utcTimestamp: nowUtc,
+        type: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        ticker: normTicker,
+        amount: pos.amount,
+        price,
+        totalUsd: proceeds,
+        balanceBefore: prevCash,
+        balanceAfter: state.cashBalance,
+        realizedPnl: pnl,
+        realizedPnlPct: pnlPct,
+        notes: `Council Quorum SELL: Closed ${pos.amount.toFixed(4)} ${normTicker} at $${price.toLocaleString()} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)`,
+      };
+      state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
+
+      const trades = getAuditTrades();
+      const count = trades.length + 1;
+      const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${count.toString().padStart(2, '0')}`;
+      const priceDelta = parseFloat((price - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
+      const priceDeltaPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
+
+      const normalizedTrade = normalizeTradeRecord({
+        id: newTradeId,
+        timestamp: nowUtc,
+        instrument: `${normTicker}/USDT`,
+        direction: 'LONG',
+        price: pos.entryPrice,
+        entryPrice: pos.entryPrice,
+        exitPrice: price,
+        priceDelta,
+        priceDeltaPct,
+        quantity: cost,
+        leverage: 3,
+        balanceChange: pnl,
+        balanceChangePct: pnlPct,
+        accountBalance: 100000,
+        trigger: `Council Quorum Ratified Exit on ${normTicker} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%): ${proposal.reasoning}`,
+        status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        sourceHandler: 'AUTOPILOT_DAEMON',
+      }, newTradeId);
+      trades.push(normalizedTrade);
+      saveAuditTrades(reconcileTradeCollection(trades));
+
+      state.lastUpdated = nowUtc;
+      const updated = saveAutopilotState(state);
+
+      return res.json({
+        success: true,
+        approved: true,
+        state: updated,
+        ledgerEntry,
+        log: {
+          id: `council-log-${Date.now()}`,
+          timestamp: timeStr,
+          ticker: normTicker,
+          action: 'SELL',
+          sizePct: 100,
+          text: `SELL ${normTicker} [100% | ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} | ${pnlPct.toFixed(2)}%] — ${proposal.reasoning}`,
+          status: 'APPROVED',
+          source: 'AUTONOMOUS',
+        },
+      });
+    }
+
+    return res.json({ success: true, approved: true, state });
+  } catch (err: any) {
+    console.error('Council signal error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/autopilot/cashout-all - Authoritative server liquidation of all open positions
+app.post('/api/autopilot/cashout-all', (req, res) => {
+  try {
+    const state = getAutopilotState();
+    const posKeys = Object.keys(state.positions || {});
+    if (posKeys.length === 0) {
+      return res.json({ success: true, state });
+    }
+
+    let totalProceeds = 0;
+    let totalCost = 0;
+    let closedCount = 0;
+    const nowUtc = new Date().toISOString();
+    const timeStr = new Date().toLocaleTimeString();
+
+    posKeys.forEach((ticker) => {
+      const pos = state.positions[ticker];
+      if (pos && pos.amount > 0) {
+        const { price } = getServerPrice(ticker);
+        const proceeds = pos.amount * price;
+        const cost = pos.amount * pos.entryPrice;
+        totalProceeds += proceeds;
+        totalCost += cost;
+        closedCount++;
+      }
+    });
+
+    const netPnl = parseFloat((totalProceeds - totalCost).toFixed(2));
+    const netPnlPct = totalCost > 0 ? parseFloat((((totalProceeds - totalCost) / totalCost) * 100).toFixed(2)) : 0;
+    const prevCash = state.cashBalance;
+    state.cashBalance = parseFloat((state.cashBalance + totalProceeds).toFixed(2));
+    state.positions = {};
+
+    const cashoutEntry = {
+      id: `cashout-${Date.now()}`,
+      timestamp: timeStr,
+      utcTimestamp: nowUtc,
+      type: 'CASHOUT_ALL',
+      ticker: 'ALL_POSITIONS',
+      amount: closedCount,
+      price: 0,
+      totalUsd: parseFloat(totalProceeds.toFixed(2)),
+      balanceBefore: prevCash,
+      balanceAfter: state.cashBalance,
+      realizedPnl: netPnl,
+      realizedPnlPct: netPnlPct,
+      notes: `Manual Cashout: Liquidated ${closedCount} open positions. Full proceeds of $${totalProceeds.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} credited to Available Cash.`,
+    };
+    state.ledger = [cashoutEntry, ...(state.ledger || []).slice(0, 299)];
+    state.lastUpdated = nowUtc;
+    const updated = saveAutopilotState(state);
+
+    return res.json({ success: true, state: updated });
+  } catch (err: any) {
+    console.error('Cashout all error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/autopilot/reset - Reset cash balance and positions to initial seed across all nodes
 app.post('/api/autopilot/reset', (req, res) => {
   try {
     stopAutopilotDaemon();
     const resetState: ServerAutopilotState = {
       ...DEFAULT_AUTOPILOT_STATE,
+      positions: {},
+      cashBalance: 100000.0,
+      ledger: [...DEFAULT_AUTOPILOT_STATE.ledger],
       lastUpdated: new Date().toISOString(),
     };
     fs.writeFileSync(AUTOPILOT_FILE_PATH, JSON.stringify(resetState, null, 2), 'utf8');
+    saveAuditTrades(SEED_PAPER_TRADES);
+    startAutopilotDaemon();
     res.json({ success: true, state: resetState });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
