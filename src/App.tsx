@@ -397,7 +397,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 py-4 space-y-8">
+      <main className={`mx-auto px-4 py-4 space-y-8 transition-all duration-200 ${activeTab === 'AUDIT' ? 'max-w-[1680px]' : 'max-w-7xl'}`}>
         {/* VIEW 1: COMMAND DECK (Clean, Cinematic Gateway matching Moonberg Reference) */}
         {activeTab === 'DECK' && (
           <div className="space-y-8 animate-fadeIn">
@@ -724,7 +724,7 @@ export default function App() {
 
       {/* Institutional Terminal Footer */}
       <footer className="border-t border-[var(--lunaris-panel-border)] bg-[#070709] py-6 mt-12 text-xs text-gray-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
+        <div className={`mx-auto px-4 flex flex-wrap items-center justify-between gap-4 transition-all duration-200 ${activeTab === 'AUDIT' ? 'max-w-[1680px]' : 'max-w-7xl'}`}>
           <div className="flex items-center gap-2.5">
             <div className="relative flex items-center justify-center">
               <div className="w-3.5 h-3.5 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-[#FACC15] to-[#D946EF] rotate-45 shadow-[0_0_10px_rgba(0,240,255,0.7)]" />

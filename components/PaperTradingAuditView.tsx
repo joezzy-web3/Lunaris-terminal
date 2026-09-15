@@ -30,6 +30,7 @@ import {
   Search,
   ExternalLink,
   ShieldCheck,
+  FileSearch,
   TrendingUp,
   TrendingDown,
   Activity,
@@ -935,20 +936,22 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
 
       {/* Ledger Table with Live Highlight Flash */}
       <div className="bg-[#08090f] border border-white/10 rounded-xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono border-collapse">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+          <table className="w-full text-left text-xs font-mono border-collapse min-w-[1020px]">
             <thead>
               <tr className="border-b border-white/15 text-gray-400 uppercase text-[10px] tracking-wider bg-white/[0.02]">
-                <th className="py-3 px-3.5">ID / Timestamp (UTC)</th>
-                <th className="py-3 px-3.5">Instrument</th>
-                <th className="py-3 px-3.5">Direction</th>
-                <th className="py-3 px-3.5 text-right">Entry / Exit Price</th>
-                <th className="py-3 px-3.5 text-right">Size (USDT)</th>
-                <th className="py-3 px-3.5 text-right">Balance Change</th>
-                <th className="py-3 px-3.5 text-right">Settled Balance</th>
-                <th className="py-3 px-3.5">Council Quorum / Execution Trigger</th>
-                <th className="py-3 px-3.5 text-center">Status</th>
-                <th className="py-3 px-3.5 text-center">Audit Proof</th>
+                <th className="py-2.5 px-3 min-w-[130px]">ID / Timestamp (UTC)</th>
+                <th className="py-2.5 px-2.5 min-w-[110px]">Instrument</th>
+                <th className="py-2.5 px-2 text-center min-w-[85px]">Direction</th>
+                <th className="py-2.5 px-3 text-right min-w-[145px]">Entry / Exit Price</th>
+                <th className="py-2.5 px-2.5 text-right min-w-[90px]">Size (USDT)</th>
+                <th className="py-2.5 px-3 text-right min-w-[130px]">Balance Change</th>
+                <th className="py-2.5 px-3 text-right min-w-[110px]">Settled Balance</th>
+                <th className="py-2.5 px-3 min-w-[180px] max-w-[240px]">Council Quorum / Execution Trigger</th>
+                <th className="py-2.5 px-2 text-center min-w-[100px]">Status</th>
+                <th className="py-2.5 px-3.5 text-center sticky right-0 bg-[#0c0e18] z-20 shadow-[-8px_0_12px_rgba(0,0,0,0.6)] border-l border-white/10 min-w-[135px]">
+                  Audit Proof & PnL
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -963,13 +966,13 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                       playCyberClick();
                       setSelectedProofTrade(trade);
                     }}
-                    className={`transition-colors cursor-pointer ${
+                    className={`group transition-colors cursor-pointer ${
                       isJustAdded
                         ? 'bg-[#00F0FF]/15 border-l-4 border-[#00F0FF]'
                         : 'hover:bg-white/[0.04]'
                     }`}
                   >
-                    <td className="py-3 px-3.5 text-gray-300 whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-gray-300 whitespace-nowrap">
                       {(() => {
                         const { dateStr, timeStr } = formatAuditTimestamp(trade.timestamp, trade.id);
                         return (
@@ -990,7 +993,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                         );
                       })()}
                     </td>
-                    <td className="py-3 px-3.5 font-bold text-white whitespace-nowrap">
+                    <td className="py-2.5 px-2.5 font-bold text-white whitespace-nowrap">
                       <span className="bg-white/5 border border-white/10 px-2 py-1 rounded text-xs flex items-center gap-1 w-fit">
                         <span>{trade.instrument}</span>
                         {(trade.instrument.includes('NVDAon') || trade.instrument.includes('TSLAon')) && (
@@ -1000,9 +1003,9 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                         )}
                       </span>
                     </td>
-                    <td className="py-3 px-3.5 whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-center whitespace-nowrap">
                       <span
-                        className={`px-2.5 py-1 rounded text-[10px] font-bold ${
+                        className={`px-2.5 py-1 rounded text-[10px] font-bold inline-block ${
                           trade.direction === 'LONG'
                             ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                             : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
@@ -1011,7 +1014,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                         {trade.direction} {trade.leverage}x
                       </span>
                     </td>
-                    <td className="py-3 px-3.5 text-right font-medium whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-right font-medium whitespace-nowrap">
                       {(() => {
                         const { entryPrice, exitPrice, priceDelta, priceDeltaPct } = resolveTradePrices(trade);
                         const isWin = trade.balanceChange >= 0;
@@ -1043,21 +1046,21 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                         );
                       })()}
                     </td>
-                    <td className="py-3 px-3.5 text-right text-gray-300 whitespace-nowrap">
+                    <td className="py-2.5 px-2.5 text-right text-gray-300 whitespace-nowrap">
                       ${trade.quantity.toLocaleString()}
                     </td>
-                    <td className={`py-3 px-3.5 text-right font-bold whitespace-nowrap ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <td className={`py-2.5 px-3 text-right font-bold whitespace-nowrap ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {isProfit ? '+' : ''}${trade.balanceChange.toFixed(2)} ({isProfit ? '+' : ''}{trade.balanceChangePct.toFixed(2)}%)
                     </td>
-                    <td className="py-3 px-3.5 text-right font-semibold text-white whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-right font-semibold text-white whitespace-nowrap">
                       ${trade.accountBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-3 px-3.5 text-gray-300 max-w-sm">
-                      <div className="text-xs text-gray-200 line-clamp-2" title={trade.trigger}>
+                    <td className="py-2.5 px-3 text-gray-300 max-w-[200px] xl:max-w-[260px]">
+                      <div className="text-xs text-gray-200 line-clamp-2 leading-relaxed" title={trade.trigger}>
                         {trade.trigger}
                       </div>
                     </td>
-                    <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-center whitespace-nowrap">
                       <div className="flex flex-col items-center gap-1">
                         <span
                           className={`px-2.5 py-1 rounded text-[10px] font-semibold ${
@@ -1077,16 +1080,22 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                    <td className={`py-2.5 px-3.5 text-center whitespace-nowrap sticky right-0 z-10 shadow-[-8px_0_12px_rgba(0,0,0,0.6)] border-l border-white/10 transition-colors ${
+                      isJustAdded
+                        ? 'bg-[#0b1c28]'
+                        : 'bg-[#08090f] group-hover:bg-[#121524]'
+                    }`}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           playCyberClick();
                           setSelectedProofTrade(trade);
                         }}
-                        className="px-2 py-1 rounded text-[10px] font-bold bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/30 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10.5px] font-bold bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 text-[#00F0FF] hover:text-white border border-[#00F0FF]/40 hover:border-[#00F0FF] shadow-[0_0_10px_rgba(0,240,255,0.15)] transition-all cursor-pointer whitespace-nowrap"
+                        title="Inspect Cryptographic Proof & Realized PnL Math"
                       >
-                        Inspect Proof
+                        <FileSearch className="w-3.5 h-3.5 shrink-0" />
+                        <span>Inspect PnL</span>
                       </button>
                     </td>
                   </tr>
