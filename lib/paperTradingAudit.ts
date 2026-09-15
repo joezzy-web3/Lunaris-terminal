@@ -625,30 +625,38 @@ export async function resetPaperTradesToSeed(
     return { success: false, error: 'ACCESS DENIED: Invalid Auditor Security Passcode.' };
   }
 
-  try {
-    await seedFirestoreAuditTrades(SEED_PAPER_TRADES, true);
-  } catch (err) {
-    console.warn('Failed to reset Firestore audit trades:', err);
+  // 1. Immediately reset local storage & dispatch event
+  savePaperTrades(SEED_PAPER_TRADES);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('lunaris-audit-reset', { detail: SEED_PAPER_TRADES }));
   }
 
+  // 2. Notify server reset with fast timeout
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
     const resp = await fetch('/api/audit/reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ passcode: cleanCode }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     const json = await resp.json();
     if (!resp.ok || !json.success) {
       return { success: false, error: json.error || 'Server rejected reset request.' };
     }
   } catch (err) {
-    console.warn('Direct server reset fallback active:', err);
+    console.warn('Direct server reset notice:', err);
   }
 
-  savePaperTrades(SEED_PAPER_TRADES);
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('lunaris-audit-reset', { detail: SEED_PAPER_TRADES }));
+  // 3. Reset Firestore in background non-blocking
+  if (!isFirestoreQuotaExceeded()) {
+    seedFirestoreAuditTrades(SEED_PAPER_TRADES, true).catch((err) => {
+      console.warn('Background Firestore reset notice:', err);
+    });
   }
+
   return { success: true };
 }
 
@@ -777,7 +785,10 @@ export function sanitizeAuditTrades(trades: PaperTradeRecord[]): {
  * Executes Auditor Cloud Sanitization (Strategy 2)
  * Synchronizes with Firestore cloud database and server persistence
  */
-export async function executeAuditorSanitization(passcode: string): Promise<{
+export async function executeAuditorSanitization(
+  passcode: string,
+  onProgress?: (msg: string) => void
+): Promise<{
   success: boolean;
   count: number;
   modifiedCount: number;
@@ -802,44 +813,67 @@ export async function executeAuditorSanitization(passcode: string): Promise<{
   }
 
   try {
-    // 1. Fetch current trades from Firestore / server
-    let currentTrades = await fetchFirestoreAuditTrades();
-    if (currentTrades.length === 0) {
-      currentTrades = getSavedPaperTrades();
-    }
+    onProgress?.('Verifying Clearance & Loading Current Ledger...');
+    // 1. Instantly read local paper trades
+    let currentTrades = getSavedPaperTrades();
 
-    // 2. Sanitize and reconcile
-    const { sanitized, modifiedCount, anomaliesFixed } = sanitizeAuditTrades(currentTrades);
-
-    // 3. Persist to local storage
-    savePaperTrades(sanitized);
-
-    // 4. Batch commit to Firestore
-    try {
-      await seedFirestoreAuditTrades(sanitized);
-    } catch (fsErr) {
-      console.warn('Firestore cloud commit notice:', fsErr);
-    }
-
-    // 5. Commit to server persistence
+    // 2. Fetch server trades with fast timeout if available
     if (typeof window !== 'undefined') {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+        const resp = await fetch('/api/audit/trades', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (resp.ok) {
+          const json = await resp.json();
+          if (Array.isArray(json.trades) && json.trades.length > 0) {
+            currentTrades = reconcileTradeCollection([...currentTrades, ...json.trades]);
+          }
+        }
+      } catch {}
+    }
+
+    onProgress?.('Scanning corridors & clamping price anomalies...');
+    // 3. Sanitize and reconcile mathematically
+    const { sanitized, modifiedCount, anomaliesFixed } = sanitizeAuditTrades(currentTrades);
+
+    onProgress?.('Persisting sanitized records to local cache & server...');
+    // 4. Persist to local storage
+    savePaperTrades(sanitized);
+
+    // 5. Commit to server persistence (/api/audit/sync) with fast timeout
+    if (typeof window !== 'undefined') {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1800);
         await fetch('/api/audit/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ trades: sanitized, passcode: cleanCode }),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
       } catch (srvErr) {
         console.warn('Server audit sync notice:', srvErr);
       }
     }
 
-    // 6. Broadcast update to UI listeners
+    onProgress?.('Syncing with Firestore Cloud Database...');
+    // 6. Push to Firestore asynchronously in background so slow network or quotas never block the UI
+    if (!isFirestoreQuotaExceeded()) {
+      seedFirestoreAuditTrades(sanitized).catch((fsErr) => {
+        console.warn('Firestore cloud commit notice:', fsErr);
+      });
+    }
+
+    // 7. Broadcast update to UI listeners
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
         new CustomEvent('lunaris-audit-updated', { detail: sanitized })
       );
     }
+
+    onProgress?.('Sanitization Complete!');
 
     return {
       success: true,

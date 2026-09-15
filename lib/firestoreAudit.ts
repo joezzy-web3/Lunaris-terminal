@@ -131,11 +131,39 @@ function checkIsQuotaError(err: any): boolean {
   const code = err.code || '';
   return (
     code === 'resource-exhausted' ||
+    code === 'deadline-exceeded' ||
     msg.includes('Quota exceeded') ||
     msg.includes('RESOURCE_EXHAUSTED') ||
     msg.includes('Quota limit exceeded') ||
-    msg.includes('Free daily write units')
+    msg.includes('Free daily write units') ||
+    msg.includes('rate limit') ||
+    msg.includes('Rate limit') ||
+    msg.includes('timeout')
   );
+}
+
+/**
+ * Executes a Promise with a strict timeout to prevent long UI blocking
+ * if Firestore has rate limits, quota issues, or slow network response.
+ */
+export function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  timeoutErrorMessage: string = 'Operation timed out'
+): Promise<T> {
+  let timeoutHandle: any;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(timeoutErrorMessage));
+    }, ms);
+  });
+  return Promise.race([
+    promise.then((res) => {
+      clearTimeout(timeoutHandle);
+      return res;
+    }),
+    timeoutPromise,
+  ]);
 }
 
 /**
@@ -528,12 +556,12 @@ export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
   try {
     const colRef = collection(db, TRADES_COLLECTION);
     const q = query(colRef, limit(500));
-    const snapshot = await getDocs(q);
+    const snapshot = await withTimeout(getDocs(q), 2500, 'Firestore query timeout');
 
     if (snapshot.empty) {
       if (!isFirestoreQuotaExceeded()) {
-        console.log('⚡ [Firestore] audit_trades collection is empty. Seeding baseline trades to cloud...');
-        await seedFirestoreAuditTrades(SEED_PAPER_TRADES);
+        console.log('⚡ [Firestore] audit_trades collection is empty. Seeding baseline trades to cloud in background...');
+        seedFirestoreAuditTrades(SEED_PAPER_TRADES).catch(() => {});
       }
       return SEED_PAPER_TRADES;
     }
@@ -557,7 +585,7 @@ export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
   } catch (err: any) {
     if (checkIsQuotaError(err)) {
       flagFirestoreQuotaExceeded(err);
-      console.warn('⚠️ [Firestore] Free-tier daily write units exceeded on Firebase Spark plan. Falling back to persistent server ledger.');
+      console.warn('⚠️ [Firestore] Free-tier daily write units or timeout reached on Firebase Spark plan. Falling back to persistent server ledger.');
     } else {
       console.warn('⚠️ [Firestore] Failed to fetch trades, falling back to local/seed:', err);
     }
@@ -596,7 +624,7 @@ export async function flushPendingFirestoreTrades(): Promise<void> {
       const cleaned = cleanFirestoreData(trade);
       batch.set(docRef, cleaned, { merge: true });
     }
-    await batch.commit();
+    await withTimeout(batch.commit(), 3000, 'Firestore pending flush timeout');
 
     // Successfully committed: remove from pending queue
     for (const trade of batchSlice) {
@@ -674,7 +702,7 @@ export async function seedFirestoreAuditTrades(
     if (purgeOthers) {
       try {
         const colRef = collection(db, TRADES_COLLECTION);
-        const snap = await getDocs(colRef);
+        const snap = await withTimeout(getDocs(colRef), 2000, 'Firestore purge fetch timeout');
         const deleteBatch = writeBatch(db);
         let deleteCount = 0;
         snap.forEach((d) => {
@@ -684,7 +712,7 @@ export async function seedFirestoreAuditTrades(
           }
         });
         if (deleteCount > 0) {
-          await deleteBatch.commit();
+          await withTimeout(deleteBatch.commit(), 2500, 'Firestore purge commit timeout');
           console.log(`🧹 [Firestore] Purged ${deleteCount} anomalous/stale cloud trade records.`);
         }
       } catch (delErr) {
@@ -693,13 +721,15 @@ export async function seedFirestoreAuditTrades(
     }
 
     const batch = writeBatch(db);
-    for (const t of trades) {
+    // Slice to at most 100 items to guarantee Firestore batch limits and network responsiveness
+    const tradesSlice = trades.slice(0, 100);
+    for (const t of tradesSlice) {
       const docRef = doc(db, TRADES_COLLECTION, t.id);
       const cleaned = cleanFirestoreData(t);
       batch.set(docRef, cleaned, { merge: true });
     }
-    await batch.commit();
-    console.log(`✅ [Firestore] Successfully committed ${trades.length} trades to cloud.`);
+    await withTimeout(batch.commit(), 3000, 'Firestore batch commit timeout');
+    console.log(`✅ [Firestore] Successfully committed ${tradesSlice.length} trades to cloud.`);
   } catch (err: any) {
     if (checkIsQuotaError(err)) {
       flagFirestoreQuotaExceeded(err);

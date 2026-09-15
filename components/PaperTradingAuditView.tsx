@@ -95,6 +95,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     error: string | null;
     success: boolean;
     isSubmitting: boolean;
+    statusText?: string;
   }>({
     isOpen: false,
     action: 'RESET_LOG',
@@ -102,6 +103,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     error: null,
     success: false,
     isSubmitting: false,
+    statusText: '',
   });
 
   // Real-time Bitget market feed & tokenized equities from unified WebSocket/REST poller
@@ -296,6 +298,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       error: null,
       success: false,
       isSubmitting: false,
+      statusText: '',
     });
   };
 
@@ -319,14 +322,21 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       return;
     }
 
-    setAuthModal((prev) => ({ ...prev, isSubmitting: true, error: null }));
+    setAuthModal((prev) => ({
+      ...prev,
+      isSubmitting: true,
+      error: null,
+      statusText: 'Verifying Security Clearance...',
+    }));
 
     if (authModal.action === 'PURGE_CORRUPT') {
+      setAuthModal((prev) => ({ ...prev, statusText: 'Purging local storage anomalies...' }));
       const pristine = purgeCorruptLocalStorageTrades();
       setTrades(pristine);
+      setAuthModal((prev) => ({ ...prev, statusText: 'Restoring seed genesis trades...' }));
       await resetPaperTradesToSeed(cleanCode);
       playTradeApprovedChime();
-      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true }));
+      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true, statusText: 'Restored!' }));
       setSanitizerBanner({
         visible: true,
         message: 'Purged corrupt local and server trades. Restored pristine Bitget S2 seed ledger.',
@@ -338,6 +348,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
 
     if (authModal.action === 'RESET_LOG') {
+      setAuthModal((prev) => ({ ...prev, statusText: 'Restoring official genesis ledger...' }));
       const res = await resetPaperTradesToSeed(cleanCode);
       if (!res.success) {
         playRiskVetoTone();
@@ -349,19 +360,21 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
         return;
       }
       playTradeApprovedChime();
-      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true }));
+      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true, statusText: 'Reset Completed!' }));
       setTimeout(() => {
         setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
       }, 1200);
     } else if (authModal.action === 'PAUSE_LOOP') {
       setIsAutoTicking(false);
       playTradeApprovedChime();
-      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true }));
+      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true, statusText: 'Paused!' }));
       setTimeout(() => {
         setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
       }, 1200);
     } else if (authModal.action === 'SANITIZE_LOG') {
-      const res = await executeAuditorSanitization(cleanCode);
+      const res = await executeAuditorSanitization(cleanCode, (step) => {
+        setAuthModal((prev) => ({ ...prev, statusText: step }));
+      });
       if (!res.success) {
         playRiskVetoTone();
         setAuthModal((prev) => ({
@@ -375,7 +388,12 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       if (res.sanitizedTrades && res.sanitizedTrades.length > 0) {
         setTrades(res.sanitizedTrades);
       }
-      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true }));
+      setAuthModal((prev) => ({
+        ...prev,
+        isSubmitting: false,
+        success: true,
+        statusText: `Sanitized ${res.count} records!`,
+      }));
       setSanitizerBanner({
         visible: true,
         message: `Auditor Cloud Sanitizer Completed: Successfully reconciled ${res.count} ledger items. Remediated ${res.modifiedCount} price & balance anomalies across Firestore Cloud and server disk.`,
@@ -1271,15 +1289,24 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                 </div>
               )}
 
+              {/* In-Progress Status Alert */}
+              {authModal.isSubmitting && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/50 text-cyan-300 text-xs font-mono animate-pulse">
+                  <Activity className="w-4 h-4 shrink-0 text-cyan-400 animate-spin" />
+                  <span className="font-semibold">{authModal.statusText || 'Executing operation...'}</span>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
+                  disabled={authModal.isSubmitting}
                   onClick={() => {
                     playCyberClick();
                     setAuthModal((prev) => ({ ...prev, isOpen: false, error: null }));
                   }}
-                  className="px-4 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -1289,10 +1316,14 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                   disabled={authModal.isSubmitting || !authModal.passcode.trim()}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-extrabold shadow-[0_0_15px_rgba(250,204,21,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
-                  <Key className="w-3.5 h-3.5" />
+                  {authModal.isSubmitting ? (
+                    <Activity className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Key className="w-3.5 h-3.5" />
+                  )}
                   <span>
                     {authModal.isSubmitting
-                      ? 'Verifying...'
+                      ? authModal.statusText || 'Processing...'
                       : authModal.action === 'SANITIZE_LOG'
                       ? 'Execute Cloud Sanitizer'
                       : authModal.action === 'PURGE_CORRUPT'
