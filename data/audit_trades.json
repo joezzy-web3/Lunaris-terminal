@@ -13,7 +13,11 @@
     "trigger": "Guardian-01 Risk Veto: Volatility threshold breach; executed tight trailing stop",
     "id": "PT-2026-0901-01",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894138005_SOL/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894138005_SOL/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 134.8,
+    "exitPrice": 135.73,
+    "priceDelta": 0.93,
+    "priceDeltaPct": 0.69
   },
   {
     "leverage": 2,
@@ -29,7 +33,11 @@
     "quantity": 18000,
     "id": "PT-2026-0902-02",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894172036_NVDAON/USDT_LONG_atlasmacrotokenizedus"
+    "idempotencyKey": "894172036_NVDAON/USDT_LONG_atlasmacrotokenizedus",
+    "entryPrice": 122.4,
+    "exitPrice": 126.99,
+    "priceDelta": 4.59,
+    "priceDeltaPct": 3.75
   },
   {
     "balanceChange": 785.4,
@@ -45,7 +53,11 @@
     "direction": "LONG",
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894204461_BTC/USDT_LONG_councilquorumquantome"
+    "idempotencyKey": "894204461_BTC/USDT_LONG_councilquorumquantome",
+    "entryPrice": 76820.5,
+    "exitPrice": 78076.52,
+    "priceDelta": 1256.02,
+    "priceDeltaPct": 1.64
   },
   {
     "instrument": "ETH/USDT",
@@ -61,7 +73,11 @@
     "balanceChangePct": 5.31,
     "id": "PT-2026-0903-04",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894217864_ETH/USDT_LONG_autopilotpulselayer1"
+    "idempotencyKey": "894217864_ETH/USDT_LONG_autopilotpulselayer1",
+    "entryPrice": 2480.1,
+    "exitPrice": 2513.02,
+    "priceDelta": 32.92,
+    "priceDeltaPct": 1.33
   },
   {
     "timestamp": "2026-09-04T08:19:40.000Z",
@@ -77,7 +93,11 @@
     "leverage": 3,
     "instrument": "SOL/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894254990_SOL/USDT_SHORT_guardian01hardstopme"
+    "idempotencyKey": "894254990_SOL/USDT_SHORT_guardian01hardstopme",
+    "entryPrice": 138.4,
+    "exitPrice": 139.78,
+    "priceDelta": 1.38,
+    "priceDeltaPct": 1
   },
   {
     "balanceChangePct": 5.96,
@@ -93,7 +113,11 @@
     "instrument": "NVDAon/USDT",
     "quantity": 6500,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894269707_NVDAON/USDT_LONG_quantomegaorderbookbi"
+    "idempotencyKey": "894269707_NVDAON/USDT_LONG_quantomegaorderbookbi",
+    "entryPrice": 125.8,
+    "exitPrice": 129.55,
+    "priceDelta": 3.75,
+    "priceDeltaPct": 2.98
   },
   {
     "balanceChange": 674.79,
@@ -109,7 +133,11 @@
     "instrument": "BTC/USDT",
     "trigger": "Quant-Omega: Orderbook Bid Absorption on Bitget Spot Gateway",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894287157_BTC/USDT_LONG_quantomegaorderbookbi"
+    "idempotencyKey": "894287157_BTC/USDT_LONG_quantomegaorderbookbi",
+    "entryPrice": 77150,
+    "exitPrice": 78390.19,
+    "priceDelta": 1240.19,
+    "priceDeltaPct": 1.61
   },
   {
     "accountBalance": 103970.7,
@@ -125,7 +153,11 @@
     "trigger": "Autopilot Pulse: Social Velocity Spike (88.4) + Volume Influx",
     "balanceChangePct": 10.21,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894342726_SUI/USDT_LONG_autopilotpulsesocialv"
+    "idempotencyKey": "894342726_SUI/USDT_LONG_autopilotpulsesocialv",
+    "entryPrice": 3.14,
+    "exitPrice": 3.2201,
+    "priceDelta": 0.0801,
+    "priceDeltaPct": 2.55
   },
   {
     "accountBalance": 104950.7,
@@ -141,7 +173,11 @@
     "leverage": 4,
     "balanceChangePct": 7,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894384460_BTC/USDT_LONG_councilquorumunanimous"
+    "idempotencyKey": "894384460_BTC/USDT_LONG_councilquorumunanimous",
+    "entryPrice": 77480,
+    "exitPrice": 78835.9,
+    "priceDelta": 1355.9,
+    "priceDeltaPct": 1.75
   },
   {
     "balanceChange": 830,
@@ -157,7 +193,11 @@
     "accountBalance": 105780.7,
     "balanceChangePct": 6.92,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894401427_TSLAON/USDT_LONG_atlasmacrotokenizedst"
+    "idempotencyKey": "894401427_TSLAON/USDT_LONG_atlasmacrotokenizedst",
+    "entryPrice": 246.5,
+    "exitPrice": 255.03,
+    "priceDelta": 8.53,
+    "priceDeltaPct": 3.46
   },
   {
     "trigger": "Council Quorum: Quant-Omega Momentum Alignment (94% Conf)",
@@ -173,7 +213,11 @@
     "instrument": "SOL/USDT",
     "id": "PT-2026-0908-11",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894425120_SOL/USDT_LONG_councilquorumquantome"
+    "idempotencyKey": "894425120_SOL/USDT_LONG_councilquorumquantome",
+    "entryPrice": 139.2,
+    "exitPrice": 142.21,
+    "priceDelta": 3.01,
+    "priceDeltaPct": 2.16
   },
   {
     "direction": "LONG",
@@ -189,7 +233,11 @@
     "leverage": 4,
     "balanceChange": 986.32,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894488821_BTC/USDT_LONG_atlasmacroinstitutiona"
+    "idempotencyKey": "894488821_BTC/USDT_LONG_atlasmacroinstitutiona",
+    "entryPrice": 77800,
+    "exitPrice": 79334.6,
+    "priceDelta": 1534.6,
+    "priceDeltaPct": 1.97
   },
   {
     "quantity": 7500,
@@ -205,7 +253,11 @@
     "timestamp": "2026-09-10T12:05:19.000Z",
     "id": "PT-2026-0910-13",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894520959_TSLAON/USDT_LONG_autopilotdaemontokeniz"
+    "idempotencyKey": "894520959_TSLAON/USDT_LONG_autopilotdaemontokeniz",
+    "entryPrice": 248.6,
+    "exitPrice": 256.43,
+    "priceDelta": 7.83,
+    "priceDeltaPct": 3.15
   },
   {
     "direction": "LONG",
@@ -221,7 +273,11 @@
     "id": "PT-2026-0911-14",
     "leverage": 4,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894548722_ETH/USDT_LONG_autopilotdaemonliquidi"
+    "idempotencyKey": "894548722_ETH/USDT_LONG_autopilotdaemonliquidi",
+    "entryPrice": 2510,
+    "exitPrice": 2558.51,
+    "priceDelta": 48.51,
+    "priceDeltaPct": 1.93
   },
   {
     "timestamp": "2026-09-11T14:18:22.000Z",
@@ -237,7 +293,11 @@
     "balanceChangePct": 7,
     "leverage": 2,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894568151_NVDAON/USDT_LONG_councilquorumnvdaon7x"
+    "idempotencyKey": "894568151_NVDAON/USDT_LONG_councilquorumnvdaon7x",
+    "entryPrice": 128.9,
+    "exitPrice": 133.41,
+    "priceDelta": 4.51,
+    "priceDeltaPct": 3.5
   },
   {
     "id": "PT-2026-0912-16",
@@ -253,7 +313,11 @@
     "balanceChange": 1130,
     "quantity": 14000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894598532_BTC/USDT_LONG_quantomegaorderbookde"
+    "idempotencyKey": "894598532_BTC/USDT_LONG_quantomegaorderbookde",
+    "entryPrice": 78150,
+    "exitPrice": 79726.68,
+    "priceDelta": 1576.68,
+    "priceDeltaPct": 2.02
   },
   {
     "id": "PT-20260912-13",
@@ -269,7 +333,11 @@
     "leverage": 2,
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894604640_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894604640_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 248.9,
+    "exitPrice": 256.88,
+    "priceDelta": 7.98,
+    "priceDeltaPct": 3.21
   },
   {
     "id": "PT-2026-0912-17",
@@ -285,7 +353,11 @@
     "leverage": 4,
     "instrument": "SOL/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894621165_SOL/USDT_LONG_autopilotpulseecosyste"
+    "idempotencyKey": "894621165_SOL/USDT_LONG_autopilotpulseecosyste",
+    "entryPrice": 142.5,
+    "exitPrice": 145.44,
+    "priceDelta": 2.94,
+    "priceDeltaPct": 2.06
   },
   {
     "direction": "LONG",
@@ -301,7 +373,11 @@
     "balanceChangePct": 3.94,
     "balanceChange": 137.9,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894649267_ETH/USDT_LONG_atlasmacropreweeklyo"
+    "idempotencyKey": "894649267_ETH/USDT_LONG_atlasmacropreweeklyo",
+    "entryPrice": 2525,
+    "exitPrice": 2558.16,
+    "priceDelta": 33.16,
+    "priceDeltaPct": 1.31
   },
   {
     "price": 2479.84,
@@ -317,7 +393,11 @@
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "leverage": 5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669513_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894669513_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2479.84,
+    "exitPrice": 2520.86,
+    "priceDelta": 41.02,
+    "priceDeltaPct": 1.65
   },
   {
     "balanceChangePct": 4.19,
@@ -333,7 +413,11 @@
     "instrument": "NVDAon/USDT",
     "price": 139.4,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669858_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894669858_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 139.4,
+    "exitPrice": 142.32,
+    "priceDelta": 2.92,
+    "priceDeltaPct": 2.09
   },
   {
     "id": "PT-20260913-16",
@@ -349,7 +433,11 @@
     "status": "STOP_LOSS",
     "accountBalance": 112859.14,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669865_BTC/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894669865_BTC/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 76752,
+    "exitPrice": 77685.82,
+    "priceDelta": 933.82,
+    "priceDeltaPct": 1.22
   },
   {
     "balanceChange": 585.82,
@@ -365,7 +453,11 @@
     "timestamp": "2026-09-13T22:49:05.294Z",
     "direction": "SHORT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669872_TSLAON/USDT_SHORT_councilquorumtslaonus"
+    "idempotencyKey": "894669872_TSLAON/USDT_SHORT_councilquorumtslaonus",
+    "entryPrice": 248.9,
+    "exitPrice": 239.43,
+    "priceDelta": -9.47,
+    "priceDeltaPct": -3.8
   },
   {
     "id": "PT-20260913-18",
@@ -381,7 +473,11 @@
     "quantity": 9491,
     "balanceChangePct": -3.19,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669882_SOL/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894669882_SOL/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 100.03,
+    "exitPrice": 99.23,
+    "priceDelta": -0.8,
+    "priceDeltaPct": -0.8
   },
   {
     "balanceChangePct": 5.42,
@@ -397,7 +493,11 @@
     "accountBalance": 113549.08,
     "leverage": 2,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669893_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894669893_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 248.9,
+    "exitPrice": 255.65,
+    "priceDelta": 6.75,
+    "priceDeltaPct": 2.71
   },
   {
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
@@ -413,7 +513,11 @@
     "instrument": "TSLAon/USDT",
     "id": "PT-20260913-20",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669900_TSLAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894669900_TSLAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 248.9,
+    "exitPrice": 244.64,
+    "priceDelta": -4.26,
+    "priceDeltaPct": -1.71
   },
   {
     "status": "STOP_LOSS",
@@ -429,7 +533,11 @@
     "balanceChangePct": -2.68,
     "quantity": 11529,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669910_BTC/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894669910_BTC/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 76752.48,
+    "exitPrice": 76341.09,
+    "priceDelta": -411.39,
+    "priceDeltaPct": -0.54
   },
   {
     "leverage": 5,
@@ -445,7 +553,11 @@
     "timestamp": "2026-09-13T22:50:35.289Z",
     "balanceChangePct": -2.34,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669917_ETH/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894669917_ETH/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 2478.42,
+    "exitPrice": 2490.02,
+    "priceDelta": 11.6,
+    "priceDeltaPct": 0.47
   },
   {
     "accountBalance": 113263.33,
@@ -461,7 +573,11 @@
     "id": "PT-20260913-23",
     "balanceChangePct": 4.56,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669925_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894669925_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2478.42,
+    "exitPrice": 2516.09,
+    "priceDelta": 37.67,
+    "priceDeltaPct": 1.52
   },
   {
     "price": 99.93,
@@ -477,7 +593,11 @@
     "leverage": 4,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669934_SOL/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894669934_SOL/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 99.93,
+    "exitPrice": 99.43,
+    "priceDelta": -0.5,
+    "priceDeltaPct": -0.5
   },
   {
     "quantity": 7544,
@@ -493,7 +613,11 @@
     "accountBalance": 113554.68,
     "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669944_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894669944_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 99.92,
+    "exitPrice": 101.38,
+    "priceDelta": 1.46,
+    "priceDeltaPct": 1.46
   },
   {
     "id": "PT-20260913-26",
@@ -509,7 +633,11 @@
     "direction": "LONG",
     "balanceChangePct": -2.07,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669955_TSLAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894669955_TSLAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 248.9,
+    "exitPrice": 246.32,
+    "priceDelta": -2.58,
+    "priceDeltaPct": -1.04
   },
   {
     "instrument": "ETH/USDT",
@@ -525,7 +653,11 @@
     "id": "PT-20260913-27",
     "status": "STOP_LOSS",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669963_ETH/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894669963_ETH/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 2477.47,
+    "exitPrice": 2464.22,
+    "priceDelta": -13.25,
+    "priceDeltaPct": -0.53
   },
   {
     "id": "PT-20260913-28",
@@ -541,7 +673,11 @@
     "balanceChange": 641.19,
     "leverage": 4,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669971_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894669971_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 76716.15,
+    "exitPrice": 78001.15,
+    "priceDelta": 1285,
+    "priceDeltaPct": 1.68
   },
   {
     "status": "STOP_LOSS",
@@ -557,7 +693,11 @@
     "accountBalance": 113524.15,
     "quantity": 7796,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669978_NVDAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894669978_NVDAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 139.4,
+    "exitPrice": 137.27,
+    "priceDelta": -2.13,
+    "priceDeltaPct": -1.53
   },
   {
     "accountBalance": 114374.19,
@@ -573,7 +713,11 @@
     "status": "TAKE_PROFIT",
     "leverage": 5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669984_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894669984_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 76749.87,
+    "exitPrice": 78125.23,
+    "priceDelta": 1375.36,
+    "priceDeltaPct": 1.79
   },
   {
     "timestamp": "2026-09-13T22:53:09.291Z",
@@ -589,7 +733,11 @@
     "balanceChangePct": -3.59,
     "leverage": 2,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894669994_NVDAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894669994_NVDAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 139.4,
+    "exitPrice": 136.9,
+    "priceDelta": -2.5,
+    "priceDeltaPct": -1.79
   },
   {
     "timestamp": "2026-09-13T22:53:25.311Z",
@@ -605,7 +753,11 @@
     "status": "STOP_LOSS",
     "quantity": 14648,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894670002_SOL/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894670002_SOL/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 100.03,
+    "exitPrice": 99.25,
+    "priceDelta": -0.78,
+    "priceDeltaPct": -0.78
   },
   {
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
@@ -621,7 +773,11 @@
     "balanceChangePct": 7.54,
     "price": 139.4,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894670491_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894670491_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 139.4,
+    "exitPrice": 144.66,
+    "priceDelta": 5.26,
+    "priceDeltaPct": 3.77
   },
   {
     "trigger": "Test trade write",
@@ -637,7 +793,11 @@
     "timestamp": "2026-09-14T01:00:05.070Z",
     "price": 76800,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894673802_BTC/USDT_LONG_testtradewrite"
+    "idempotencyKey": "894673802_BTC/USDT_LONG_testtradewrite",
+    "entryPrice": 76800,
+    "exitPrice": 78080,
+    "priceDelta": 1280,
+    "priceDeltaPct": 1.67
   },
   {
     "balanceChange": 250,
@@ -653,7 +813,11 @@
     "balanceChangePct": 5,
     "accountBalance": 114526.59,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894673833_BTC/USDT_LONG_testtrade"
+    "idempotencyKey": "894673833_BTC/USDT_LONG_testtrade",
+    "entryPrice": 76800,
+    "exitPrice": 78080,
+    "priceDelta": 1280,
+    "priceDeltaPct": 1.67
   },
   {
     "timestamp": "2026-09-14T01:58:15.605Z",
@@ -669,7 +833,11 @@
     "price": 78450,
     "quantity": 14000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675547_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675547_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79809.8,
+    "priceDelta": 1359.8,
+    "priceDeltaPct": 1.73
   },
   {
     "id": "PT-20260914-15",
@@ -685,7 +853,11 @@
     "quantity": 12500,
     "price": 139.5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675550_SOL/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894675550_SOL/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 139.5,
+    "exitPrice": 138.1,
+    "priceDelta": -1.4,
+    "priceDeltaPct": -1
   },
   {
     "status": "STOP_LOSS",
@@ -707,7 +879,11 @@
     "accountBalance": 114659.59,
     "instrument": "TSLA/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675553_TSLA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675553_TSLA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 248,
+    "exitPrice": 246.18,
+    "priceDelta": -1.82,
+    "priceDeltaPct": -0.73
   },
   {
     "leverage": 3,
@@ -729,7 +905,11 @@
     "balanceChange": -260,
     "balanceChangePct": -2.6,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675558_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675558_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 113.35,
+    "exitPrice": 112.37,
+    "priceDelta": -0.98,
+    "priceDeltaPct": -0.86
   },
   {
     "id": "PT-20260914-18",
@@ -745,7 +925,11 @@
     "accountBalance": 115296.77,
     "balanceChange": 897.18,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675562_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894675562_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 76815.4,
+    "exitPrice": 78254.92,
+    "priceDelta": 1439.52,
+    "priceDeltaPct": 1.87
   },
   {
     "balanceChangePct": 2.06,
@@ -761,7 +945,11 @@
     "trigger": "Breakeven Ratchet: Trailing stop locked in +2.06% profit on TSLA (Peak: +19.64%)",
     "accountBalance": 115502.77,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675568_TSLA/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894675568_TSLA/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 250.23,
+    "exitPrice": 251.95,
+    "priceDelta": 1.72,
+    "priceDeltaPct": 0.69
   },
   {
     "quantity": 11482,
@@ -777,7 +965,11 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T01:59:09.947Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675574_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894675574_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 76839.7,
+    "exitPrice": 78033.79,
+    "priceDelta": 1194.09,
+    "priceDeltaPct": 1.55
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on ETH (-10.83%)",
@@ -799,7 +991,11 @@
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 10.83%."
     },
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675578_ETH/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675578_ETH/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 2517.8,
+    "exitPrice": 2492.62,
+    "priceDelta": -25.18,
+    "priceDeltaPct": -1
   },
   {
     "instrument": "AAPL/USDT",
@@ -815,7 +1011,11 @@
     "leverage": 3,
     "price": 230.34,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675582_AAPL/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894675582_AAPL/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 230.34,
+    "exitPrice": 232.31,
+    "priceDelta": 1.97,
+    "priceDeltaPct": 0.86
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on SOL (-36.45%)",
@@ -837,7 +1037,11 @@
     "id": "PT-20260914-23",
     "status": "STOP_LOSS",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675584_SOL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675584_SOL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 139.5,
+    "exitPrice": 138.29,
+    "priceDelta": -1.21,
+    "priceDeltaPct": -0.87
   },
   {
     "balanceChangePct": -3,
@@ -853,7 +1057,11 @@
     "leverage": 3,
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-20.48% profit on SOL (Peak: +6.10%)",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675588_SOL/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894675588_SOL/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 139.5,
+    "exitPrice": 138.1,
+    "priceDelta": -1.4,
+    "priceDeltaPct": -1
   },
   {
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -869,7 +1077,11 @@
     "accountBalance": 116127.34,
     "price": 76868.7,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675589_BTC/USDT_SHORT_autopilotpulsebtcusdt"
+    "idempotencyKey": "894675589_BTC/USDT_SHORT_autopilotpulsebtcusdt",
+    "entryPrice": 76868.7,
+    "exitPrice": 76232.23,
+    "priceDelta": -636.47,
+    "priceDeltaPct": -0.83
   },
   {
     "price": 131.75,
@@ -891,7 +1103,11 @@
     "timestamp": "2026-09-14T01:59:40.159Z",
     "direction": "LONG",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675590_NVDA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675590_NVDA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 131.75,
+    "exitPrice": 128.67,
+    "priceDelta": -3.08,
+    "priceDeltaPct": -2.34
   },
   {
     "balanceChangePct": -3,
@@ -913,7 +1129,11 @@
     "status": "STOP_LOSS",
     "balanceChange": -300,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675594_SOL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675594_SOL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 100.93,
+    "exitPrice": 99.92,
+    "priceDelta": -1.01,
+    "priceDeltaPct": -1
   },
   {
     "price": 133.28,
@@ -929,7 +1149,11 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T01:59:54.505Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675597_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675597_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 133.28,
+    "exitPrice": 135.28,
+    "priceDelta": 2,
+    "priceDeltaPct": 1.5
   },
   {
     "status": "STOP_LOSS",
@@ -945,7 +1169,11 @@
     "timestamp": "2026-09-14T02:00:00.950Z",
     "balanceChangePct": -3.45,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675600_ETH/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894675600_ETH/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 2484.1,
+    "exitPrice": 2455.53,
+    "priceDelta": -28.57,
+    "priceDeltaPct": -1.15
   },
   {
     "balanceChange": 949.68,
@@ -961,7 +1189,11 @@
     "accountBalance": 116058.89,
     "balanceChangePct": 7.75,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675611_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894675611_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2484.7,
+    "exitPrice": 2523.21,
+    "priceDelta": 38.51,
+    "priceDeltaPct": 1.55
   },
   {
     "id": "PT-20260914-31",
@@ -977,7 +1209,11 @@
     "leverage": 4,
     "instrument": "ETH/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675625_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894675625_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2484.8,
+    "exitPrice": 2515.11,
+    "priceDelta": 30.31,
+    "priceDeltaPct": 1.22
   },
   {
     "accountBalance": 116116.44,
@@ -993,7 +1229,11 @@
     "id": "PT-20260914-32",
     "leverage": 4,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675637_ETH/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894675637_ETH/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 2484.8,
+    "exitPrice": 2501.32,
+    "priceDelta": 16.52,
+    "priceDeltaPct": 0.66
   },
   {
     "status": "TAKE_PROFIT",
@@ -1009,7 +1249,11 @@
     "leverage": 2,
     "balanceChangePct": 9.15,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675647_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894675647_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 128.4,
+    "exitPrice": 122.53,
+    "priceDelta": -5.87,
+    "priceDeltaPct": -4.57
   },
   {
     "balanceChangePct": -2.2,
@@ -1025,7 +1269,11 @@
     "status": "TAKE_PROFIT",
     "direction": "LONG",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675665_SOL/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894675665_SOL/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 139.5,
+    "exitPrice": 138.48,
+    "priceDelta": -1.02,
+    "priceDeltaPct": -0.73
   },
   {
     "timestamp": "2026-09-14T02:02:11.234Z",
@@ -1041,7 +1289,11 @@
     "status": "TAKE_PROFIT",
     "leverage": 3,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675665_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675665_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79992.85,
+    "priceDelta": 1542.85,
+    "priceDeltaPct": 1.97
   },
   {
     "timestamp": "2026-09-14T02:02:11.234Z",
@@ -1057,7 +1309,11 @@
     "price": 2540,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675665_ETH/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675665_ETH/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 2540,
+    "exitPrice": 2595.88,
+    "priceDelta": 55.88,
+    "priceDeltaPct": 2.2
   },
   {
     "status": "TAKE_PROFIT",
@@ -1073,7 +1329,11 @@
     "quantity": 10000,
     "instrument": "MSTR/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675667_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675667_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 131,
+    "exitPrice": 132.66,
+    "priceDelta": 1.66,
+    "priceDeltaPct": 1.27
   },
   {
     "balanceChange": 965.54,
@@ -1089,7 +1349,11 @@
     "quantity": 21456.42,
     "id": "PT-20260914-38",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675670_SOL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675670_SOL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 106.06,
+    "exitPrice": 107.65,
+    "priceDelta": 1.59,
+    "priceDeltaPct": 1.5
   },
   {
     "postMortem": {
@@ -1111,7 +1375,11 @@
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on TSLA (-3.75%)",
     "balanceChange": -375,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675674_TSLA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675674_TSLA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 240.29,
+    "exitPrice": 237.29,
+    "priceDelta": -3,
+    "priceDeltaPct": -1.25
   },
   {
     "balanceChange": 590,
@@ -1127,7 +1395,11 @@
     "quantity": 10000,
     "id": "PT-20260914-40",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675677_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675677_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 147.7,
+    "exitPrice": 150.6,
+    "priceDelta": 2.9,
+    "priceDeltaPct": 1.96
   },
   {
     "status": "STOP_LOSS",
@@ -1149,7 +1421,11 @@
     "accountBalance": 119609.64,
     "id": "PT-20260914-41",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675685_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675685_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 131.35,
+    "exitPrice": 130.21,
+    "priceDelta": -1.14,
+    "priceDeltaPct": -0.87
   },
   {
     "status": "TAKE_PROFIT",
@@ -1165,7 +1441,11 @@
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "id": "PT-20260914-42",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675685_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894675685_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 128.4,
+    "exitPrice": 122.57,
+    "priceDelta": -5.83,
+    "priceDeltaPct": -4.54
   },
   {
     "id": "PT-20260914-43",
@@ -1187,7 +1467,11 @@
     "leverage": 3,
     "balanceChangePct": -2.2,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675688_NVDA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675688_NVDA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 128.4,
+    "exitPrice": 127.46,
+    "priceDelta": -0.94,
+    "priceDeltaPct": -0.73
   },
   {
     "status": "TAKE_PROFIT",
@@ -1203,7 +1487,11 @@
     "quantity": 14125,
     "id": "PT-20260914-44",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675696_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894675696_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 252,
+    "exitPrice": 261.27,
+    "priceDelta": 9.27,
+    "priceDeltaPct": 3.68
   },
   {
     "timestamp": "2026-09-14T02:03:14.441Z",
@@ -1219,7 +1507,11 @@
     "balanceChange": 590,
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675697_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675697_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79992.85,
+    "priceDelta": 1542.85,
+    "priceDeltaPct": 1.97
   },
   {
     "balanceChangePct": 6.6,
@@ -1235,7 +1527,11 @@
     "quantity": 10000,
     "timestamp": "2026-09-14T02:03:17.744Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675698_ETH/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675698_ETH/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 2540,
+    "exitPrice": 2595.88,
+    "priceDelta": 55.88,
+    "priceDeltaPct": 2.2
   },
   {
     "quantity": 10000,
@@ -1257,7 +1553,11 @@
     "price": 99.39,
     "status": "STOP_LOSS",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675701_SOL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675701_SOL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 99.39,
+    "exitPrice": 96.55,
+    "priceDelta": -2.84,
+    "priceDeltaPct": -2.86
   },
   {
     "balanceChangePct": -3.66,
@@ -1273,7 +1573,11 @@
     "quantity": 9394,
     "timestamp": "2026-09-14T02:03:38.684Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675709_BTC/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894675709_BTC/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 76803.7,
+    "exitPrice": 76100.95,
+    "priceDelta": -702.75,
+    "priceDeltaPct": -0.91
   },
   {
     "instrument": "SOL/USDT",
@@ -1289,7 +1593,11 @@
     "timestamp": "2026-09-14T02:03:44.988Z",
     "accountBalance": 121674.7,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675712_SOL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675712_SOL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 102.33,
+    "exitPrice": 104.1,
+    "priceDelta": 1.77,
+    "priceDeltaPct": 1.73
   },
   {
     "direction": "LONG",
@@ -1305,7 +1613,11 @@
     "balanceChangePct": 0.16,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675712_COIN/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894675712_COIN/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 176.23,
+    "exitPrice": 176.32,
+    "priceDelta": 0.09,
+    "priceDeltaPct": 0.05
   },
   {
     "balanceChangePct": -3,
@@ -1321,7 +1633,11 @@
     "status": "TAKE_PROFIT",
     "id": "PT-20260914-51",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675718_COIN/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894675718_COIN/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 141.16,
+    "exitPrice": 139.75,
+    "priceDelta": -1.41,
+    "priceDeltaPct": -1
   },
   {
     "instrument": "NVDAon/USDT",
@@ -1337,7 +1653,11 @@
     "status": "TAKE_PROFIT",
     "balanceChange": 654.01,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675720_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894675720_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 128.4,
+    "exitPrice": 132.11,
+    "priceDelta": 3.71,
+    "priceDeltaPct": 2.89
   },
   {
     "status": "TAKE_PROFIT",
@@ -1353,7 +1673,11 @@
     "quantity": 10000,
     "id": "PT-20260914-53",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675727_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675727_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79626.75,
+    "priceDelta": 1176.75,
+    "priceDeltaPct": 1.5
   },
   {
     "id": "PT-20260914-54",
@@ -1369,7 +1693,11 @@
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.2%) ratified on ETH",
     "instrument": "ETH/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675728_ETH/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675728_ETH/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 2540,
+    "exitPrice": 2584.03,
+    "priceDelta": 44.03,
+    "priceDeltaPct": 1.73
   },
   {
     "instrument": "AAPL/USDT",
@@ -1391,7 +1719,11 @@
     "quantity": 10000,
     "accountBalance": 122369.71,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675732_AAPL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675732_AAPL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 213.57,
+    "exitPrice": 208.98,
+    "priceDelta": -4.59,
+    "priceDeltaPct": -2.15
   },
   {
     "timestamp": "2026-09-14T02:04:27.782Z",
@@ -1413,7 +1745,11 @@
     "leverage": 3,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on COIN (-35.68%)",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675733_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675733_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 117.28,
+    "exitPrice": 116.26,
+    "priceDelta": -1.02,
+    "priceDeltaPct": -0.87
   },
   {
     "id": "PT-20260914-57",
@@ -1429,7 +1765,11 @@
     "timestamp": "2026-09-14T02:04:28.176Z",
     "balanceChange": 549.55,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675734_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894675734_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2486.1,
+    "exitPrice": 2521.9,
+    "priceDelta": 35.8,
+    "priceDeltaPct": 1.44
   },
   {
     "leverage": 3,
@@ -1451,7 +1791,11 @@
     "balanceChangePct": -2.2,
     "direction": "LONG",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675736_TSLA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675736_TSLA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 248,
+    "exitPrice": 246.18,
+    "priceDelta": -1.82,
+    "priceDeltaPct": -0.73
   },
   {
     "instrument": "MSTR/USDT",
@@ -1473,7 +1817,11 @@
     "quantity": 10000,
     "accountBalance": 122179.26,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675740_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675740_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 132,
+    "exitPrice": 130.86,
+    "priceDelta": -1.14,
+    "priceDeltaPct": -0.86
   },
   {
     "balanceChange": 590,
@@ -1489,7 +1837,11 @@
     "quantity": 10000,
     "balanceChangePct": 5.9,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675743_COIN/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675743_COIN/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 165,
+    "exitPrice": 168.25,
+    "priceDelta": 3.25,
+    "priceDeltaPct": 1.97
   },
   {
     "accountBalance": 123255.54,
@@ -1505,7 +1857,11 @@
     "instrument": "NVDAon/USDT",
     "quantity": 7998,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675746_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894675746_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 128.4,
+    "exitPrice": 132.3,
+    "priceDelta": 3.9,
+    "priceDeltaPct": 3.04
   },
   {
     "quantity": 10000,
@@ -1527,7 +1883,11 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T02:05:04.822Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675752_TSLA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675752_TSLA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 248.16,
+    "exitPrice": 246.01,
+    "priceDelta": -2.15,
+    "priceDeltaPct": -0.87
   },
   {
     "id": "PT-20260914-63",
@@ -1549,7 +1909,11 @@
     "price": 175.35,
     "status": "STOP_LOSS",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675754_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675754_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 175.35,
+    "exitPrice": 173.6,
+    "priceDelta": -1.75,
+    "priceDeltaPct": -1
   },
   {
     "accountBalance": 123146.15,
@@ -1565,7 +1929,11 @@
     "id": "PT-20260914-64",
     "direction": "LONG",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675755_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894675755_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 76779.8,
+    "exitPrice": 77638.2,
+    "priceDelta": 858.4,
+    "priceDeltaPct": 1.12
   },
   {
     "status": "STOP_LOSS",
@@ -1587,7 +1955,11 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T02:05:17.216Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675758_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675758_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 175.08,
+    "exitPrice": 173.56,
+    "priceDelta": -1.52,
+    "priceDeltaPct": -0.87
   },
   {
     "accountBalance": 123546.15,
@@ -1603,7 +1975,11 @@
     "id": "PT-20260914-66",
     "direction": "LONG",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675765_TSLA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675765_TSLA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 248,
+    "exitPrice": 253.46,
+    "priceDelta": 5.46,
+    "priceDeltaPct": 2.2
   },
   {
     "leverage": 3,
@@ -1619,7 +1995,11 @@
     "balanceChange": 380,
     "timestamp": "2026-09-14T02:05:39.224Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675769_SOL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675769_SOL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 100.92,
+    "exitPrice": 102.2,
+    "priceDelta": 1.28,
+    "priceDeltaPct": 1.27
   },
   {
     "id": "PT-20260914-68",
@@ -1641,7 +2021,11 @@
     "price": 228.44,
     "status": "STOP_LOSS",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675772_AAPL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894675772_AAPL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 228.44,
+    "exitPrice": 226.46,
+    "priceDelta": -1.98,
+    "priceDeltaPct": -0.87
   },
   {
     "leverage": 3,
@@ -1657,7 +2041,11 @@
     "timestamp": "2026-09-14T02:05:51.834Z",
     "balanceChange": 520,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675775_AAPL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675775_AAPL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 228.5,
+    "exitPrice": 232.46,
+    "priceDelta": 3.96,
+    "priceDeltaPct": 1.73
   },
   {
     "status": "STOP_LOSS",
@@ -1673,7 +2061,11 @@
     "quantity": 7903,
     "id": "PT-20260914-70",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675778_TSLAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894675778_TSLAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 252,
+    "exitPrice": 247.35,
+    "priceDelta": -4.65,
+    "priceDeltaPct": -1.85
   },
   {
     "leverage": 3,
@@ -1689,7 +2081,11 @@
     "id": "PT-20260914-71",
     "timestamp": "2026-09-14T02:06:01.736Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894675780_SOL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894675780_SOL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 102.12,
+    "exitPrice": 104.37,
+    "priceDelta": 2.25,
+    "priceDeltaPct": 2.2
   },
   {
     "balanceChange": -385.24,
@@ -1705,7 +2101,11 @@
     "status": "STOP_LOSS",
     "instrument": "ETH/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894684653_ETH/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894684653_ETH/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 2485.6,
+    "exitPrice": 2458.42,
+    "priceDelta": -27.18,
+    "priceDeltaPct": -1.09
   },
   {
     "price": 139.5,
@@ -1721,7 +2121,11 @@
     "balanceChangePct": -7.63,
     "timestamp": "2026-09-14T08:09:44.114Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686692_SOL/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894686692_SOL/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 139.5,
+    "exitPrice": 135.95,
+    "priceDelta": -3.55,
+    "priceDeltaPct": -2.54
   },
   {
     "leverage": 3,
@@ -1737,7 +2141,11 @@
     "price": 67438.31,
     "balanceChangePct": -2.6,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686698_BTC/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894686698_BTC/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 67438.31,
+    "exitPrice": 66853.84,
+    "priceDelta": -584.47,
+    "priceDeltaPct": -0.87
   },
   {
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
@@ -1753,7 +2161,11 @@
     "price": 252,
     "balanceChangePct": 6.16,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686700_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894686700_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 252,
+    "exitPrice": 259.76,
+    "priceDelta": 7.76,
+    "priceDeltaPct": 3.08
   },
   {
     "id": "PT-20260914-76",
@@ -1775,7 +2187,11 @@
     "price": 77587.59,
     "balanceChangePct": -2.2,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686702_BTC/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686702_BTC/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 77587.59,
+    "exitPrice": 77018.61,
+    "priceDelta": -568.98,
+    "priceDeltaPct": -0.73
   },
   {
     "instrument": "MSTR/USDT",
@@ -1797,7 +2213,11 @@
     "direction": "LONG",
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-55.62%)",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686710_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686710_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 132,
+    "exitPrice": 130.86,
+    "priceDelta": -1.14,
+    "priceDeltaPct": -0.86
   },
   {
     "balanceChangePct": 4.6,
@@ -1813,7 +2233,11 @@
     "instrument": "ETH/USDT",
     "id": "PT-20260914-78",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686712_ETH/USDT_SHORT_autopilotpulseethusdt"
+    "idempotencyKey": "894686712_ETH/USDT_SHORT_autopilotpulseethusdt",
+    "entryPrice": 2525.93,
+    "exitPrice": 2496.88,
+    "priceDelta": -29.05,
+    "priceDeltaPct": -1.15
   },
   {
     "quantity": 7249.93,
@@ -1835,7 +2259,11 @@
     "balanceChangePct": -2.2,
     "status": "STOP_LOSS",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686721_NVDA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686721_NVDA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 132.5,
+    "exitPrice": 131.53,
+    "priceDelta": -0.97,
+    "priceDeltaPct": -0.73
   },
   {
     "balanceChangePct": 5.9,
@@ -1851,7 +2279,11 @@
     "instrument": "AAPL/USDT",
     "id": "PT-20260914-80",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686721_AAPL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686721_AAPL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 228.5,
+    "exitPrice": 232.99,
+    "priceDelta": 4.49,
+    "priceDeltaPct": 1.96
   },
   {
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-5.65% profit on COIN (Peak: +18.78%)",
@@ -1867,7 +2299,11 @@
     "balanceChange": -500.9,
     "balanceChangePct": -5.65,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686723_COIN/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894686723_COIN/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 166.57,
+    "exitPrice": 163.43,
+    "priceDelta": -3.14,
+    "priceDeltaPct": -1.89
   },
   {
     "quantity": 11642.93,
@@ -1883,7 +2319,11 @@
     "balanceChange": 109.08,
     "instrument": "NVDA/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686723_NVDA/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894686723_NVDA/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 133.59,
+    "exitPrice": 134.01,
+    "priceDelta": 0.42,
+    "priceDeltaPct": 0.31
   },
   {
     "price": 132,
@@ -1899,7 +2339,11 @@
     "instrument": "MSTR/USDT",
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-38.97% profit on MSTR (Peak: +8.44%)",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686732_MSTR/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894686732_MSTR/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 132,
+    "exitPrice": 130.86,
+    "priceDelta": -1.14,
+    "priceDeltaPct": -0.86
   },
   {
     "quantity": 6549.29,
@@ -1921,7 +2365,11 @@
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 36.32%."
     },
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686732_TSLA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686732_TSLA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 248,
+    "exitPrice": 245.52,
+    "priceDelta": -2.48,
+    "priceDeltaPct": -1
   },
   {
     "price": 228.5,
@@ -1937,7 +2385,11 @@
     "instrument": "AAPL/USDT",
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on AAPL",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686733_AAPL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686733_AAPL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 228.5,
+    "exitPrice": 232.99,
+    "priceDelta": 4.49,
+    "priceDeltaPct": 1.96
   },
   {
     "timestamp": "2026-09-14T08:11:16.901Z",
@@ -1953,7 +2405,11 @@
     "quantity": 10009.45,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on MSTR",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686738_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686738_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 209.06,
+    "exitPrice": 213.66,
+    "priceDelta": 4.6,
+    "priceDeltaPct": 2.2
   },
   {
     "price": 165,
@@ -1969,7 +2425,11 @@
     "balanceChangePct": 3.8,
     "instrument": "COIN/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686742_COIN/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686742_COIN/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 165,
+    "exitPrice": 167.09,
+    "priceDelta": 2.09,
+    "priceDeltaPct": 1.27
   },
   {
     "leverage": 3,
@@ -1985,7 +2445,11 @@
     "balanceChangePct": 4.5,
     "price": 214.16,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686745_COIN/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686745_COIN/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 214.16,
+    "exitPrice": 217.37,
+    "priceDelta": 3.21,
+    "priceDeltaPct": 1.5
   },
   {
     "direction": "LONG",
@@ -2001,7 +2465,11 @@
     "price": 78450,
     "leverage": 3,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686747_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686747_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79809.8,
+    "priceDelta": 1359.8,
+    "priceDeltaPct": 1.73
   },
   {
     "price": 2540,
@@ -2023,7 +2491,11 @@
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on ETH (-35.38%)",
     "id": "PT-20260914-90",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686749_ETH/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686749_ETH/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 2540,
+    "exitPrice": 2514.6,
+    "priceDelta": -25.4,
+    "priceDeltaPct": -1
   },
   {
     "status": "STOP_LOSS",
@@ -2045,7 +2517,11 @@
     "leverage": 3,
     "balanceChangePct": -2.2,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686753_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686753_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 90.72,
+    "exitPrice": 90.05,
+    "priceDelta": -0.67,
+    "priceDeltaPct": -0.74
   },
   {
     "timestamp": "2026-09-14T08:11:51.722Z",
@@ -2067,7 +2543,11 @@
     },
     "price": 165,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686755_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686755_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 165,
+    "exitPrice": 163.57,
+    "priceDelta": -1.43,
+    "priceDeltaPct": -0.87
   },
   {
     "timestamp": "2026-09-14T08:11:57.285Z",
@@ -2089,7 +2569,11 @@
     "instrument": "SOL/USDT",
     "price": 139.5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686758_SOL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686758_SOL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 139.5,
+    "exitPrice": 138.1,
+    "priceDelta": -1.4,
+    "priceDeltaPct": -1
   },
   {
     "accountBalance": 125131.59,
@@ -2105,7 +2589,11 @@
     "status": "TAKE_PROFIT",
     "leverage": 3,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686761_ETH/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686761_ETH/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 2540,
+    "exitPrice": 2584.03,
+    "priceDelta": 44.03,
+    "priceDeltaPct": 1.73
   },
   {
     "quantity": 17984.26,
@@ -2127,7 +2615,11 @@
     "instrument": "AAPL/USDT",
     "id": "PT-20260914-95",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686774_AAPL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686774_AAPL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 228.5,
+    "exitPrice": 226.52,
+    "priceDelta": -1.98,
+    "priceDeltaPct": -0.87
   },
   {
     "accountBalance": 125381.81,
@@ -2143,7 +2635,11 @@
     "leverage": 3,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686776_COIN/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686776_COIN/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 165,
+    "exitPrice": 168.63,
+    "priceDelta": 3.63,
+    "priceDeltaPct": 2.2
   },
   {
     "accountBalance": 124626.68,
@@ -2159,7 +2655,11 @@
     "balanceChangePct": -7.28,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686780_MSTR/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894686780_MSTR/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 121.07,
+    "exitPrice": 118.13,
+    "priceDelta": -2.94,
+    "priceDeltaPct": -2.43
   },
   {
     "quantity": 7522,
@@ -2175,7 +2675,11 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T08:12:47.926Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686783_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894686783_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2522.19,
+    "exitPrice": 2564.46,
+    "priceDelta": 42.27,
+    "priceDeltaPct": 1.68
   },
   {
     "accountBalance": 126670.84,
@@ -2191,7 +2695,11 @@
     "status": "TAKE_PROFIT",
     "price": 135.3,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686786_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686786_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 135.3,
+    "exitPrice": 140.79,
+    "priceDelta": 5.49,
+    "priceDeltaPct": 4.06
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on SOL (-11.49%)",
@@ -2213,7 +2721,11 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T08:13:03.018Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686791_SOL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686791_SOL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 139.5,
+    "exitPrice": 138.48,
+    "priceDelta": -1.02,
+    "priceDeltaPct": -0.73
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.6%) ratified on BTC",
@@ -2229,7 +2741,11 @@
     "balanceChangePct": 6.6,
     "price": 78450,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686791_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686791_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 80175.9,
+    "priceDelta": 1725.9,
+    "priceDeltaPct": 2.2
   },
   {
     "price": 175.84,
@@ -2251,7 +2767,11 @@
     "balanceChange": -300,
     "accountBalance": 127217.98,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686795_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686795_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 175.84,
+    "exitPrice": 174.08,
+    "priceDelta": -1.76,
+    "priceDeltaPct": -1
   },
   {
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
@@ -2267,7 +2787,11 @@
     "balanceChangePct": -1.87,
     "price": 128.4,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686795_NVDAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894686795_NVDAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 128.4,
+    "exitPrice": 127.2,
+    "priceDelta": -1.2,
+    "priceDeltaPct": -0.93
   },
   {
     "instrument": "ETH/USDT",
@@ -2289,7 +2813,11 @@
     "timestamp": "2026-09-14T08:13:16.681Z",
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686798_ETH/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686798_ETH/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 2545.96,
+    "exitPrice": 2523.9,
+    "priceDelta": -22.06,
+    "priceDeltaPct": -0.87
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on MSTR",
@@ -2305,7 +2833,11 @@
     "balanceChangePct": 5.9,
     "price": 189.31,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686804_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686804_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 189.31,
+    "exitPrice": 193.03,
+    "priceDelta": 3.72,
+    "priceDeltaPct": 1.97
   },
   {
     "balanceChangePct": 7.83,
@@ -2321,7 +2853,11 @@
     "id": "PT-20260914-106",
     "instrument": "ETH/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686804_ETH/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686804_ETH/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 2538.35,
+    "exitPrice": 2604.6,
+    "priceDelta": 66.25,
+    "priceDeltaPct": 2.61
   },
   {
     "direction": "LONG",
@@ -2337,7 +2873,11 @@
     "leverage": 3,
     "id": "PT-20260914-107",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686807_AAPL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686807_AAPL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 228.5,
+    "exitPrice": 231.39,
+    "priceDelta": 2.89,
+    "priceDeltaPct": 1.26
   },
   {
     "accountBalance": 128879.92,
@@ -2353,7 +2893,11 @@
     "instrument": "ETH/USDT",
     "quantity": 7997,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686807_ETH/USDT_SHORT_autopilotpulseethusdt"
+    "idempotencyKey": "894686807_ETH/USDT_SHORT_autopilotpulseethusdt",
+    "entryPrice": 2522.68,
+    "exitPrice": 2482.4,
+    "priceDelta": -40.28,
+    "priceDeltaPct": -1.6
   },
   {
     "direction": "LONG",
@@ -2375,7 +2919,11 @@
     "accountBalance": 128659.92,
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686815_ETH/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686815_ETH/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 2090.39,
+    "exitPrice": 2075.06,
+    "priceDelta": -15.33,
+    "priceDeltaPct": -0.73
   },
   {
     "accountBalance": 129538.57,
@@ -2391,7 +2939,11 @@
     "instrument": "ETH/USDT",
     "quantity": 10337,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686817_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894686817_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2522.42,
+    "exitPrice": 2565.3,
+    "priceDelta": 42.88,
+    "priceDeltaPct": 1.7
   },
   {
     "quantity": 10000,
@@ -2407,7 +2959,11 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T08:14:00.069Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686820_MSTR/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894686820_MSTR/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 104.5,
+    "exitPrice": 103.45,
+    "priceDelta": -1.05,
+    "priceDeltaPct": -1
   },
   {
     "id": "PT-20260914-112",
@@ -2423,7 +2979,11 @@
     "status": "TAKE_PROFIT",
     "direction": "LONG",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686821_COIN/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686821_COIN/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 232.49,
+    "exitPrice": 235.43,
+    "priceDelta": 2.94,
+    "priceDeltaPct": 1.26
   },
   {
     "accountBalance": 130068.57,
@@ -2439,7 +2999,11 @@
     "timestamp": "2026-09-14T08:14:11.944Z",
     "direction": "LONG",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686825_TSLA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686825_TSLA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 248.55,
+    "exitPrice": 252.28,
+    "priceDelta": 3.73,
+    "priceDeltaPct": 1.5
   },
   {
     "instrument": "AAPL/USDT",
@@ -2461,7 +3025,11 @@
     },
     "accountBalance": 129283.57,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686828_AAPL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686828_AAPL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 211.98,
+    "exitPrice": 206.43,
+    "priceDelta": -5.55,
+    "priceDeltaPct": -2.62
   },
   {
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
@@ -2477,7 +3045,11 @@
     "instrument": "TSLAon/USDT",
     "id": "PT-20260914-115",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686829_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894686829_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 252,
+    "exitPrice": 259.64,
+    "priceDelta": 7.64,
+    "priceDeltaPct": 3.03
   },
   {
     "status": "STOP_LOSS",
@@ -2499,7 +3071,11 @@
     "timestamp": "2026-09-14T08:14:23.515Z",
     "instrument": "MSTR/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686831_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686831_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 132,
+    "exitPrice": 130.86,
+    "priceDelta": -1.14,
+    "priceDeltaPct": -0.86
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+7.87%) ratified on SOL",
@@ -2515,7 +3091,11 @@
     "instrument": "SOL/USDT",
     "id": "PT-20260914-117",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686837_SOL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686837_SOL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 107.83,
+    "exitPrice": 110.66,
+    "priceDelta": 2.83,
+    "priceDeltaPct": 2.62
   },
   {
     "status": "TAKE_PROFIT",
@@ -2531,7 +3111,11 @@
     "balanceChange": 450,
     "instrument": "TSLA/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686839_TSLA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686839_TSLA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 248,
+    "exitPrice": 251.72,
+    "priceDelta": 3.72,
+    "priceDeltaPct": 1.5
   },
   {
     "postMortem": {
@@ -2553,7 +3137,11 @@
     "direction": "LONG",
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on TSLA (-43.87%)",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686850_TSLA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686850_TSLA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 251.65,
+    "exitPrice": 249.47,
+    "priceDelta": -2.18,
+    "priceDeltaPct": -0.87
   },
   {
     "status": "TAKE_PROFIT",
@@ -2569,7 +3157,11 @@
     "balanceChange": 590,
     "instrument": "BTC/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686853_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686853_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79992.85,
+    "priceDelta": 1542.85,
+    "priceDeltaPct": 1.97
   },
   {
     "instrument": "COIN/USDT",
@@ -2591,7 +3183,11 @@
     "status": "STOP_LOSS",
     "leverage": 3,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686855_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686855_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 160.74,
+    "exitPrice": 159.56,
+    "priceDelta": -1.18,
+    "priceDeltaPct": -0.73
   },
   {
     "status": "TAKE_PROFIT",
@@ -2607,7 +3203,11 @@
     "balanceChange": 380,
     "instrument": "NVDA/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686862_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686862_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 132.36,
+    "exitPrice": 134.04,
+    "priceDelta": 1.68,
+    "priceDeltaPct": 1.27
   },
   {
     "leverage": 3,
@@ -2629,7 +3229,11 @@
       "lessonLearned": "Capital preservation ratified: Automated stop prevented tail drawdown. Drawdown capped at 20.00%."
     },
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686863_AAPL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686863_AAPL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 229.92,
+    "exitPrice": 227.62,
+    "priceDelta": -2.3,
+    "priceDeltaPct": -1
   },
   {
     "timestamp": "2026-09-14T08:15:35.211Z",
@@ -2651,7 +3255,11 @@
     "leverage": 3,
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on NVDA (-4.28%)",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686867_NVDA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686867_NVDA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 128.12,
+    "exitPrice": 126.29,
+    "priceDelta": -1.83,
+    "priceDeltaPct": -1.43
   },
   {
     "id": "PT-20260914-125",
@@ -2667,7 +3275,11 @@
     "leverage": 3,
     "instrument": "AAPL/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686874_AAPL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686874_AAPL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 267.28,
+    "exitPrice": 272.54,
+    "priceDelta": 5.26,
+    "priceDeltaPct": 1.97
   },
   {
     "id": "PT-20260914-148",
@@ -2683,7 +3295,11 @@
     "quantity": 11887,
     "price": 252,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686883_TSLAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894686883_TSLAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 252,
+    "exitPrice": 248.6,
+    "priceDelta": -3.4,
+    "priceDeltaPct": -1.35
   },
   {
     "postMortem": {
@@ -2705,7 +3321,11 @@
     "balanceChangePct": -4.53,
     "accountBalance": 130288.39,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686883_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894686883_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 167.21,
+    "exitPrice": 164.69,
+    "priceDelta": -2.52,
+    "priceDeltaPct": -1.51
   },
   {
     "accountBalance": 130738.39,
@@ -2721,7 +3341,11 @@
     "quantity": 10000,
     "price": 78450,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686886_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686886_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79626.75,
+    "priceDelta": 1176.75,
+    "priceDeltaPct": 1.5
   },
   {
     "timestamp": "2026-09-14T08:16:13.946Z",
@@ -2737,7 +3361,11 @@
     "id": "PT-20260914-151",
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686886_ETH/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894686886_ETH/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 2540,
+    "exitPrice": 2584.03,
+    "priceDelta": 44.03,
+    "priceDeltaPct": 1.73
   },
   {
     "status": "TAKE_PROFIT",
@@ -2759,7 +3387,11 @@
     },
     "price": 128.4,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686891_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894686891_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 128.4,
+    "exitPrice": 133.95,
+    "priceDelta": 5.55,
+    "priceDeltaPct": 4.32
   },
   {
     "timestamp": "2026-09-14T08:16:59.528Z",
@@ -2775,7 +3407,11 @@
     "id": "PT-20260914-153",
     "quantity": 13615,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686909_NVDAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894686909_NVDAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 128.4,
+    "exitPrice": 126.4,
+    "priceDelta": -2,
+    "priceDeltaPct": -1.56
   },
   {
     "balanceChangePct": -3.94,
@@ -2791,7 +3427,11 @@
     "direction": "LONG",
     "leverage": 2,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894686915_TSLAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894686915_TSLAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 252,
+    "exitPrice": 247.04,
+    "priceDelta": -4.96,
+    "priceDeltaPct": -1.97
   },
   {
     "quantity": 24000,
@@ -2807,7 +3447,11 @@
     "direction": "LONG",
     "timestamp": "2026-09-14T08:20:17.464Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687008_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687008_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 77799.35,
+    "exitPrice": 78076.83,
+    "priceDelta": 277.48,
+    "priceDeltaPct": 0.36
   },
   {
     "id": "PT-20260914-156",
@@ -2823,7 +3467,11 @@
     "instrument": "SOL/USDT",
     "balanceChange": 75.28,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687010_SOL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687010_SOL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 101.9,
+    "exitPrice": 102.1,
+    "priceDelta": 0.2,
+    "priceDeltaPct": 0.2
   },
   {
     "balanceChangePct": -3,
@@ -2845,7 +3493,11 @@
     },
     "accountBalance": 131327.64,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687017_AAPL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687017_AAPL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 229.25,
+    "exitPrice": 226.96,
+    "priceDelta": -2.29,
+    "priceDeltaPct": -1
   },
   {
     "id": "PT-20260914-158",
@@ -2861,7 +3513,11 @@
     "accountBalance": 131708.76,
     "balanceChange": 381.12,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687019_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687019_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 134.39,
+    "exitPrice": 136.57,
+    "priceDelta": 2.18,
+    "priceDeltaPct": 1.62
   },
   {
     "status": "STOP_LOSS",
@@ -2883,7 +3539,11 @@
     "instrument": "ETH/USDT",
     "balanceChange": -404.99,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687019_ETH/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687019_ETH/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 2428.2,
+    "exitPrice": 2398.5,
+    "priceDelta": -29.7,
+    "priceDeltaPct": -1.22
   },
   {
     "direction": "LONG",
@@ -2899,7 +3559,11 @@
     "quantity": 12718.83,
     "accountBalance": 132127.08,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687019_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687019_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 132.41,
+    "exitPrice": 135.27,
+    "priceDelta": 2.86,
+    "priceDeltaPct": 2.16
   },
   {
     "leverage": 3,
@@ -2915,7 +3579,11 @@
     "balanceChange": 711,
     "id": "PT-20260914-161",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687021_AAPL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687021_AAPL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 239.15,
+    "exitPrice": 243.26,
+    "priceDelta": 4.11,
+    "priceDeltaPct": 1.72
   },
   {
     "timestamp": "2026-09-14T08:20:43.033Z",
@@ -2931,7 +3599,11 @@
     "price": 165.27,
     "quantity": 14795.91,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687021_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687021_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 165.27,
+    "exitPrice": 168.52,
+    "priceDelta": 3.25,
+    "priceDeltaPct": 1.97
   },
   {
     "accountBalance": 133273.19,
@@ -2953,7 +3625,11 @@
       "policyAdjustment": "Tightened trailing volatility buffer by +12% on TSLA"
     },
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687023_TSLA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687023_TSLA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 250.93,
+    "exitPrice": 248.42,
+    "priceDelta": -2.51,
+    "priceDeltaPct": -1
   },
   {
     "direction": "LONG",
@@ -2975,7 +3651,11 @@
       "adversarialFlag": "NEXUS-RED Verified Liquidity Trap"
     },
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687023_SOL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687023_SOL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 139.5,
+    "exitPrice": 138.48,
+    "priceDelta": -1.02,
+    "priceDeltaPct": -0.73
   },
   {
     "accountBalance": 133584.58,
@@ -2991,7 +3671,11 @@
     "quantity": 12526.08,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687024_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687024_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 137.28,
+    "exitPrice": 139.34,
+    "priceDelta": 2.06,
+    "priceDeltaPct": 1.5
   },
   {
     "instrument": "SOL/USDT",
@@ -3007,7 +3691,11 @@
     "leverage": 5,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687117_SOL/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894687117_SOL/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 101.62,
+    "exitPrice": 102.36,
+    "priceDelta": 0.74,
+    "priceDeltaPct": 0.73
   },
   {
     "timestamp": "2026-09-14T08:24:20.590Z",
@@ -3023,7 +3711,11 @@
     "status": "STOP_LOSS",
     "quantity": 13384,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687130_TSLAON/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894687130_TSLAON/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 252,
+    "exitPrice": 255.31,
+    "priceDelta": 3.31,
+    "priceDeltaPct": 1.31
   },
   {
     "accountBalance": 133152.77,
@@ -3039,7 +3731,11 @@
     "status": "TAKE_PROFIT",
     "leverage": 5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687142_SOL/USDT_SHORT_autopilotpulsesolusdt"
+    "idempotencyKey": "894687142_SOL/USDT_SHORT_autopilotpulsesolusdt",
+    "entryPrice": 101.63,
+    "exitPrice": 100.81,
+    "priceDelta": -0.82,
+    "priceDeltaPct": -0.81
   },
   {
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -3055,7 +3751,11 @@
     "timestamp": "2026-09-14T08:44:08.615Z",
     "leverage": 5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687724_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894687724_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2522.09,
+    "exitPrice": 2558.31,
+    "priceDelta": 36.22,
+    "priceDeltaPct": 1.44
   },
   {
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -3071,7 +3771,11 @@
     "leverage": 5,
     "timestamp": "2026-09-14T08:45:25.479Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687762_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894687762_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2522.32,
+    "exitPrice": 2564.04,
+    "priceDelta": 41.72,
+    "priceDeltaPct": 1.65
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+6.42%) ratified on COIN",
@@ -3087,7 +3791,11 @@
     "timestamp": "2026-09-14T08:45:37.590Z",
     "price": 186.44,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687768_COIN/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687768_COIN/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 186.44,
+    "exitPrice": 190.43,
+    "priceDelta": 3.99,
+    "priceDeltaPct": 2.14
   },
   {
     "leverage": 3,
@@ -3103,7 +3811,11 @@
     "instrument": "BNB/USDT",
     "accountBalance": 135948.53,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687768_BNB/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687768_BNB/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 724.7,
+    "exitPrice": 738.95,
+    "priceDelta": 14.25,
+    "priceDeltaPct": 1.97
   },
   {
     "status": "TAKE_PROFIT",
@@ -3119,7 +3831,11 @@
     "accountBalance": 136543.04,
     "balanceChange": 594.51,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687768_SOL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687768_SOL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 133.48,
+    "exitPrice": 136.42,
+    "priceDelta": 2.94,
+    "priceDeltaPct": 2.2
   },
   {
     "accountBalance": 136129.25,
@@ -3141,7 +3857,11 @@
     "leverage": 3,
     "price": 176.66,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687776_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687776_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 176.66,
+    "exitPrice": 175.13,
+    "priceDelta": -1.53,
+    "priceDeltaPct": -0.87
   },
   {
     "id": "PT-20260914-175",
@@ -3163,7 +3883,11 @@
     "balanceChangePct": -3,
     "accountBalance": 135851.5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687779_TSLA/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687779_TSLA/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 249.08,
+    "exitPrice": 246.59,
+    "priceDelta": -2.49,
+    "priceDeltaPct": -1
   },
   {
     "status": "STOP_LOSS",
@@ -3185,7 +3909,11 @@
     "balanceChange": -284.27,
     "instrument": "MSTR/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687782_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687782_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 127.43,
+    "exitPrice": 126.5,
+    "priceDelta": -0.93,
+    "priceDeltaPct": -0.73
   },
   {
     "instrument": "BTC/USDT",
@@ -3201,7 +3929,11 @@
     "status": "TAKE_PROFIT",
     "price": 78450,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687789_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687789_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79992.85,
+    "priceDelta": 1542.85,
+    "priceDeltaPct": 1.97
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+4.41%) ratified on MSTR",
@@ -3217,7 +3949,11 @@
     "accountBalance": 136822.85,
     "balanceChange": 428.91,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687789_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687789_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 136.19,
+    "exitPrice": 138.19,
+    "priceDelta": 2,
+    "priceDeltaPct": 1.47
   },
   {
     "quantity": 10000,
@@ -3239,7 +3975,11 @@
     "timestamp": "2026-09-14T08:46:35.584Z",
     "direction": "LONG",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687797_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687797_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 123.5,
+    "exitPrice": 122.59,
+    "priceDelta": -0.91,
+    "priceDeltaPct": -0.74
   },
   {
     "instrument": "AAPL/USDT",
@@ -3261,7 +4001,11 @@
     "balanceChangePct": -2.6,
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687808_AAPL/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687808_AAPL/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 228.34,
+    "exitPrice": 226.36,
+    "priceDelta": -1.98,
+    "priceDeltaPct": -0.87
   },
   {
     "leverage": 3,
@@ -3283,7 +4027,11 @@
     "accountBalance": 135924.85,
     "status": "STOP_LOSS",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687810_ETH/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687810_ETH/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 2415.52,
+    "exitPrice": 2381.86,
+    "priceDelta": -33.66,
+    "priceDeltaPct": -1.39
   },
   {
     "accountBalance": 136514.85,
@@ -3299,7 +4047,11 @@
     "leverage": 3,
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on NVDA",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687811_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687811_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 132.5,
+    "exitPrice": 135.11,
+    "priceDelta": 2.61,
+    "priceDeltaPct": 1.97
   },
   {
     "trigger": "Breakeven Ratchet: Trailing stop locked in +-20.55% profit on COIN (Peak: +2.77%)",
@@ -3315,7 +4067,11 @@
     "timestamp": "2026-09-14T08:47:12.371Z",
     "balanceChangePct": -2.6,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687816_COIN/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894687816_COIN/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 138.92,
+    "exitPrice": 137.72,
+    "priceDelta": -1.2,
+    "priceDeltaPct": -0.86
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on MSTR (-8.09%)",
@@ -3337,7 +4093,11 @@
     "leverage": 3,
     "price": 128.84,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687818_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687818_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 128.84,
+    "exitPrice": 125.37,
+    "priceDelta": -3.47,
+    "priceDeltaPct": -2.69
   },
   {
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
@@ -3353,7 +4113,11 @@
     "balanceChangePct": -3.04,
     "timestamp": "2026-09-14T08:47:19.481Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687819_TSLAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894687819_TSLAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 252,
+    "exitPrice": 248.17,
+    "priceDelta": -3.83,
+    "priceDeltaPct": -1.52
   },
   {
     "quantity": 10000,
@@ -3369,7 +4133,11 @@
     "id": "PT-20260914-186",
     "timestamp": "2026-09-14T08:47:27.961Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687823_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687823_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 132.5,
+    "exitPrice": 134.8,
+    "priceDelta": 2.3,
+    "priceDeltaPct": 1.74
   },
   {
     "accountBalance": 135349.42,
@@ -3391,7 +4159,11 @@
     "status": "STOP_LOSS",
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687825_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687825_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 155.2,
+    "exitPrice": 153.65,
+    "priceDelta": -1.55,
+    "priceDeltaPct": -1
   },
   {
     "instrument": "BTC/USDT",
@@ -3413,7 +4185,11 @@
     "id": "PT-20260914-188",
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687830_BTC/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687830_BTC/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 78450,
+    "exitPrice": 77874.7,
+    "priceDelta": -575.3,
+    "priceDeltaPct": -0.73
   },
   {
     "instrument": "MSTR/USDT",
@@ -3435,7 +4211,11 @@
     },
     "leverage": 3,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687831_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687831_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 123.61,
+    "exitPrice": 120.86,
+    "priceDelta": -2.75,
+    "priceDeltaPct": -2.22
   },
   {
     "price": 101.41,
@@ -3451,7 +4231,11 @@
     "leverage": 3,
     "balanceChange": 453.84,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687833_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894687833_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 101.41,
+    "exitPrice": 102.88,
+    "priceDelta": 1.47,
+    "priceDeltaPct": 1.45
   },
   {
     "status": "STOP_LOSS",
@@ -3473,7 +4257,11 @@
     "accountBalance": 134696.26,
     "instrument": "ETH/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687835_ETH/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687835_ETH/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 2020.24,
+    "exitPrice": 2005.42,
+    "priceDelta": -14.82,
+    "priceDeltaPct": -0.73
   },
   {
     "postMortem": {
@@ -3495,7 +4283,11 @@
     "direction": "LONG",
     "leverage": 3,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687838_MSTR/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687838_MSTR/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 97.73,
+    "exitPrice": 96.88,
+    "priceDelta": -0.85,
+    "priceDeltaPct": -0.87
   },
   {
     "direction": "LONG",
@@ -3511,7 +4303,11 @@
     "status": "TAKE_PROFIT",
     "price": 249.06,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687841_COIN/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687841_COIN/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 249.06,
+    "exitPrice": 254.54,
+    "priceDelta": 5.48,
+    "priceDeltaPct": 2.2
   },
   {
     "balanceChange": 519.87,
@@ -3527,7 +4323,11 @@
     "quantity": 10697,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687844_TSLAON/USDT_SHORT_councilquorumtslaonus"
+    "idempotencyKey": "894687844_TSLAON/USDT_SHORT_councilquorumtslaonus",
+    "entryPrice": 252,
+    "exitPrice": 245.88,
+    "priceDelta": -6.12,
+    "priceDeltaPct": -2.43
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+4.5%) ratified on MSTR",
@@ -3543,7 +4343,11 @@
     "leverage": 3,
     "timestamp": "2026-09-14T08:48:10.946Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687845_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687845_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 209,
+    "exitPrice": 212.13,
+    "priceDelta": 3.13,
+    "priceDeltaPct": 1.5
   },
   {
     "status": "TAKE_PROFIT",
@@ -3559,7 +4363,11 @@
     "id": "PT-20260914-196",
     "balanceChange": 520,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687860_NVDA/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687860_NVDA/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 132.73,
+    "exitPrice": 135.03,
+    "priceDelta": 2.3,
+    "priceDeltaPct": 1.73
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+5.9%) ratified on BTC",
@@ -3575,7 +4383,11 @@
     "price": 78450,
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687862_BTC/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687862_BTC/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 78450,
+    "exitPrice": 79992.85,
+    "priceDelta": 1542.85,
+    "priceDeltaPct": 1.97
   },
   {
     "trigger": "Disciplined Risk Cut: Automated stop preserved capital on COIN (-67.65%)",
@@ -3597,7 +4409,11 @@
     "quantity": 10000,
     "price": 165,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687865_COIN/USDT_LONG_disciplinedriskcutaut"
+    "idempotencyKey": "894687865_COIN/USDT_LONG_disciplinedriskcutaut",
+    "entryPrice": 165,
+    "exitPrice": 163.57,
+    "priceDelta": -1.43,
+    "priceDeltaPct": -0.87
   },
   {
     "trigger": "Autopilot Engine: Target Profit Auto-Exit (+3.25%) ratified on AAPL",
@@ -3613,7 +4429,11 @@
     "price": 235.17,
     "quantity": 10000,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687866_AAPL/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687866_AAPL/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 235.17,
+    "exitPrice": 237.72,
+    "priceDelta": 2.55,
+    "priceDeltaPct": 1.08
   },
   {
     "timestamp": "2026-09-14T08:49:05.202Z",
@@ -3629,7 +4449,11 @@
     "balanceChangePct": -2.2,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687872_AAPL/USDT_LONG_breakevenratchettraili"
+    "idempotencyKey": "894687872_AAPL/USDT_LONG_breakevenratchettraili",
+    "entryPrice": 228.5,
+    "exitPrice": 226.82,
+    "priceDelta": -1.68,
+    "priceDeltaPct": -0.74
   },
   {
     "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -3645,7 +4469,11 @@
     "price": 101.38,
     "balanceChangePct": 5.28,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687872_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894687872_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 101.38,
+    "exitPrice": 102.72,
+    "priceDelta": 1.34,
+    "priceDeltaPct": 1.32
   },
   {
     "quantity": 10000,
@@ -3661,7 +4489,11 @@
     "balanceChange": 590,
     "instrument": "COIN/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687873_COIN/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687873_COIN/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 242.99,
+    "exitPrice": 247.77,
+    "priceDelta": 4.78,
+    "priceDeltaPct": 1.97
   },
   {
     "price": 134.01,
@@ -3677,7 +4509,11 @@
     "balanceChangePct": 6.6,
     "id": "PT-20260914-203",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687877_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687877_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 134.01,
+    "exitPrice": 136.96,
+    "priceDelta": 2.95,
+    "priceDeltaPct": 2.2
   },
   {
     "timestamp": "2026-09-14T08:49:21.599Z",
@@ -3693,7 +4529,11 @@
     "leverage": 3,
     "id": "PT-20260914-204",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687880_MSTR/USDT_LONG_autopilotenginetarget"
+    "idempotencyKey": "894687880_MSTR/USDT_LONG_autopilotenginetarget",
+    "entryPrice": 135.03,
+    "exitPrice": 136.57,
+    "priceDelta": 1.54,
+    "priceDeltaPct": 1.14
   },
   {
     "leverage": 2,
@@ -3709,7 +4549,11 @@
     "status": "STOP_LOSS",
     "balanceChangePct": -3.63,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687926_TSLAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894687926_TSLAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 252,
+    "exitPrice": 247.43,
+    "priceDelta": -4.57,
+    "priceDeltaPct": -1.81
   },
   {
     "quantity": 8638,
@@ -3725,7 +4569,11 @@
     "accountBalance": 139224.93,
     "balanceChangePct": 4.16,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894687960_SOL/USDT_SHORT_autopilotpulsesolusdt"
+    "idempotencyKey": "894687960_SOL/USDT_SHORT_autopilotpulsesolusdt",
+    "entryPrice": 101.42,
+    "exitPrice": 100.01,
+    "priceDelta": -1.41,
+    "priceDeltaPct": -1.39
   },
   {
     "balanceChangePct": -3.93,
@@ -3741,7 +4589,11 @@
     "balanceChange": -491.37,
     "leverage": 2,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688020_TSLAON/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894688020_TSLAON/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 252,
+    "exitPrice": 256.95,
+    "priceDelta": 4.95,
+    "priceDeltaPct": 1.96
   },
   {
     "accountBalance": 139361.15,
@@ -3757,7 +4609,11 @@
     "leverage": 5,
     "instrument": "SOL/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688077_SOL/USDT_SHORT_autopilotpulsesolusdt"
+    "idempotencyKey": "894688077_SOL/USDT_SHORT_autopilotpulsesolusdt",
+    "entryPrice": 101.44,
+    "exitPrice": 100.2,
+    "priceDelta": -1.24,
+    "priceDeltaPct": -1.22
   },
   {
     "instrument": "BTC/USDT",
@@ -3773,7 +4629,11 @@
     "leverage": 4,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688139_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894688139_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 77692.01,
+    "exitPrice": 78954.51,
+    "priceDelta": 1262.5,
+    "priceDeltaPct": 1.63
   },
   {
     "instrument": "BTC/USDT",
@@ -3789,7 +4649,11 @@
     "leverage": 5,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688199_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894688199_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 77728.8,
+    "exitPrice": 79068.84,
+    "priceDelta": 1340.04,
+    "priceDeltaPct": 1.72
   },
   {
     "id": "PT-20260914-211",
@@ -3805,7 +4669,11 @@
     "accountBalance": 141629.29,
     "balanceChange": 573.94,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688259_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894688259_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2520.39,
+    "exitPrice": 2568.61,
+    "priceDelta": 48.22,
+    "priceDeltaPct": 1.91
   },
   {
     "instrument": "TSLAon/USDT",
@@ -3821,7 +4689,11 @@
     "balanceChangePct": 9.23,
     "timestamp": "2026-09-14T09:05:21.541Z",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688360_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894688360_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 252,
+    "exitPrice": 263.63,
+    "priceDelta": 11.63,
+    "priceDeltaPct": 4.62
   },
   {
     "balanceChangePct": 5.16,
@@ -3837,7 +4709,11 @@
     "leverage": 4,
     "id": "PT-20260914-213",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688360_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894688360_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 101.55,
+    "exitPrice": 102.86,
+    "priceDelta": 1.31,
+    "priceDeltaPct": 1.29
   },
   {
     "leverage": 3,
@@ -3853,7 +4729,11 @@
     "timestamp": "2026-09-14T09:05:57.517Z",
     "direction": "SHORT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688378_BTC/USDT_SHORT_autopilotpulsebtcusdt"
+    "idempotencyKey": "894688378_BTC/USDT_SHORT_autopilotpulsebtcusdt",
+    "entryPrice": 77751.09,
+    "exitPrice": 76460.42,
+    "priceDelta": -1290.67,
+    "priceDeltaPct": -1.66
   },
   {
     "instrument": "BTC/USDT",
@@ -3869,7 +4749,11 @@
     "balanceChangePct": 8.39,
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688466_BTC/USDT_SHORT_autopilotpulsebtcusdt"
+    "idempotencyKey": "894688466_BTC/USDT_SHORT_autopilotpulsebtcusdt",
+    "entryPrice": 77708.01,
+    "exitPrice": 76404.07,
+    "priceDelta": -1303.94,
+    "priceDeltaPct": -1.68
   },
   {
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
@@ -3885,7 +4769,11 @@
     "balanceChange": -280.63,
     "balanceChangePct": -3.49,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688499_BTC/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894688499_BTC/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 77805.06,
+    "exitPrice": 78348.14,
+    "priceDelta": 543.08,
+    "priceDeltaPct": 0.7
   },
   {
     "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
@@ -3901,7 +4789,11 @@
     "leverage": 5,
     "price": 2515.23,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688601_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894688601_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2515.23,
+    "exitPrice": 2540.33,
+    "priceDelta": 25.1,
+    "priceDeltaPct": 1
   },
   {
     "accountBalance": 146570.77,
@@ -3917,7 +4809,11 @@
     "price": 218.29,
     "status": "TAKE_PROFIT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688617_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894688617_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 218.29,
+    "exitPrice": 228.2,
+    "priceDelta": 9.91,
+    "priceDeltaPct": 4.54
   },
   {
     "direction": "LONG",
@@ -3933,7 +4829,11 @@
     "leverage": 4,
     "balanceChangePct": -3.28,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688630_BTC/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894688630_BTC/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 77727.47,
+    "exitPrice": 77090.1,
+    "priceDelta": -637.37,
+    "priceDeltaPct": -0.82
   },
   {
     "price": 218.29,
@@ -3949,7 +4849,11 @@
     "balanceChangePct": -2.65,
     "quantity": 12361,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688630_NVDAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894688630_NVDAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 218.29,
+    "exitPrice": 215.4,
+    "priceDelta": -2.89,
+    "priceDeltaPct": -1.32
   },
   {
     "balanceChangePct": 6.47,
@@ -3965,7 +4869,11 @@
     "quantity": 12194,
     "balanceChange": 788.95,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688666_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894688666_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 218.29,
+    "exitPrice": 211.23,
+    "priceDelta": -7.06,
+    "priceDeltaPct": -3.23
   },
   {
     "quantity": 13925,
@@ -3981,7 +4889,11 @@
     "id": "PT-20260914-240",
     "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688678_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894688678_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 77660.01,
+    "exitPrice": 79024.88,
+    "priceDelta": 1364.87,
+    "priceDeltaPct": 1.76
   },
   {
     "quantity": 14283,
@@ -3997,7 +4909,11 @@
     "balanceChange": 1174.06,
     "id": "PT-20260914-241",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688694_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894688694_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 77674.99,
+    "exitPrice": 79803.28,
+    "priceDelta": 2128.29,
+    "priceDeltaPct": 2.74
   },
   {
     "accountBalance": 149565.18,
@@ -4013,7 +4929,11 @@
     "timestamp": "2026-09-14T09:16:48.831Z",
     "instrument": "NVDAon/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688704_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894688704_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 218.29,
+    "exitPrice": 211.61,
+    "priceDelta": -6.68,
+    "priceDeltaPct": -3.06
   },
   {
     "quantity": 12507,
@@ -4029,7 +4949,11 @@
     "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "instrument": "NVDAon/USDT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688714_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894688714_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 218.29,
+    "exitPrice": 207.96,
+    "priceDelta": -10.33,
+    "priceDeltaPct": -4.73
   },
   {
     "id": "PT-20260914-246",
@@ -4045,7 +4969,11 @@
     "timestamp": "2026-09-14T09:18:05.324Z",
     "balanceChange": 445.36,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688742_TSLAON/USDT_SHORT_councilquorumtslaonus"
+    "idempotencyKey": "894688742_TSLAON/USDT_SHORT_councilquorumtslaonus",
+    "entryPrice": 365.55,
+    "exitPrice": 356.48,
+    "priceDelta": -9.07,
+    "priceDeltaPct": -2.48
   },
   {
     "leverage": 2,
@@ -4061,7 +4989,11 @@
     "accountBalance": 151012.24,
     "trigger": "Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688756_NVDAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894688756_NVDAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 218.26,
+    "exitPrice": 216.21,
+    "priceDelta": -2.05,
+    "priceDeltaPct": -0.94
   },
   {
     "instrument": "TSLAon/USDT",
@@ -4077,7 +5009,11 @@
     "status": "TAKE_PROFIT",
     "accountBalance": 151550.17,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688756_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894688756_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 365.44,
+    "exitPrice": 375.91,
+    "priceDelta": 10.47,
+    "priceDeltaPct": 2.87
   },
   {
     "balanceChangePct": 8.51,
@@ -4093,7 +5029,11 @@
     "id": "PT-20260914-249",
     "balanceChange": 606,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688799_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894688799_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 101.5,
+    "exitPrice": 104.38,
+    "priceDelta": 2.88,
+    "priceDeltaPct": 2.84
   },
   {
     "id": "PT-20260914-250",
@@ -4109,7 +5049,11 @@
     "instrument": "ETH/USDT",
     "leverage": 5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688829_ETH/USDT_SHORT_autopilotpulseethusdt"
+    "idempotencyKey": "894688829_ETH/USDT_SHORT_autopilotpulseethusdt",
+    "entryPrice": 2516.06,
+    "exitPrice": 2470.47,
+    "priceDelta": -45.59,
+    "priceDeltaPct": -1.81
   },
   {
     "id": "PT-20260914-251",
@@ -4125,7 +5069,11 @@
     "balanceChangePct": 4.64,
     "price": 218.62,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688888_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894688888_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 218.62,
+    "exitPrice": 223.69,
+    "priceDelta": 5.07,
+    "priceDeltaPct": 2.32
   },
   {
     "status": "TAKE_PROFIT",
@@ -4141,7 +5089,11 @@
     "balanceChangePct": 7.23,
     "direction": "SHORT",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894688948_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894688948_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 218.54,
+    "exitPrice": 210.64,
+    "priceDelta": -7.9,
+    "priceDeltaPct": -3.61
   },
   {
     "leverage": 5,
@@ -4157,7 +5109,11 @@
     "balanceChange": -433.38,
     "accountBalance": 153815.12,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894689008_SOL/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894689008_SOL/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 101.27,
+    "exitPrice": 100.63,
+    "priceDelta": -0.64,
+    "priceDeltaPct": -0.63
   },
   {
     "balanceChangePct": 8.2,
@@ -4173,7 +5129,11 @@
     "accountBalance": 154847.17,
     "balanceChange": 1032.05,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894689036_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894689036_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2513.9,
+    "exitPrice": 2565.43,
+    "priceDelta": 51.53,
+    "priceDeltaPct": 2.05
   },
   {
     "id": "PT-20260914-255",
@@ -4189,7 +5149,11 @@
     "accountBalance": 154363.19,
     "status": "STOP_LOSS",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894689056_SOL/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894689056_SOL/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 101.35,
+    "exitPrice": 100.02,
+    "priceDelta": -1.33,
+    "priceDeltaPct": -1.31
   },
   {
     "direction": "LONG",
@@ -4205,7 +5169,11 @@
     "leverage": 2,
     "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894689069_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894689069_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 364.58,
+    "exitPrice": 378.62,
+    "priceDelta": 14.04,
+    "priceDeltaPct": 3.85
   },
   {
     "instrument": "ETH/USDT",
@@ -4221,7 +5189,11 @@
     "timestamp": "2026-09-14T17:46:16.526Z",
     "accountBalance": 156042.6,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894703988_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894703988_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2527.37,
+    "exitPrice": 2595.95,
+    "priceDelta": 68.58,
+    "priceDeltaPct": 2.71
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4237,7 +5209,11 @@
     "timestamp": "2026-09-14T17:46:16.542Z",
     "accountBalance": 157230.29,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894703988_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894703988_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 212.48,
+    "exitPrice": 202.49,
+    "priceDelta": -9.99,
+    "priceDeltaPct": -4.7
   },
   {
     "instrument": "ETH/USDT",
@@ -4253,7 +5229,11 @@
     "timestamp": "2026-09-14T17:46:42.039Z",
     "accountBalance": 156838.42,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704001_ETH/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894704001_ETH/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 2529.51,
+    "exitPrice": 2551.83,
+    "priceDelta": 22.32,
+    "priceDeltaPct": 0.88
   },
   {
     "instrument": "TSLAon/USDT",
@@ -4269,7 +5249,11 @@
     "timestamp": "2026-09-14T17:46:42.056Z",
     "accountBalance": 157324.32,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704001_TSLAON/USDT_SHORT_councilquorumtslaonus"
+    "idempotencyKey": "894704001_TSLAON/USDT_SHORT_councilquorumtslaonus",
+    "entryPrice": 362.45,
+    "exitPrice": 350.87,
+    "priceDelta": -11.58,
+    "priceDeltaPct": -3.19
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4285,7 +5269,11 @@
     "timestamp": "2026-09-14T17:47:15.053Z",
     "accountBalance": 157833.58,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704017_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894704017_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 212.52,
+    "exitPrice": 206.91,
+    "priceDelta": -5.61,
+    "priceDeltaPct": -2.64
   },
   {
     "instrument": "SOL/USDT",
@@ -4301,7 +5289,11 @@
     "timestamp": "2026-09-14T17:47:15.074Z",
     "accountBalance": 158688.13,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704017_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894704017_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 103,
+    "exitPrice": 105.09,
+    "priceDelta": 2.09,
+    "priceDeltaPct": 2.03
   },
   {
     "instrument": "SOL/USDT",
@@ -4317,7 +5309,11 @@
     "timestamp": "2026-09-14T17:47:37.537Z",
     "accountBalance": 158308.84,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704028_SOL/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704028_SOL/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 102.93,
+    "exitPrice": 102.38,
+    "priceDelta": -0.55,
+    "priceDeltaPct": -0.53
   },
   {
     "instrument": "BTC/USDT",
@@ -4333,7 +5329,11 @@
     "timestamp": "2026-09-14T17:48:07.558Z",
     "accountBalance": 159207.05,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704043_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894704043_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 78889.9,
+    "exitPrice": 80408.53,
+    "priceDelta": 1518.63,
+    "priceDeltaPct": 1.92
   },
   {
     "instrument": "SOL/USDT",
@@ -4349,7 +5349,11 @@
     "timestamp": "2026-09-14T17:48:07.583Z",
     "accountBalance": 159932.19,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704043_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894704043_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 103.04,
+    "exitPrice": 106.03,
+    "priceDelta": 2.99,
+    "priceDeltaPct": 2.9
   },
   {
     "instrument": "ETH/USDT",
@@ -4365,7 +5369,11 @@
     "timestamp": "2026-09-14T17:48:42.047Z",
     "accountBalance": 159739.44,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704061_ETH/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704061_ETH/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 2530.57,
+    "exitPrice": 2509.65,
+    "priceDelta": -20.92,
+    "priceDeltaPct": -0.83
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4381,7 +5389,11 @@
     "timestamp": "2026-09-14T17:48:42.068Z",
     "accountBalance": 159476.68,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704061_NVDAON/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894704061_NVDAON/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 182.54,
+    "exitPrice": 184.24,
+    "priceDelta": 1.7,
+    "priceDeltaPct": 0.93
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4397,7 +5409,11 @@
     "timestamp": "2026-09-14T17:49:09.316Z",
     "accountBalance": 160142.71,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704074_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894704074_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 212.54,
+    "exitPrice": 206.66,
+    "priceDelta": -5.88,
+    "priceDeltaPct": -2.77
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4413,7 +5429,11 @@
     "timestamp": "2026-09-14T17:49:30.045Z",
     "accountBalance": 161275.65,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704085_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894704085_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 212.57,
+    "exitPrice": 204.53,
+    "priceDelta": -8.04,
+    "priceDeltaPct": -3.78
   },
   {
     "instrument": "BTC/USDT",
@@ -4429,7 +5449,11 @@
     "timestamp": "2026-09-14T17:49:30.065Z",
     "accountBalance": 162235.56,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704085_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894704085_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 78979.86,
+    "exitPrice": 80431.11,
+    "priceDelta": 1451.25,
+    "priceDeltaPct": 1.84
   },
   {
     "instrument": "ETH/USDT",
@@ -4445,7 +5469,11 @@
     "timestamp": "2026-09-14T17:50:01.552Z",
     "accountBalance": 163164.54,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704100_ETH/USDT_SHORT_autopilotpulseethusdt"
+    "idempotencyKey": "894704100_ETH/USDT_SHORT_autopilotpulseethusdt",
+    "entryPrice": 2530.64,
+    "exitPrice": 2468.55,
+    "priceDelta": -62.09,
+    "priceDeltaPct": -2.45
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4461,7 +5489,11 @@
     "timestamp": "2026-09-14T17:50:22.538Z",
     "accountBalance": 163729.06,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704111_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894704111_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 212.54,
+    "exitPrice": 204.69,
+    "priceDelta": -7.85,
+    "priceDeltaPct": -3.69
   },
   {
     "instrument": "TSLAon/USDT",
@@ -4477,7 +5509,11 @@
     "timestamp": "2026-09-14T17:50:22.558Z",
     "accountBalance": 164382.25,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704111_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894704111_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 362.62,
+    "exitPrice": 372.7,
+    "priceDelta": 10.08,
+    "priceDeltaPct": 2.78
   },
   {
     "instrument": "SOL/USDT",
@@ -4493,7 +5529,11 @@
     "timestamp": "2026-09-14T17:50:48.043Z",
     "accountBalance": 164064.82,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704124_SOL/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704124_SOL/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 103.01,
+    "exitPrice": 102.44,
+    "priceDelta": -0.57,
+    "priceDeltaPct": -0.55
   },
   {
     "instrument": "SOL/USDT",
@@ -4509,7 +5549,11 @@
     "timestamp": "2026-09-14T17:51:10.529Z",
     "accountBalance": 164684.71,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704135_SOL/USDT_SHORT_autopilotpulsesolusdt"
+    "idempotencyKey": "894704135_SOL/USDT_SHORT_autopilotpulsesolusdt",
+    "entryPrice": 102.95,
+    "exitPrice": 101.8,
+    "priceDelta": -1.15,
+    "priceDeltaPct": -1.12
   },
   {
     "instrument": "ETH/USDT",
@@ -4525,7 +5569,11 @@
     "timestamp": "2026-09-14T17:51:10.545Z",
     "accountBalance": 164517.5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704135_ETH/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704135_ETH/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 2528.48,
+    "exitPrice": 2509.35,
+    "priceDelta": -19.13,
+    "priceDeltaPct": -0.76
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4541,7 +5589,11 @@
     "timestamp": "2026-09-14T17:51:34.527Z",
     "accountBalance": 165171.3,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704147_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894704147_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 212.69,
+    "exitPrice": 218.83,
+    "priceDelta": 6.14,
+    "priceDeltaPct": 2.89
   },
   {
     "instrument": "ETH/USDT",
@@ -4557,7 +5609,11 @@
     "timestamp": "2026-09-14T17:51:34.542Z",
     "accountBalance": 165824.5,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704147_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894704147_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2529.62,
+    "exitPrice": 2563.11,
+    "priceDelta": 33.49,
+    "priceDeltaPct": 1.32
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4573,7 +5629,11 @@
     "timestamp": "2026-09-14T17:52:01.530Z",
     "accountBalance": 166842.41,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704160_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894704160_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 212.66,
+    "exitPrice": 203.21,
+    "priceDelta": -9.45,
+    "priceDeltaPct": -4.44
   },
   {
     "instrument": "BTC/USDT",
@@ -4589,7 +5649,11 @@
     "timestamp": "2026-09-14T17:52:34.528Z",
     "accountBalance": 167581.39,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704177_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894704177_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 78958.92,
+    "exitPrice": 80272.8,
+    "priceDelta": 1313.88,
+    "priceDeltaPct": 1.66
   },
   {
     "instrument": "ETH/USDT",
@@ -4605,7 +5669,11 @@
     "timestamp": "2026-09-14T17:53:03.037Z",
     "accountBalance": 167197.33,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704191_ETH/USDT_SHORT_guardian01riskvetovo"
+    "idempotencyKey": "894704191_ETH/USDT_SHORT_guardian01riskvetovo",
+    "entryPrice": 2530.4,
+    "exitPrice": 2551.02,
+    "priceDelta": 20.62,
+    "priceDeltaPct": 0.81
   },
   {
     "instrument": "BTC/USDT",
@@ -4621,7 +5689,11 @@
     "timestamp": "2026-09-14T17:53:03.057Z",
     "accountBalance": 168112.69,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704191_BTC/USDT_SHORT_autopilotpulsebtcusdt"
+    "idempotencyKey": "894704191_BTC/USDT_SHORT_autopilotpulsebtcusdt",
+    "entryPrice": 78954.99,
+    "exitPrice": 77598.94,
+    "priceDelta": -1356.05,
+    "priceDeltaPct": -1.72
   },
   {
     "instrument": "ETH/USDT",
@@ -4637,7 +5709,11 @@
     "timestamp": "2026-09-14T17:53:36.036Z",
     "accountBalance": 169050.18,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704208_ETH/USDT_SHORT_autopilotpulseethusdt"
+    "idempotencyKey": "894704208_ETH/USDT_SHORT_autopilotpulseethusdt",
+    "entryPrice": 2528.91,
+    "exitPrice": 2474.1,
+    "priceDelta": -54.81,
+    "priceDeltaPct": -2.17
   },
   {
     "instrument": "ETH/USDT",
@@ -4653,7 +5729,11 @@
     "timestamp": "2026-09-14T17:54:04.531Z",
     "accountBalance": 169595.54,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704222_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894704222_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2531.52,
+    "exitPrice": 2585.61,
+    "priceDelta": 54.09,
+    "priceDeltaPct": 2.14
   },
   {
     "instrument": "TSLAon/USDT",
@@ -4669,7 +5749,11 @@
     "timestamp": "2026-09-14T17:54:04.552Z",
     "accountBalance": 169171.03,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704222_TSLAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704222_TSLAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 362.14,
+    "exitPrice": 354.93,
+    "priceDelta": -7.21,
+    "priceDeltaPct": -1.99
   },
   {
     "instrument": "BTC/USDT",
@@ -4685,7 +5769,11 @@
     "timestamp": "2026-09-14T17:54:39.046Z",
     "accountBalance": 169946.28,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704239_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894704239_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 78979.99,
+    "exitPrice": 80801.8,
+    "priceDelta": 1821.81,
+    "priceDeltaPct": 2.31
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4701,7 +5789,11 @@
     "timestamp": "2026-09-14T17:54:39.067Z",
     "accountBalance": 171291.78,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704239_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894704239_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 212.56,
+    "exitPrice": 202.78,
+    "priceDelta": -9.78,
+    "priceDeltaPct": -4.6
   },
   {
     "instrument": "ETH/USDT",
@@ -4717,7 +5809,11 @@
     "timestamp": "2026-09-14T17:55:12.036Z",
     "accountBalance": 172298.17,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704256_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894704256_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2533.58,
+    "exitPrice": 2572.6,
+    "priceDelta": 39.02,
+    "priceDeltaPct": 1.54
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4733,7 +5829,11 @@
     "timestamp": "2026-09-14T17:55:12.063Z",
     "accountBalance": 173446.98,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704256_NVDAON/USDT_LONG_councilquorumnvdaonus"
+    "idempotencyKey": "894704256_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "entryPrice": 212.52,
+    "exitPrice": 220.69,
+    "priceDelta": 8.17,
+    "priceDeltaPct": 3.84
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4749,7 +5849,11 @@
     "timestamp": "2026-09-14T17:55:31.553Z",
     "accountBalance": 173053.53,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704265_NVDAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704265_NVDAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 212.51,
+    "exitPrice": 209.1,
+    "priceDelta": -3.41,
+    "priceDeltaPct": -1.6
   },
   {
     "instrument": "BTC/USDT",
@@ -4765,7 +5869,11 @@
     "timestamp": "2026-09-14T17:55:31.579Z",
     "accountBalance": 173984.1,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704265_BTC/USDT_LONG_autopilotpulsebtcusdt"
+    "idempotencyKey": "894704265_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "entryPrice": 79014.7,
+    "exitPrice": 80378.49,
+    "priceDelta": 1363.79,
+    "priceDeltaPct": 1.73
   },
   {
     "instrument": "TSLAon/USDT",
@@ -4781,7 +5889,11 @@
     "timestamp": "2026-09-14T17:56:01.895Z",
     "accountBalance": 175032.14,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704280_TSLAON/USDT_LONG_councilquorumtslaonus"
+    "idempotencyKey": "894704280_TSLAON/USDT_LONG_councilquorumtslaonus",
+    "entryPrice": 362.35,
+    "exitPrice": 375.52,
+    "priceDelta": 13.17,
+    "priceDeltaPct": 3.63
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4797,7 +5909,11 @@
     "timestamp": "2026-09-14T17:56:01.924Z",
     "accountBalance": 175910.74,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704280_NVDAON/USDT_SHORT_councilquorumnvdaonus"
+    "idempotencyKey": "894704280_NVDAON/USDT_SHORT_councilquorumnvdaonus",
+    "entryPrice": 212.51,
+    "exitPrice": 205.49,
+    "priceDelta": -7.02,
+    "priceDeltaPct": -3.3
   },
   {
     "instrument": "SOL/USDT",
@@ -4813,7 +5929,11 @@
     "timestamp": "2026-09-14T17:56:28.552Z",
     "accountBalance": 177130.73,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704294_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894704294_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 103.18,
+    "exitPrice": 106.39,
+    "priceDelta": 3.21,
+    "priceDeltaPct": 3.11
   },
   {
     "instrument": "ETH/USDT",
@@ -4829,7 +5949,11 @@
     "timestamp": "2026-09-14T17:56:28.577Z",
     "accountBalance": 178243.23,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704294_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894704294_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2533,
+    "exitPrice": 2588.73,
+    "priceDelta": 55.73,
+    "priceDeltaPct": 2.2
   },
   {
     "instrument": "ETH/USDT",
@@ -4845,7 +5969,11 @@
     "timestamp": "2026-09-14T17:56:52.544Z",
     "accountBalance": 179013.43,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704306_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894704306_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2532.88,
+    "exitPrice": 2567.33,
+    "priceDelta": 34.45,
+    "priceDeltaPct": 1.36
   },
   {
     "instrument": "BTC/USDT",
@@ -4861,7 +5989,11 @@
     "timestamp": "2026-09-14T17:56:52.575Z",
     "accountBalance": 178742.16,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704306_BTC/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704306_BTC/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 78950.33,
+    "exitPrice": 78659.79,
+    "priceDelta": -290.54,
+    "priceDeltaPct": -0.37
   },
   {
     "instrument": "ETH/USDT",
@@ -4877,7 +6009,11 @@
     "timestamp": "2026-09-14T17:57:16.545Z",
     "accountBalance": 178458.99,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704318_ETH/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704318_ETH/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 2532.86,
+    "exitPrice": 2501.96,
+    "priceDelta": -30.9,
+    "priceDeltaPct": -1.22
   },
   {
     "instrument": "SOL/USDT",
@@ -4893,7 +6029,11 @@
     "timestamp": "2026-09-14T17:57:37.548Z",
     "accountBalance": 179370.16,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704328_SOL/USDT_SHORT_autopilotpulsesolusdt"
+    "idempotencyKey": "894704328_SOL/USDT_SHORT_autopilotpulsesolusdt",
+    "entryPrice": 103.11,
+    "exitPrice": 101.81,
+    "priceDelta": -1.3,
+    "priceDeltaPct": -1.26
   },
   {
     "instrument": "SOL/USDT",
@@ -4909,7 +6049,11 @@
     "timestamp": "2026-09-14T17:57:58.532Z",
     "accountBalance": 179043.78,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704339_SOL/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704339_SOL/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 103.07,
+    "exitPrice": 102.52,
+    "priceDelta": -0.55,
+    "priceDeltaPct": -0.53
   },
   {
     "instrument": "ETH/USDT",
@@ -4925,7 +6069,11 @@
     "timestamp": "2026-09-14T17:58:25.530Z",
     "accountBalance": 178675.07,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704352_ETH/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704352_ETH/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 2533.65,
+    "exitPrice": 2518.04,
+    "priceDelta": -15.61,
+    "priceDeltaPct": -0.62
   },
   {
     "instrument": "SOL/USDT",
@@ -4941,7 +6089,11 @@
     "timestamp": "2026-09-14T17:58:25.557Z",
     "accountBalance": 179645.03,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704352_SOL/USDT_LONG_autopilotpulsesolusdt"
+    "idempotencyKey": "894704352_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "entryPrice": 103.09,
+    "exitPrice": 105.02,
+    "priceDelta": 1.93,
+    "priceDeltaPct": 1.87
   },
   {
     "instrument": "NVDAon/USDT",
@@ -4957,7 +6109,11 @@
     "timestamp": "2026-09-14T17:58:52.546Z",
     "accountBalance": 179279.55,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704366_NVDAON/USDT_LONG_guardian01riskvetovo"
+    "idempotencyKey": "894704366_NVDAON/USDT_LONG_guardian01riskvetovo",
+    "entryPrice": 212.4,
+    "exitPrice": 209.64,
+    "priceDelta": -2.76,
+    "priceDeltaPct": -1.3
   },
   {
     "instrument": "ETH/USDT",
@@ -4973,6 +6129,190 @@
     "timestamp": "2026-09-14T17:58:52.573Z",
     "accountBalance": 179649.36,
     "sourceHandler": "AUTOPILOT_DAEMON",
-    "idempotencyKey": "894704366_ETH/USDT_LONG_autopilotpulseethusdt"
+    "idempotencyKey": "894704366_ETH/USDT_LONG_autopilotpulseethusdt",
+    "entryPrice": 2531.9,
+    "exitPrice": 2574.01,
+    "priceDelta": 42.11,
+    "priceDeltaPct": 1.66
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "SHORT",
+    "price": 101.19,
+    "quantity": 14660,
+    "leverage": 4,
+    "balanceChange": 1351.65,
+    "balanceChangePct": 9.22,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUDIT_SIM",
+    "id": "PT-20260915-291",
+    "timestamp": "2026-09-15T06:24:25.329Z",
+    "idempotencyKey": "894726732_SOL/USDT_SHORT_autopilotpulsesolusdt",
+    "accountBalance": 181001.01,
+    "entryPrice": 101.19,
+    "exitPrice": 98.86,
+    "priceDelta": -2.33,
+    "priceDeltaPct": -2.3
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "LONG",
+    "price": 2491.31,
+    "quantity": 11964,
+    "leverage": 3,
+    "balanceChange": 1097.1,
+    "balanceChangePct": 9.17,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUDIT_SIM",
+    "id": "PT-20260915-292",
+    "timestamp": "2026-09-15T06:24:43.358Z",
+    "idempotencyKey": "894726741_ETH/USDT_LONG_autopilotpulseethusdt",
+    "accountBalance": 182098.11,
+    "entryPrice": 2491.31,
+    "exitPrice": 2567.46,
+    "priceDelta": 76.15,
+    "priceDeltaPct": 3.06
+  },
+  {
+    "instrument": "SOL/USDT",
+    "direction": "LONG",
+    "price": 101.17,
+    "quantity": 7904,
+    "leverage": 3,
+    "balanceChange": 531.15,
+    "balanceChangePct": 6.72,
+    "trigger": "Autopilot Pulse: SOL/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUDIT_SIM",
+    "id": "PT-20260915-293",
+    "timestamp": "2026-09-15T06:25:01.255Z",
+    "idempotencyKey": "894726750_SOL/USDT_LONG_autopilotpulsesolusdt",
+    "accountBalance": 182629.26,
+    "entryPrice": 101.17,
+    "exitPrice": 103.44,
+    "priceDelta": 2.27,
+    "priceDeltaPct": 2.24
+  },
+  {
+    "instrument": "TSLAon/USDT",
+    "direction": "SHORT",
+    "price": 359.06,
+    "quantity": 13182,
+    "leverage": 2,
+    "balanceChange": 831.78,
+    "balanceChangePct": 6.31,
+    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUDIT_SIM",
+    "id": "PT-20260915-294",
+    "timestamp": "2026-09-15T06:25:16.261Z",
+    "idempotencyKey": "894726758_TSLAON/USDT_SHORT_councilquorumtslaonus",
+    "accountBalance": 183461.04,
+    "entryPrice": 359.06,
+    "exitPrice": 347.73,
+    "priceDelta": -11.33,
+    "priceDeltaPct": -3.16
+  },
+  {
+    "instrument": "BTC/USDT",
+    "direction": "LONG",
+    "price": 77454,
+    "quantity": 9554,
+    "leverage": 3,
+    "balanceChange": 809.22,
+    "balanceChangePct": 8.47,
+    "trigger": "Autopilot Pulse: BTC/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUDIT_SIM",
+    "id": "PT-20260915-295",
+    "timestamp": "2026-09-15T06:25:32.307Z",
+    "idempotencyKey": "894726766_BTC/USDT_LONG_autopilotpulsebtcusdt",
+    "accountBalance": 184270.26,
+    "entryPrice": 77454,
+    "exitPrice": 79640.78,
+    "priceDelta": 2186.78,
+    "priceDeltaPct": 2.82
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "LONG",
+    "price": 210.96,
+    "quantity": 9646,
+    "leverage": 2,
+    "balanceChange": 544.03,
+    "balanceChangePct": 5.64,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUDIT_SIM",
+    "id": "PT-20260915-296",
+    "timestamp": "2026-09-15T06:25:51.246Z",
+    "idempotencyKey": "894726775_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "accountBalance": 184814.29,
+    "entryPrice": 210.96,
+    "exitPrice": 216.91,
+    "priceDelta": 5.95,
+    "priceDeltaPct": 2.82
+  },
+  {
+    "instrument": "NVDAon/USDT",
+    "direction": "LONG",
+    "price": 210.96,
+    "quantity": 9419,
+    "leverage": 2,
+    "balanceChange": 830.76,
+    "balanceChangePct": 8.82,
+    "trigger": "Council Quorum: NVDAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUDIT_SIM",
+    "id": "PT-20260915-297",
+    "timestamp": "2026-09-15T06:26:04.242Z",
+    "idempotencyKey": "894726782_NVDAON/USDT_LONG_councilquorumnvdaonus",
+    "accountBalance": 185645.05,
+    "entryPrice": 210.96,
+    "exitPrice": 220.26,
+    "priceDelta": 9.3,
+    "priceDeltaPct": 4.41
+  },
+  {
+    "instrument": "ETH/USDT",
+    "direction": "SHORT",
+    "price": 2490.8,
+    "quantity": 7121,
+    "leverage": 3,
+    "balanceChange": 495.62,
+    "balanceChangePct": 6.96,
+    "trigger": "Autopilot Pulse: ETH/USDT Social Velocity spike (>82) + Quant-Omega Orderbook absorption",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUDIT_SIM",
+    "id": "PT-20260915-298",
+    "timestamp": "2026-09-15T06:26:18.350Z",
+    "idempotencyKey": "894726789_ETH/USDT_SHORT_autopilotpulseethusdt",
+    "accountBalance": 186140.67,
+    "entryPrice": 2490.8,
+    "exitPrice": 2433.01,
+    "priceDelta": -57.79,
+    "priceDeltaPct": -2.32
+  },
+  {
+    "id": "PT-20260915-299",
+    "timestamp": "2026-09-15T07:09:29.203Z",
+    "instrument": "TSLAon/USDT",
+    "direction": "LONG",
+    "price": 359.16,
+    "entryPrice": 359.16,
+    "exitPrice": 372.4,
+    "priceDelta": 13.24,
+    "priceDeltaPct": 3.69,
+    "quantity": 11813,
+    "leverage": 2,
+    "balanceChange": 870.62,
+    "balanceChangePct": 7.37,
+    "accountBalance": 187011.29,
+    "trigger": "Council Quorum: TSLAon/USDT 7x24 tokenized liquidity surge + Atlas-Macro correlation",
+    "status": "TAKE_PROFIT",
+    "sourceHandler": "AUTOPILOT_DAEMON",
+    "idempotencyKey": "daemon_council_TSLAon_894728084"
   }
 ]

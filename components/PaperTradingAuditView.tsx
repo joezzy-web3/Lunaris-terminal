@@ -213,7 +213,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     return () => clearInterval(timer);
   }, [isAutoTicking]);
 
-  // Continuous 7x24 Autonomous Paper-Trading Loop: Syncs authoritative 24/7 server daemon trades
+  // Continuous 7x24 Autonomous Paper-Trading Loop: Triggers authoritative server daemon trade cycle on countdown completion
   useEffect(() => {
     if (!isAutoTicking || secondsUntilNextTick !== 1) return;
     if (isExecutingRef.current) return;
@@ -222,13 +222,45 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     (async () => {
       try {
         const previousCount = trades.length;
+        let newestTrade: PaperTradeRecord | null = null;
+
+        // 1. Authoritative trigger on the server daemon
+        try {
+          const res = await fetch('/api/audit/trigger-daemon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          const data = await res.json();
+          if (data && data.success && data.trade) {
+            newestTrade = data.trade;
+          }
+        } catch (netErr) {
+          console.warn('Server daemon trigger notice, invoking local fallback:', netErr);
+        }
+
+        // 2. Offline fallback if server is unreachable
+        if (!newestTrade) {
+          const liveQuotes = quotesRef.current;
+          const scenario = generateAutonomousTradeScenario(liveQuotes);
+          const baseTicker = scenario.instrument.split('/')[0];
+          if (liveQuotes[baseTicker]?.price) {
+            scenario.price = liveQuotes[baseTicker].price;
+          }
+          newestTrade = recordNewPaperTrade({
+            ...scenario,
+            sourceHandler: 'AUTOPILOT_DAEMON',
+          });
+        }
+
+        // 3. Re-sync with authoritative server ledger
         const serverTrades = await syncServerAuditTrades();
         if (serverTrades && serverTrades.length > 0) {
           setTrades(serverTrades);
-          if (serverTrades.length > previousCount) {
-            const newest = serverTrades[0];
-            setLatestTradeId(newest.id);
-            if (newest.balanceChange >= 0) {
+          // Highlight the newest trade (last element in chronologically sorted array)
+          const latest = newestTrade || (serverTrades.length > previousCount ? serverTrades[serverTrades.length - 1] : null);
+          if (latest) {
+            setLatestTradeId(latest.id);
+            if (latest.balanceChange >= 0) {
               playTradeApprovedChime();
             } else {
               playRiskVetoTone();
@@ -240,7 +272,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       } finally {
         setTimeout(() => {
           isExecutingRef.current = false;
-        }, 1200);
+        }, 1500);
       }
     })();
   }, [secondsUntilNextTick, isAutoTicking, trades.length]);

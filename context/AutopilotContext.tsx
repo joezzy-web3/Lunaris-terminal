@@ -120,10 +120,10 @@ function loadPersistedAutopilotState() {
 const AutopilotContext = createContext<AutopilotContextType | null>(null);
 
 export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Autopilot active state
+  // Autopilot active state (defaults to true for continuous 24/7 background execution)
   const [isExecuting, setIsExecuting] = useState<boolean>(() => {
     const p = loadPersistedAutopilotState();
-    return typeof p?.isExecuting === 'boolean' ? p.isExecuting : false;
+    return typeof p?.isExecuting === 'boolean' ? p.isExecuting : true;
   });
   const [isTurbo, setIsTurbo] = useState<boolean>(false);
   const [circuitBreakerAlert, setCircuitBreakerAlert] = useState<string | null>(null);

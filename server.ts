@@ -756,8 +756,17 @@ function runAutopilotDaemonTick() {
   saveAutopilotState(state);
 }
 
+let lastServerAgenticTradeTime = 0;
+let lastServerAgenticTrade: any = null;
+
 // Authoritative server-side agentic trade execution generator
 function executeServerAgenticTrade(requestedInstrument?: string, requestedDirection?: 'LONG' | 'SHORT') {
+  const now = Date.now();
+  // Multi-tab cooldown: if called within 3.5 seconds without specific manual overrides, return existing latest trade
+  if (!requestedInstrument && !requestedDirection && now - lastServerAgenticTradeTime < 3500 && lastServerAgenticTrade) {
+    return lastServerAgenticTrade;
+  }
+
   const instruments = [
     { name: 'NVDAon/USDT', ticker: 'NVDAon', fallbackPrice: 128.4, class: 'rToken' },
     { name: 'TSLAon/USDT', ticker: 'TSLAon', fallbackPrice: 248.0, class: 'rToken' },
@@ -842,6 +851,8 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
   trades.push(normalized);
   const reconciled = reconcileTradeCollection(trades);
   saveAuditTrades(reconciled);
+  lastServerAgenticTradeTime = Date.now();
+  lastServerAgenticTrade = normalized;
   return normalized;
 }
 
