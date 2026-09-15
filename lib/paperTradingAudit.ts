@@ -438,10 +438,10 @@ export function getSavedPaperTrades(): PaperTradeRecord[] {
 }
 
 /**
- * Fetch official persistent audit trades from Firestore cloud database and persistent server ledger.
- * Merges across all persistence layers (Firestore, Server Ledger disk, LocalStorage)
- * so newly recorded trades are NEVER clobbered, reset, or truncated on refresh even if
- * Firestore free-tier write quotas are reached.
+ * Option A (Server Authoritative): Synchronizes audit trades across all layers.
+ * The server persistent disk ledger (/api/audit/trades) is the authoritative Source of Truth ("King").
+ * Cloud Firestore and localStorage provide secondary sync/caching, but will never overwrite or resurrect
+ * stale/corrupt records that contradict the ratified server ledger.
  */
 export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   const tradeMap = new Map<string, PaperTradeRecord>();
@@ -451,13 +451,17 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
     tradeMap.set(t.id, normalizeTradeRecord(t));
   }
 
-  // 2. Fetch server persistent disk ledger (/api/audit/trades)
+  // 2. Authoritative Source of Truth: Fetch server persistent disk ledger (/api/audit/trades)
+  let serverTradesLoaded = false;
+  let serverTradesCount = 0;
   if (typeof window !== 'undefined') {
     try {
       const resp = await fetch('/api/audit/trades');
       if (resp.ok) {
         const json = await resp.json();
-        if (Array.isArray(json.trades)) {
+        if (Array.isArray(json.trades) && json.trades.length > 0) {
+          serverTradesLoaded = true;
+          serverTradesCount = json.trades.length;
           for (const t of json.trades) {
             if (t && t.id && !isAnomalousTrade(t)) {
               tradeMap.set(t.id, normalizeTradeRecord(t));
@@ -466,11 +470,13 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
         }
       }
     } catch (err) {
-      console.warn('⚠️ Server disk ledger fetch error:', err);
+      console.warn('⚠️ Server disk ledger fetch notice:', err);
     }
   }
 
-  // 3. Primary Cloud Source: Firestore Cloud Database
+  // 3. Secondary Cloud Sync: Firestore Cloud Database
+  // When the authoritative server ledger is available, Firestore trades only supplement new/missing records
+  // and are never allowed to override verified server state.
   let cloudTradesCount = 0;
   try {
     const cloudTrades = await fetchFirestoreAuditTrades();
@@ -478,15 +484,23 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
       cloudTradesCount = cloudTrades.length;
       for (const t of cloudTrades) {
         if (t && t.id && !isAnomalousTrade(t)) {
-          tradeMap.set(t.id, normalizeTradeRecord(t));
+          // If server ledger loaded, only add if not already in authoritative server ledger
+          if (serverTradesLoaded) {
+            if (!tradeMap.has(t.id)) {
+              tradeMap.set(t.id, normalizeTradeRecord(t));
+            }
+          } else {
+            // Server ledger was unreachable; fallback to cloud data
+            tradeMap.set(t.id, normalizeTradeRecord(t));
+          }
         }
       }
     }
   } catch (err) {
-    console.warn('⚠️ Firestore fetch error, preserving current cache:', err);
+    console.warn('⚠️ Firestore fetch notice, operating on authoritative server ledger:', err);
   }
 
-  // 4. Merge Local Storage cache
+  // 4. Secondary Local Cache: Merge localStorage cache without clobbering server state
   const currentLocal = getSavedPaperTrades();
   if (Array.isArray(currentLocal) && currentLocal.length > 0) {
     for (const t of currentLocal) {
@@ -500,8 +514,7 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
 
   const reconciled = reconcileTradeCollection(Array.from(tradeMap.values()));
 
-  // 5. If Firestore has refreshed quota and has fewer records than our authoritative server ledger,
-  // back-populate Firestore so cloud is fully synchronized across all devices
+  // 5. If Firestore is active and behind the authoritative ledger, asynchronously catch up Firestore
   if (!isFirestoreQuotaExceeded() && cloudTradesCount < reconciled.length && reconciled.length > 0) {
     seedFirestoreAuditTrades(reconciled).catch((err) =>
       console.warn('⚠️ Cloud catch-up sync notice:', err)

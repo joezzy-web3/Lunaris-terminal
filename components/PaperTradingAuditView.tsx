@@ -140,11 +140,25 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     window.addEventListener('lunaris-audit-reset', handleReset);
 
     // 1. Real-time Firestore listener across all devices/browsers
-    // Merges new cloud trades by ID instead of clobbering the existing persistent ledger
+    // Merges new cloud trades by ID without clobbering or resurrecting stale records
     const unsubscribeFirestore = subscribeToFirestoreAuditTrades((cloudTrades) => {
       if (!isMounted || !cloudTrades || cloudTrades.length === 0) return;
       setTrades((prevTrades) => {
-        const merged = reconcileTradeCollection([...prevTrades, ...cloudTrades]);
+        // Build map keyed by ID from authoritative previous state
+        const map = new Map<string, PaperTradeRecord>();
+        for (const pt of prevTrades) {
+          map.set(pt.id, pt);
+        }
+        // Only append cloud trades that are genuinely new (not already settled in authoritative ledger)
+        let addedAny = false;
+        for (const ct of cloudTrades) {
+          if (ct && ct.id && !map.has(ct.id)) {
+            map.set(ct.id, ct);
+            addedAny = true;
+          }
+        }
+        if (!addedAny) return prevTrades;
+        const merged = reconcileTradeCollection(Array.from(map.values()));
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('LUNARIS_BITGET_S2_PAPER_TRADES_V2', JSON.stringify(merged));
