@@ -419,13 +419,16 @@ export const DailyPnlCalendar: React.FC<DailyPnlCalendarProps> = ({
                 );
               }
 
-              // Days without trades (neutral plain numbers as seen in user's screenshot for future/inactive days)
+              // Days without trades: styled neutral frame so the calendar grid remains visually balanced and never looks cropped
               return (
                 <div
                   key={`day-${cell.dayNumber}`}
-                  className="min-h-[58px] sm:min-h-[66px] rounded-xl p-1.5 sm:p-2 flex flex-col items-center justify-center text-gray-600 hover:text-gray-400 transition-colors"
+                  className="min-h-[58px] sm:min-h-[66px] rounded-xl p-1.5 sm:p-2 flex flex-col justify-between border border-white/[0.04] bg-white/[0.015] text-gray-600 hover:border-white/10 transition-colors"
                 >
-                  <span className="text-xs sm:text-sm font-mono">{cell.dayNumber}</span>
+                  <span className="text-[11px] sm:text-xs font-mono font-medium text-gray-500">{cell.dayNumber}</span>
+                  <div className="mt-auto text-center">
+                    <span className="text-[10px] sm:text-xs font-mono text-gray-700">—</span>
+                  </div>
                 </div>
               );
             })}

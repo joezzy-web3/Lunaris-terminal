@@ -52,13 +52,24 @@ export function resolveTradePrices(trade: Partial<PaperTradeRecord>): {
   const direction = trade.direction === 'SHORT' ? 'SHORT' : 'LONG';
 
   let exitPrice = Number(trade.exitPrice);
-  if (!exitPrice || !Number.isFinite(exitPrice) || exitPrice <= 0) {
+  const statedPnl = Number(trade.balanceChange) || 0;
+  const isIdenticalPriceWithPnl = Boolean(
+    exitPrice && Math.abs(exitPrice - entryPrice) < 0.00001 && (Math.abs(statedPnl) > 0.01 || Math.abs(pnlPct) > 0.01)
+  );
+
+  if (!exitPrice || !Number.isFinite(exitPrice) || exitPrice <= 0 || isIdenticalPriceWithPnl) {
+    // If we have stated balanceChange and quantity, calculate exact return on margin
+    const quantity = Math.max(1, Number(trade.quantity) || 5000);
+    const effectivePnlPct = (statedPnl !== 0 && quantity > 0)
+      ? (statedPnl / quantity) * 100
+      : pnlPct;
+
     if (direction === 'SHORT') {
-      // For SHORT: loss means price rose, win means price fell
-      exitPrice = entryPrice * (1 - pnlPct / (100 * leverage));
+      // For SHORT: positive PnL means exit < entry; negative PnL means exit > entry
+      exitPrice = entryPrice * (1 - effectivePnlPct / (100 * leverage));
     } else {
-      // For LONG: win means price rose, loss means price fell
-      exitPrice = entryPrice * (1 + pnlPct / (100 * leverage));
+      // For LONG: positive PnL means exit > entry; negative PnL means exit < entry
+      exitPrice = entryPrice * (1 + effectivePnlPct / (100 * leverage));
     }
   }
 

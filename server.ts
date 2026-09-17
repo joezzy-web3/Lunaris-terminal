@@ -12,6 +12,7 @@ import {
   normalizeTradeRecord,
   generateTradeIdempotencyKey,
 } from './lib/firestoreAudit';
+import { runIncrementalReconciliation } from './scripts/reconcileAuditTrades';
 import { evaluateTradeRisk, TradeProposal } from './lib/riskVeto';
 import { initializeApp as initFirebaseApp, getApps as getFirebaseApps } from 'firebase/app';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
@@ -1213,8 +1214,6 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
     trigger = `Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital`;
   }
 
-  const pnlDollar = parseFloat(((quantity * (pnlPct / 100))).toFixed(2));
-
   let exitPrice: number;
   if (direction === 'SHORT') {
     exitPrice = entryPrice * (1 - pnlPct / (100 * leverage));
@@ -1225,6 +1224,13 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
   const finalExitPrice = parseFloat(exitPrice.toFixed(decimals));
   const priceDelta = parseFloat((finalExitPrice - entryPrice).toFixed(decimals));
   const priceDeltaPct = parseFloat((((finalExitPrice - entryPrice) / entryPrice) * 100).toFixed(2));
+
+  // Single mathematical source of truth: PnL derived strictly from filled prices
+  const exactCalculatedPnL = direction === 'LONG'
+    ? (quantity * leverage * (finalExitPrice - entryPrice)) / entryPrice
+    : (quantity * leverage * (entryPrice - finalExitPrice)) / entryPrice;
+  const pnlDollar = parseFloat(exactCalculatedPnL.toFixed(2));
+  const actualRoiPct = parseFloat(((pnlDollar / quantity) * 100).toFixed(2));
 
   const nowUtc = new Date().toISOString();
   const trades = getAuditTrades();
@@ -1244,7 +1250,7 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
     quantity,
     leverage,
     balanceChange: pnlDollar,
-    balanceChangePct: pnlPct,
+    balanceChangePct: actualRoiPct,
     accountBalance: 100000,
     trigger,
     status,
@@ -1361,6 +1367,55 @@ app.post('/api/audit/sync', (req, res) => {
       success: true,
       count: reconciled.length,
       timestamp: Date.now(),
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/audit/reconcile - Trigger authoritative incremental reconciliation process
+app.post('/api/audit/reconcile', async (req, res) => {
+  try {
+    const dryRun = req.body?.dryRun === true;
+    const forceAll = req.body?.forceAll === true;
+    const report = await runIncrementalReconciliation({ dryRun, forceAll });
+    return res.json({
+      success: true,
+      report,
+    });
+  } catch (err: any) {
+    console.error('Reconciliation error:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Reconciliation failed' });
+  }
+});
+
+// GET /api/audit/reconciliation-status - Read latest checkpoint and backup statistics
+app.get('/api/audit/reconciliation-status', (req, res) => {
+  try {
+    const checkpointPath = path.join(process.cwd(), 'data', 'reconciliation_checkpoint.json');
+    const backupDir = path.join(process.cwd(), 'data', 'backups');
+    const quarantineDir = path.join(process.cwd(), 'data', 'quarantine');
+
+    let checkpoint = null;
+    if (fs.existsSync(checkpointPath)) {
+      try {
+        checkpoint = JSON.parse(fs.readFileSync(checkpointPath, 'utf8'));
+      } catch {}
+    }
+
+    const backups = fs.existsSync(backupDir) ? fs.readdirSync(backupDir).filter(f => f.endsWith('.json')) : [];
+    const quarantineFiles = fs.existsSync(quarantineDir) ? fs.readdirSync(quarantineDir).filter(f => f.endsWith('.json')) : [];
+
+    return res.json({
+      success: true,
+      databaseProduct: 'Cloud Firestore',
+      collectionName: 'audit_trades',
+      quarantineCollection: 'audit_trades_quarantine',
+      checkpoint,
+      backupsCount: backups.length,
+      latestBackup: backups.sort().reverse()[0] || null,
+      quarantineFilesCount: quarantineFiles.length,
+      timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });

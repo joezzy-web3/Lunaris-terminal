@@ -55,6 +55,7 @@ import {
 } from 'lucide-react';
 import { playCyberClick, playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
 import { TradeProofModal } from '@/components/TradeProofModal';
+import { AuditReconciliationModal } from '@/components/AuditReconciliationModal';
 
 interface PaperTradingAuditViewProps {
   onNavigateToCockpit?: (ticker?: string) => void;
@@ -76,6 +77,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [latestTradeId, setLatestTradeId] = useState<string | null>(null);
   const [selectedProofTrade, setSelectedProofTrade] = useState<PaperTradeRecord | null>(null);
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
+  const [showReconciliationModal, setShowReconciliationModal] = useState(false);
   const [sanitizerBanner, setSanitizerBanner] = useState<{
     visible: boolean;
     message: string | null;
@@ -848,6 +850,20 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
 
         <div className="flex items-center gap-2">
           <button
+            id="btn-open-reconciliation"
+            onClick={() => {
+              playCyberClick();
+              setShowReconciliationModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm"
+            title="Inspect Incremental Reconciliation, Database Detection & Mathematical P&L Audit"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Auditor Reconciliation & Math</span>
+            <span className="sm:hidden">Reconcile</span>
+          </button>
+
+          <button
             id="btn-toggle-auto-loop"
             onClick={() => {
               playCyberClick();
@@ -968,7 +984,9 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                 <th className="py-2.5 px-2.5 min-w-[110px]">Instrument</th>
                 <th className="py-2.5 px-2 text-center min-w-[85px]">Direction</th>
                 <th className="py-2.5 px-3 text-right min-w-[145px]">Entry / Exit Price</th>
-                <th className="py-2.5 px-2.5 text-right min-w-[90px]">Size (USDT)</th>
+                <th className="py-2.5 px-2.5 text-right min-w-[110px]" title="Allocated Margin Collateral (Position Notional = Margin × Leverage)">
+                  Margin / Notional
+                </th>
                 <th className="py-2.5 px-3 text-right min-w-[130px]">Balance Change</th>
                 <th className="py-2.5 px-3 text-right min-w-[110px]">Settled Balance</th>
                 <th className="py-2.5 px-3 min-w-[180px] max-w-[240px]">Council Quorum / Execution Trigger</th>
@@ -1071,7 +1089,10 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                       })()}
                     </td>
                     <td className="py-2.5 px-2.5 text-right text-gray-300 whitespace-nowrap">
-                      ${trade.quantity.toLocaleString()}
+                      <div className="font-semibold text-white">${trade.quantity.toLocaleString()}</div>
+                      <div className="text-[9.5px] text-[#00F0FF]/80 font-mono">
+                        ${(trade.quantity * (trade.leverage || 1)).toLocaleString()} ({trade.leverage || 1}x)
+                      </div>
                     </td>
                     <td className={`py-2.5 px-3 text-right font-bold whitespace-nowrap ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {isProfit ? '+' : ''}${trade.balanceChange.toFixed(2)} ({isProfit ? '+' : ''}{trade.balanceChangePct.toFixed(2)}%)
@@ -1415,6 +1436,19 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Institutional Auditor Incremental Reconciliation Modal */}
+      <AuditReconciliationModal
+        isOpen={showReconciliationModal}
+        onClose={() => setShowReconciliationModal(false)}
+        onReconciliationComplete={() => {
+          syncServerAuditTrades().then((serverTrades) => {
+            if (serverTrades && serverTrades.length > 0) {
+              processIncomingAuthoritativeTrades(serverTrades);
+            }
+          });
+        }}
+      />
     </div>
   );
 };

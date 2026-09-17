@@ -1,7 +1,7 @@
 {
   "isExecuting": true,
   "isTurbo": false,
-  "cashBalance": 80252.95,
+  "cashBalance": 77383.42,
   "positions": {
     "BTC": {
       "entryPrice": 77609.29,
@@ -10,33 +10,93 @@
       "ticker": "BTC",
       "isBreakevenLocked": false,
       "peakPnlPct": 0.11198401634650117,
-      "unrealizedPnl": -143.45,
+      "unrealizedPnl": -152.03,
       "peakPrice": 77696.2,
       "class": "CX",
-      "unrealizedPnlPct": -1.02,
-      "currentPrice": 76814.75,
+      "unrealizedPnlPct": -1.09,
+      "currentPrice": 76767.21,
       "trailingStopPct": -3
     },
-    "TSLAon": {
-      "ticker": "TSLAon",
-      "amount": 10.836,
-      "entryPrice": 369.14,
-      "currentPrice": 369.25,
-      "unrealizedPnl": 1.19,
-      "unrealizedPnlPct": 0.03,
-      "class": "EQ"
+    "SOL": {
+      "ticker": "SOL",
+      "amount": 39.3778,
+      "entryPrice": 101.58,
+      "currentPrice": 101.35,
+      "unrealizedPnl": -9.06,
+      "unrealizedPnlPct": -0.23,
+      "class": "CX"
     },
     "NVDAon": {
       "ticker": "NVDAon",
-      "amount": 18.2207,
-      "entryPrice": 219.53,
-      "currentPrice": 220.04,
-      "unrealizedPnl": 9.29,
-      "unrealizedPnlPct": 0.23,
+      "amount": 18.2199,
+      "entryPrice": 219.54,
+      "currentPrice": 219.31,
+      "unrealizedPnl": -4.19,
+      "unrealizedPnlPct": -0.1,
       "class": "EQ"
     }
   },
   "ledger": [
+    {
+      "id": "buy-1789670094837-2-l0iwi-NVDAon",
+      "timestamp": "6:34:54 PM",
+      "utcTimestamp": "2026-09-17T18:34:54.766Z",
+      "type": "BUY",
+      "ticker": "NVDAon",
+      "amount": 18.2199,
+      "price": 219.54,
+      "totalUsd": 4000,
+      "balanceBefore": 81383.42,
+      "balanceAfter": 77383.42,
+      "realizedPnl": 0,
+      "realizedPnlPct": 0,
+      "notes": "Council Quorum Buy Signal ratified on NVDAon at $219.54. Position size $4,000 USDT."
+    },
+    {
+      "id": "stop-1789670094771-1-n7mln-TSLAon",
+      "timestamp": "6:34:54 PM",
+      "utcTimestamp": "2026-09-17T18:34:54.766Z",
+      "type": "STOP_LOSS",
+      "ticker": "TSLAon",
+      "amount": 10.836,
+      "price": 249.86,
+      "totalUsd": 2707.48,
+      "balanceBefore": 78675.94,
+      "balanceAfter": 81383.42,
+      "realizedPnl": -1292.52,
+      "realizedPnlPct": -32.31,
+      "notes": "Stop Loss Risk Sentinel Triggered: Closed 10.8360 TSLAon at $249.86. Incident post-mortem recorded."
+    },
+    {
+      "id": "buy-1789669007085-1-wynx7-SOL",
+      "timestamp": "6:16:47 PM",
+      "utcTimestamp": "2026-09-17T18:16:47.084Z",
+      "type": "BUY",
+      "ticker": "SOL",
+      "amount": 39.3778,
+      "price": 101.58,
+      "totalUsd": 4000,
+      "balanceBefore": 82675.94,
+      "balanceAfter": 78675.94,
+      "realizedPnl": 0,
+      "realizedPnlPct": 0,
+      "notes": "Council Quorum Buy Signal ratified on SOL at $101.58. Position size $4,000 USDT."
+    },
+    {
+      "id": "stop-1789668980105-1-0ebla-NVDAon",
+      "timestamp": "6:16:20 PM",
+      "utcTimestamp": "2026-09-17T18:16:20.101Z",
+      "type": "STOP_LOSS",
+      "ticker": "NVDAon",
+      "amount": 18.2207,
+      "price": 132.98,
+      "totalUsd": 2422.99,
+      "balanceBefore": 80252.95,
+      "balanceAfter": 82675.94,
+      "realizedPnl": -1577,
+      "realizedPnlPct": -39.43,
+      "notes": "Stop Loss Risk Sentinel Triggered: Closed 18.2207 NVDAon at $132.98. Incident post-mortem recorded."
+    },
     {
       "id": "buy-1789655170650-2-mm0li-NVDAon",
       "timestamp": "2:26:10 PM",
@@ -640,6 +700,6 @@
   ],
   "autoExitPct": 3,
   "maxOpenPositions": 3,
-  "cycleCount": 479,
-  "lastUpdated": "2026-09-17T15:00:07.723Z"
+  "cycleCount": 627,
+  "lastUpdated": "2026-09-17T18:50:16.224Z"
 }
