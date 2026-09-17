@@ -1,6 +1,6 @@
 // components/PulseRadarPanel.tsx
-import React, { useState } from 'react';
-import { Radio, Flame, TrendingUp, ArrowUpRight, ArrowDownRight, MessageCircle, Twitter, Globe, Search, RefreshCw, Send, Scale } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Radio, Flame, TrendingUp, ArrowUpRight, ArrowDownRight, MessageCircle, Twitter, Globe, Search, RefreshCw, Send, Scale, Sparkles, Activity } from 'lucide-react';
 import { PulseContext } from '@/lib/councilDebateEngine';
 
 export interface PulseAsset {
@@ -12,6 +12,10 @@ export interface PulseAsset {
   velocity1h: number; // % spike
   mentionsPerHour: number;
   catalystSummary: string;
+  currentPrice?: number;
+  change24h?: number;
+  isTrending?: boolean;
+  searchQueries?: string[];
   sources: {
     twitter: number;
     farcaster?: number;
@@ -20,7 +24,7 @@ export interface PulseAsset {
   };
 }
 
-const PULSE_DATA: PulseAsset[] = [
+const INITIAL_PULSE_DATA: PulseAsset[] = [
   {
     ticker: 'SOL',
     name: 'Solana',
@@ -29,7 +33,7 @@ const PULSE_DATA: PulseAsset[] = [
     sentimentLabel: 'EXTREME BULL',
     velocity1h: 312,
     mentionsPerHour: 4820,
-    catalystSummary: 'Bitget on-chain liquidity telemetry detects $65M institutional accumulation across spot pairs.',
+    catalystSummary: 'Bitget on-chain liquidity telemetry detects institutional accumulation across spot pairs.',
     sources: { twitter: 91, farcaster: 84, reddit: 76, discord: 89 },
   },
   {
@@ -51,7 +55,7 @@ const PULSE_DATA: PulseAsset[] = [
     sentimentLabel: 'BULLISH',
     velocity1h: 94,
     mentionsPerHour: 12450,
-    catalystSummary: 'Global ETF net inflows hit 3-week peak; Bitget futures funding rates stabilize in positive territory.',
+    catalystSummary: 'Global ETF net inflows hit positive streak; Bitget futures funding rates stabilize in positive territory.',
     sources: { twitter: 78, farcaster: 72, reddit: 69, discord: 75 },
   },
   {
@@ -117,10 +121,94 @@ export interface PulseRadarPanelProps {
 
 export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelProps) {
   const [filter, setFilter] = useState<'ALL' | 'CX' | 'EQ'>('ALL');
-  const [selectedAsset, setSelectedAsset] = useState<PulseAsset>(PULSE_DATA[0]);
+  const [pulseData, setPulseData] = useState<PulseAsset[]>(INITIAL_PULSE_DATA);
+  const [selectedAsset, setSelectedAsset] = useState<PulseAsset>(INITIAL_PULSE_DATA[0]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAiScanning, setIsAiScanning] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string>('Live');
+  const [fearGreed, setFearGreed] = useState<{ value: number; label: string }>({ value: 65, label: 'Greed' });
+  const [aiGroundingLog, setAiGroundingLog] = useState<string[]>([]);
 
-  const filteredAssets = PULSE_DATA.filter((a) => {
+  // Fetch live market pulse from server endpoint
+  const fetchLivePulse = useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      const res = await fetch('/api/market/pulse');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setPulseData(json.data);
+          if (json.fearAndGreed) setFearGreed(json.fearAndGreed);
+          setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+          
+          // Update selected asset if already picked
+          setSelectedAsset((prev) => {
+            const match = json.data.find((a: PulseAsset) => a.ticker === prev.ticker);
+            return match || prev;
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch live pulse:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  // Initial load and periodic polling every 12 seconds
+  useEffect(() => {
+    fetchLivePulse();
+    const interval = setInterval(fetchLivePulse, 12000);
+    return () => clearInterval(interval);
+  }, [fetchLivePulse]);
+
+  // Real-Time Gemini AI Live Search Refresh for Selected Asset
+  const triggerAiLiveSearch = async () => {
+    if (!selectedAsset) return;
+    try {
+      setIsAiScanning(true);
+      const res = await fetch('/api/market/pulse/ai-refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker: selectedAsset.ticker }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.data) {
+          const d = result.data;
+          const updatedAsset: PulseAsset = {
+            ...selectedAsset,
+            sentimentScore: d.sentimentScore || selectedAsset.sentimentScore,
+            sentimentLabel: d.sentimentLabel || selectedAsset.sentimentLabel,
+            velocity1h: d.velocity1h || selectedAsset.velocity1h,
+            mentionsPerHour: d.mentionsPerHour || selectedAsset.mentionsPerHour,
+            catalystSummary: d.breakingCatalyst || selectedAsset.catalystSummary,
+            searchQueries: d.searchQueries || [],
+            sources: {
+              twitter: d.twitterSentiment || selectedAsset.sources.twitter,
+              farcaster: d.farcasterSentiment || selectedAsset.sources.farcaster,
+              reddit: d.redditSentiment || selectedAsset.sources.reddit,
+              discord: selectedAsset.sources.discord,
+            },
+          };
+
+          setSelectedAsset(updatedAsset);
+          setPulseData((prev) => prev.map((a) => (a.ticker === updatedAsset.ticker ? updatedAsset : a)));
+          if (d.searchQueries && d.searchQueries.length > 0) {
+            setAiGroundingLog(d.searchQueries);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('AI live search pulse error:', err);
+    } finally {
+      setIsAiScanning(false);
+    }
+  };
+
+  const filteredAssets = pulseData.filter((a) => {
     if (filter === 'CX' && a.class !== 'CX') return false;
     if (filter === 'EQ' && a.class !== 'EQ') return false;
     if (searchQuery) {
@@ -143,44 +231,62 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold tracking-wider text-white">LUNARIS PULSE</h2>
-              <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-blue-950/80 text-blue-300 border border-blue-500/30">
-                Tier 1 Social Velocity
+              <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-blue-950/80 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                Live Social Velocity
+              </span>
+              <span className="text-[10px] text-amber-300 bg-amber-950/50 border border-amber-500/30 px-1.5 py-0.5 rounded hidden sm:inline-flex items-center gap-1">
+                <Activity className="w-2.5 h-2.5" /> F&G: {fearGreed.value} ({fearGreed.label})
               </span>
             </div>
-            <p className="text-[11px] text-gray-400">Cross-Asset Social Velocity & Sentiment Heatmap</p>
+            <p className="text-[11px] text-gray-400">
+              Cross-Asset Social Velocity & Sentiment Heatmap • Refreshed: {lastUpdated}
+            </p>
           </div>
         </div>
 
-        {/* Filter Badges */}
-        <div className="flex items-center gap-1.5 text-[11px]">
+        {/* Controls: Manual Refresh & Filter Badges */}
+        <div className="flex items-center gap-2 text-[11px]">
           <button
-            onClick={() => setFilter('ALL')}
-            className={`px-2 py-0.5 rounded transition-colors ${
-              filter === 'ALL' ? 'bg-white/20 text-white font-bold' : 'text-gray-400 hover:text-white'
-            }`}
+            onClick={fetchLivePulse}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition-all cursor-pointer"
+            title="Poll live CoinGecko & Bitget social momentum"
           >
-            ALL
+            <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-cyan-400' : 'text-gray-400'}`} />
+            <span className="hidden sm:inline">{isRefreshing ? 'Syncing...' : 'Sync Feeds'}</span>
           </button>
-          <button
-            onClick={() => setFilter('CX')}
-            className={`px-2 py-0.5 rounded transition-colors ${
-              filter === 'CX'
-                ? 'bg-blue-500/20 text-blue-300 font-bold border border-blue-500/40'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            CRYPTO (CX)
-          </button>
-          <button
-            onClick={() => setFilter('EQ')}
-            className={`px-2 py-0.5 rounded transition-colors ${
-              filter === 'EQ'
-                ? 'bg-pink-500/20 text-pink-300 font-bold border border-pink-500/40'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            EQUITIES (EQ)
-          </button>
+
+          <div className="flex items-center gap-1 bg-black/40 border border-white/10 p-0.5 rounded">
+            <button
+              onClick={() => setFilter('ALL')}
+              className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                filter === 'ALL' ? 'bg-white/20 text-white font-bold' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              ALL
+            </button>
+            <button
+              onClick={() => setFilter('CX')}
+              className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                filter === 'CX'
+                  ? 'bg-blue-500/20 text-blue-300 font-bold border border-blue-500/40'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              CX
+            </button>
+            <button
+              onClick={() => setFilter('EQ')}
+              className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                filter === 'EQ'
+                  ? 'bg-pink-500/20 text-pink-300 font-bold border border-pink-500/40'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              EQ
+            </button>
+          </div>
         </div>
       </div>
 
@@ -214,24 +320,36 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
                         {asset.class}
                       </span>
                       <span className="font-bold text-white text-xs">{asset.ticker}</span>
-                      <span className="text-[10px] text-gray-400">{asset.name}</span>
+                      <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{asset.name}</span>
+                      {asset.isTrending && (
+                        <span className="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 rounded uppercase font-bold">
+                          Trending
+                        </span>
+                      )}
                     </div>
 
-                    <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        isBull
-                          ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-500/20'
-                          : 'text-amber-400 bg-amber-950/40 border border-amber-500/20'
-                      }`}
-                    >
-                      {asset.sentimentScore} / 100
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {asset.currentPrice !== undefined && (
+                        <span className="text-[10px] text-gray-300 font-mono">
+                          ${asset.currentPrice >= 1 ? asset.currentPrice.toLocaleString() : asset.currentPrice.toFixed(4)}
+                        </span>
+                      )}
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          isBull
+                            ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-500/20'
+                            : 'text-amber-400 bg-amber-950/40 border border-amber-500/20'
+                        }`}
+                      >
+                        {asset.sentimentScore}/100
+                      </span>
+                    </div>
                   </div>
 
                   {/* Velocity indicator */}
                   <div className="flex items-center justify-between text-[11px] text-gray-300">
                     <div className="flex items-center gap-1">
-                      <Flame className={`w-3 h-3 ${isHighVelocity ? 'text-amber-400' : 'text-gray-500'}`} />
+                      <Flame className={`w-3 h-3 ${isHighVelocity ? 'text-amber-400 animate-pulse' : 'text-gray-500'}`} />
                       <span className="text-[10px]">
                         Velocity: <span className="font-bold text-white">+{asset.velocity1h}%/1h</span>
                       </span>
@@ -242,7 +360,7 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
                   {/* Velocity Bar */}
                   <div className="w-full bg-white/5 h-1.5 rounded-full mt-2 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${
+                      className={`h-full rounded-full transition-all duration-500 ${
                         isHighVelocity ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-cyan-400'
                       }`}
                       style={{ width: `${Math.min(100, (asset.velocity1h / 350) * 100)}%` }}
@@ -280,7 +398,7 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
         </div>
 
         {/* Selected Asset Deep Dive Card */}
-        <div className="bg-black/50 border border-white/10 rounded-lg p-3 flex flex-col justify-between text-xs">
+        <div className="bg-black/50 border border-white/10 rounded-lg p-3 flex flex-col justify-between text-xs space-y-3">
           <div className="space-y-3">
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <div>
@@ -293,8 +411,15 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
                   >
                     {selectedAsset.class === 'CX' ? 'Crypto Token' : 'Tokenized Equity'}
                   </span>
+                  {selectedAsset.isTrending && (
+                    <span className="text-[9px] bg-amber-400/20 text-amber-300 border border-amber-400/40 px-1 py-0.2 rounded font-bold">
+                      Viral Spike
+                    </span>
+                  )}
                 </div>
-                <div className="text-[10px] text-gray-400">{selectedAsset.name}</div>
+                <div className="text-[10px] text-gray-400">
+                  {selectedAsset.name} {selectedAsset.currentPrice ? `• $${selectedAsset.currentPrice >= 1 ? selectedAsset.currentPrice.toLocaleString() : selectedAsset.currentPrice.toFixed(4)}` : ''}
+                </div>
               </div>
 
               <div className="text-right">
@@ -303,9 +428,19 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
               </div>
             </div>
 
+            {/* AI Live Search Refresh Button */}
+            <button
+              onClick={triggerAiLiveSearch}
+              disabled={isAiScanning}
+              className="w-full py-1.5 px-2.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyan-300 hover:text-white flex items-center justify-center gap-2 text-[11px] font-bold shadow-[0_0_10px_rgba(0,240,255,0.15)] transition-all cursor-pointer"
+            >
+              <Sparkles className={`w-3.5 h-3.5 text-cyan-400 ${isAiScanning ? 'animate-spin' : ''}`} />
+              <span>{isAiScanning ? `Scanning Google & X for ${selectedAsset.ticker}...` : `AI Live Search Pulse for ${selectedAsset.ticker}`}</span>
+            </button>
+
             {/* Social breakdown */}
             <div>
-              <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">Platform Sentiment Score</div>
+              <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">Live Platform Sentiment Split</div>
               <div className="space-y-1.5 text-[11px]">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400 flex items-center gap-1">
@@ -338,6 +473,16 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
               <p className="text-[11px] text-gray-300 leading-relaxed italic">
                 "{selectedAsset.catalystSummary}"
               </p>
+              {selectedAsset.searchQueries && selectedAsset.searchQueries.length > 0 && (
+                <div className="mt-2 pt-1.5 border-t border-white/5 flex flex-wrap gap-1">
+                  <span className="text-[9px] text-gray-500">Grounding Sources:</span>
+                  {selectedAsset.searchQueries.slice(0, 2).map((q, idx) => (
+                    <span key={idx} className="text-[9px] bg-white/5 text-gray-400 px-1.5 py-0.5 rounded">
+                      {q}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -352,7 +497,7 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
                 mentionsPerHour: selectedAsset.mentionsPerHour,
               })
             }
-            className="w-full mt-3 bg-gradient-to-r from-purple-600/30 to-indigo-600/30 hover:from-purple-600/50 hover:to-indigo-600/50 border border-purple-400 text-purple-200 py-2.5 rounded-lg text-xs font-black flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all cursor-pointer uppercase tracking-wider"
+            className="w-full mt-2 bg-gradient-to-r from-purple-600/30 to-indigo-600/30 hover:from-purple-600/50 hover:to-indigo-600/50 border border-purple-400 text-purple-200 py-2.5 rounded-lg text-xs font-black flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all cursor-pointer uppercase tracking-wider"
           >
             <Send className="w-3.5 h-3.5" /> CONVENE COUNCIL WITH {selectedAsset.ticker} INSTRUCTION &rarr;
           </button>
@@ -361,3 +506,4 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
     </div>
   );
 }
+

@@ -403,10 +403,10 @@ export function AutopilotLedgerView({
                   </td>
                 </tr>
               ) : (
-                filteredLedger.map((entry) => {
+                filteredLedger.map((entry, index) => {
                   const isPositive = (entry.realizedPnl || 0) >= 0;
                   return (
-                    <tr key={entry.id} className="hover:bg-white/[0.02] transition-colors text-[11px]">
+                    <tr key={`${entry.id}-${index}`} className="hover:bg-white/[0.02] transition-colors text-[11px]">
                       <td className="py-2.5 px-3 whitespace-nowrap text-zinc-400">
                         <div>{entry.timestamp}</div>
                         <div className="text-[9px] text-zinc-600">{entry.utcTimestamp}</div>

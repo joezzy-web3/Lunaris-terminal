@@ -191,14 +191,18 @@ export function AutonomousLoopPanel({
       {/* Module Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4 border-b border-white/10 pb-3">
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center">
+          {/* Lunaris Signature Multi-Color Diamond Logo Glyph */}
+          <div className="relative flex items-center justify-center shrink-0">
             <div
-              className={`w-2.5 h-2.5 rounded-full ${
-                isExecuting ? 'bg-[var(--lunaris-accent-cyan)] animate-pulse' : 'bg-gray-600'
+              className={`w-4 h-4 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-[#FACC15] to-[#D946EF] rotate-45 transition-all duration-300 ${
+                isExecuting
+                  ? 'shadow-[0_0_16px_rgba(0,240,255,0.85)] animate-pulse'
+                  : 'shadow-[0_0_10px_rgba(0,240,255,0.5)]'
               }`}
             />
+            <div className="absolute w-1.5 h-1.5 rounded-full bg-[#070709]" />
             {isExecuting && (
-              <span className="absolute w-4 h-4 rounded-full bg-[var(--lunaris-accent-cyan)] opacity-40 animate-ping" />
+              <span className="absolute w-5 h-5 rounded-full bg-[#00F0FF]/30 animate-ping pointer-events-none" />
             )}
           </div>
           <div>
@@ -768,9 +772,9 @@ export function AutonomousLoopPanel({
             {filteredLogs.length === 0 ? (
               <div className="text-gray-500 text-center py-8">No events match current filter.</div>
             ) : (
-              filteredLogs.map((log) => (
+              filteredLogs.map((log, index) => (
                 <div
-                  key={log.id}
+                  key={`${log.id}-${index}`}
                   className={`p-1.5 rounded border transition-colors ${
                     log.status === 'VETOED'
                       ? 'bg-amber-950/20 border-amber-500/30'

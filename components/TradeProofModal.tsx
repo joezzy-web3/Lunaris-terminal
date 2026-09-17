@@ -23,7 +23,7 @@ import {
   AlertTriangle,
   ShieldAlert,
 } from 'lucide-react';
-import { PaperTradeRecord } from '@/lib/paperTradingAudit';
+import { PaperTradeRecord, resolveTradePrices } from '@/lib/paperTradingAudit';
 import { formatAuditTimestamp } from '@/lib/firestoreAudit';
 import { playCyberClick } from '@/lib/soundSynth';
 
@@ -39,6 +39,9 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
   if (!trade) return null;
 
   const isProfit = trade.balanceChange >= 0;
+  const { entryPrice, exitPrice, priceDelta, priceDeltaPct } = resolveTradePrices(trade);
+  const decimals = entryPrice < 10 ? 4 : 2;
+
   // Deterministic synthetic execution hash based on trade ID
   const executionHash = `0x${(trade.id + trade.timestamp)
     .split('')
@@ -46,29 +49,28 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
     .join('')
     .slice(0, 40)}`;
 
-  // Simulated synthetic sparkline data around the execution price
-  const basePrice = trade.price;
+  // Simulated synthetic sparkline data anchored to entryPrice and exitPrice
   const directionMultiplier = trade.direction === 'LONG' ? 1 : -1;
   const targetMultiplier = isProfit ? 1 : -1;
 
-  // Generate 12 tick price points
+  // Generate 12 tick price points smoothly connecting entry to exit
   const tickPoints = [
-    basePrice * (1 - 0.006 * directionMultiplier),
-    basePrice * (1 - 0.004 * directionMultiplier),
-    basePrice * (1 - 0.002 * directionMultiplier),
-    basePrice * (1 - 0.001 * directionMultiplier),
-    basePrice, // Execution point index 4
-    basePrice * (1 + 0.003 * directionMultiplier * targetMultiplier),
-    basePrice * (1 + 0.007 * directionMultiplier * targetMultiplier),
-    basePrice * (1 + 0.012 * directionMultiplier * targetMultiplier),
-    basePrice * (1 + 0.018 * directionMultiplier * targetMultiplier),
-    basePrice * (1 + (trade.balanceChangePct / 100) * 0.7),
-    basePrice * (1 + (trade.balanceChangePct / 100) * 0.9),
-    basePrice * (1 + trade.balanceChangePct / 100),
+    entryPrice * (1 - 0.005 * directionMultiplier),
+    entryPrice * (1 - 0.003 * directionMultiplier),
+    entryPrice * (1 - 0.001 * directionMultiplier),
+    entryPrice * (1 - 0.0005 * directionMultiplier),
+    entryPrice, // Execution point index 4
+    entryPrice + (exitPrice - entryPrice) * 0.15 + (Math.random() * 0.001 * entryPrice * targetMultiplier),
+    entryPrice + (exitPrice - entryPrice) * 0.35,
+    entryPrice + (exitPrice - entryPrice) * 0.55 - (Math.random() * 0.001 * entryPrice * targetMultiplier),
+    entryPrice + (exitPrice - entryPrice) * 0.75,
+    entryPrice + (exitPrice - entryPrice) * 0.90,
+    entryPrice + (exitPrice - entryPrice) * 0.96,
+    exitPrice, // Settlement exit point index 11
   ];
 
-  const minPrice = Math.min(...tickPoints) * 0.998;
-  const maxPrice = Math.max(...tickPoints) * 1.002;
+  const minPrice = Math.min(...tickPoints, entryPrice, exitPrice) * 0.998;
+  const maxPrice = Math.max(...tickPoints, entryPrice, exitPrice) * 1.002;
   const range = maxPrice - minPrice || 1;
 
   // SVG coordinates for the sparkline (width 400, height 120)
@@ -109,7 +111,10 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
         instrument: trade.instrument,
         direction: trade.direction,
         leverage: `${trade.leverage}x`,
-        entryPrice: trade.price,
+        entryPrice: entryPrice,
+        exitPrice: exitPrice,
+        priceDeltaUsdt: priceDelta,
+        priceDeltaPct: `${priceDeltaPct}%`,
         sizeUsdt: trade.quantity,
         realizedPnlUsdt: trade.balanceChange,
         realizedPnlPct: `${trade.balanceChangePct}%`,
@@ -252,52 +257,69 @@ export const TradeProofModal: React.FC<TradeProofModalProps> = ({ trade, onClose
                   </svg>
 
                   {/* Marker Labels */}
-                  <div className="absolute left-2 top-2 text-[10px] bg-black/70 px-2 py-0.5 rounded border border-white/10 text-zinc-300">
-                    Entry: ${trade.price.toLocaleString()}
+                  <div className="absolute left-2 top-2 text-[10px] bg-black/80 px-2 py-0.5 rounded border border-white/10 text-cyan-300 font-mono">
+                    Entry: ${entryPrice.toLocaleString(undefined, { minimumFractionDigits: decimals })}
                   </div>
                   <div
-                    className={`absolute right-2 bottom-2 text-[10px] bg-black/70 px-2 py-0.5 rounded border ${
+                    className={`absolute right-2 bottom-2 text-[10px] bg-black/80 px-2 py-0.5 rounded border font-mono ${
                       isProfit ? 'border-emerald-500/40 text-emerald-400' : 'border-rose-500/40 text-rose-400'
                     }`}
                   >
-                    Settled: {isProfit ? '+' : ''}${trade.balanceChange.toFixed(2)} ({isProfit ? '+' : ''}
-                    {trade.balanceChangePct.toFixed(2)}%)
+                    Exit: ${exitPrice.toLocaleString(undefined, { minimumFractionDigits: decimals })} ({isProfit ? '+' : ''}${trade.balanceChange.toFixed(2)})
                   </div>
                 </div>
               </div>
 
               {/* Core Execution Metrics Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="bg-[#07080d] border border-white/10 p-3 rounded-xl space-y-1">
-                  <div className="text-[10px] text-zinc-500 uppercase">Execution Price</div>
-                  <div className="text-sm font-bold text-white">
-                    ${trade.price.toLocaleString(undefined, { minimumFractionDigits: trade.price < 10 ? 4 : 2 })}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+                <div className="bg-[#07080d] border border-white/10 p-2.5 rounded-xl space-y-1">
+                  <div className="text-[10px] text-zinc-500 uppercase">Entry Price</div>
+                  <div className="text-sm font-bold text-white font-mono">
+                    ${entryPrice.toLocaleString(undefined, { minimumFractionDigits: decimals })}
                   </div>
-                  <div className="text-[9px] text-zinc-400">Bitget Orderbook Mid</div>
+                  <div className="text-[9px] text-cyan-400 font-mono">In Fill</div>
                 </div>
 
-                <div className="bg-[#07080d] border border-white/10 p-3 rounded-xl space-y-1">
+                <div className="bg-[#07080d] border border-white/10 p-2.5 rounded-xl space-y-1">
+                  <div className="text-[10px] text-zinc-500 uppercase">Exit Price</div>
+                  <div className={`text-sm font-bold font-mono ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    ${exitPrice.toLocaleString(undefined, { minimumFractionDigits: decimals })}
+                  </div>
+                  <div className="text-[9px] text-zinc-400 font-mono">Out Fill</div>
+                </div>
+
+                <div className="bg-[#07080d] border border-white/10 p-2.5 rounded-xl space-y-1">
+                  <div className="text-[10px] text-zinc-500 uppercase">Price Move</div>
+                  <div className={`text-sm font-bold font-mono ${priceDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {priceDelta >= 0 ? '+' : ''}${priceDelta.toFixed(decimals)}
+                  </div>
+                  <div className="text-[9px] text-zinc-400 font-mono">
+                    ({priceDeltaPct >= 0 ? '+' : ''}{priceDeltaPct.toFixed(2)}%)
+                  </div>
+                </div>
+
+                <div className="bg-[#07080d] border border-white/10 p-2.5 rounded-xl space-y-1">
                   <div className="text-[10px] text-zinc-500 uppercase">Order Sizing</div>
-                  <div className="text-sm font-bold text-white">${trade.quantity.toLocaleString()} USDT</div>
-                  <div className="text-[9px] text-zinc-400">Leverage: {trade.leverage}x</div>
+                  <div className="text-sm font-bold text-white font-mono">${trade.quantity.toLocaleString()}</div>
+                  <div className="text-[9px] text-zinc-400 font-mono">Leverage: {trade.leverage}x</div>
                 </div>
 
-                <div className="bg-[#07080d] border border-white/10 p-3 rounded-xl space-y-1">
+                <div className="bg-[#07080d] border border-white/10 p-2.5 rounded-xl space-y-1">
                   <div className="text-[10px] text-zinc-500 uppercase">Settled PnL</div>
-                  <div className={`text-sm font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div className={`text-sm font-bold font-mono ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {isProfit ? '+' : ''}${trade.balanceChange.toFixed(2)}
                   </div>
-                  <div className={`text-[9px] ${isProfit ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  <div className={`text-[9px] font-mono ${isProfit ? 'text-emerald-500' : 'text-rose-500'}`}>
                     {isProfit ? '+' : ''}{trade.balanceChangePct.toFixed(2)}%
                   </div>
                 </div>
 
-                <div className="bg-[#07080d] border border-white/10 p-3 rounded-xl space-y-1">
+                <div className="bg-[#07080d] border border-white/10 p-2.5 rounded-xl space-y-1">
                   <div className="text-[10px] text-zinc-500 uppercase">Ending Balance</div>
-                  <div className="text-sm font-bold text-white">
+                  <div className="text-sm font-bold text-white font-mono">
                     ${trade.accountBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </div>
-                  <div className="text-[9px] text-zinc-400">Verified Ledger</div>
+                  <div className="text-[9px] text-zinc-400 font-mono">Verified Ledger</div>
                 </div>
               </div>
 

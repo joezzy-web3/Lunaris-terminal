@@ -29,10 +29,14 @@ import {
   FileText,
   Sliders,
   Skull,
+  Gavel,
+  Layers,
 } from 'lucide-react';
+import { CyberCourtroomView } from './CyberCourtroomView';
+import { ReHuddlePanel } from './ReHuddlePanel';
 import { TradeProposal } from '@/lib/riskVeto';
 import { fetchPriceSnapshot, ASSET_REGISTRY } from '@/lib/liveTokenFeed';
-import { getSeededPrice } from '@/lib/demoSeedData';
+import { getSeededPrice, SEEDED_ASSETS } from '@/lib/demoSeedData';
 import {
   generateCouncilDebate,
   ConsensusVerdict,
@@ -102,6 +106,7 @@ export function DebateConsole({
   const [forceOverAllocation, setForceOverAllocation] = useState<boolean>(false);
   const [handoffSuccess, setHandoffSuccess] = useState<boolean>(false);
   const [soundActive, setSoundActive] = useState<boolean>(getTerminalSoundState());
+  const [councilViewMode, setCouncilViewMode] = useState<'MATRIX' | 'COURTROOM'>('MATRIX');
 
   // Real-time AI / Gemini telemetry metadata
   const [groundingInfo, setGroundingInfo] = useState<GroundingInfo | null>(null);
@@ -186,8 +191,10 @@ export function DebateConsole({
     setGroundingInfo(null);
     setCatalysts([]);
 
-    // 1. Fetch real price snapshot from feed
-    let currentPrice = 0;
+    // 1. Fetch real price snapshot from feed, pre-seeded synchronously to guarantee non-zero base
+    const seedPrice = getSeededPrice(symbol);
+    const registryBase = SEEDED_ASSETS[symbol]?.basePrice || (symbol === 'BTC' ? 76500 : 100);
+    let currentPrice = seedPrice > 0 ? seedPrice : registryBase;
     let change24hVal = 0;
     try {
       const snap = await fetchPriceSnapshot(symbol);
@@ -196,7 +203,7 @@ export function DebateConsole({
         change24hVal = snap.change24h;
       }
     } catch {
-      currentPrice = getSeededPrice(symbol);
+      // currentPrice is already safely anchored to realistic asset baseline
     }
 
     // 2. Query Gemini Real-Time Search Grounding API
@@ -210,6 +217,7 @@ export function DebateConsole({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ticker: symbol,
+          clientPrice: currentPrice > 0 ? currentPrice : undefined,
           instruction: instructionToUse || pulseToUse?.catalystSummary || undefined,
           forceOverAllocation,
         }),
@@ -238,7 +246,18 @@ export function DebateConsole({
     let activeVerdict: ConsensusVerdict;
 
     if (apiData && apiData.turns && apiData.turns.length >= 3) {
-      const finalPrice = apiData.currentPrice || currentPrice || 100;
+      let finalPrice = (apiData.currentPrice && Number.isFinite(apiData.currentPrice) && apiData.currentPrice > 0)
+        ? apiData.currentPrice
+        : (currentPrice > 0 ? currentPrice : 100);
+
+      // Sanity safeguard: if apiData.currentPrice is wildly divergent from live feed, snap to live feed
+      if (currentPrice > 0 && Number.isFinite(currentPrice)) {
+        const divergence = Math.abs(finalPrice - currentPrice) / currentPrice;
+        if (divergence > 0.10 || !Number.isFinite(finalPrice) || finalPrice <= 0) {
+          console.warn(`[DebateConsole] Deliberation price $${finalPrice} diverged by ${(divergence * 100).toFixed(1)}% from live market feed $${currentPrice}. Calibrating to verified live market price.`);
+          finalPrice = currentPrice;
+        }
+      }
       const v = apiData.verdict || {};
       const action = v.action === 'VETO' ? 'HOLD' : (v.action || 'BUY');
       const optimalSize = forceOverAllocation ? 32 : (v.optimalSizePct ?? 4.5);
@@ -379,11 +398,33 @@ export function DebateConsole({
       const riskMitigationClause = v.riskMitigationClause || 
         `NEXUS-RED Trap Audit: Orderbook depth verified. Limit order execution enforced with slippage bound to 0.05%. Max VaR bounded at -${stopLossPct}% NAV.`;
 
+      const executionType = v.executionType || 'MARKET_ORDER';
+      let targetEntryPrice = finalPrice;
+      if (executionType === 'MARKET_ORDER') {
+        targetEntryPrice = finalPrice;
+      } else {
+        const rawTarget = Number(v.targetEntryPrice);
+        if (Number.isFinite(rawTarget) && rawTarget > 0) {
+          const targetDev = Math.abs(rawTarget - finalPrice) / finalPrice;
+          if (targetDev <= 0.08) {
+            targetEntryPrice = Number(rawTarget.toFixed(2));
+          } else {
+            targetEntryPrice = executionType === 'LIMIT_PULLBACK' || rawTarget < finalPrice
+              ? Number((finalPrice * 0.985).toFixed(2))
+              : Number((finalPrice * 1.015).toFixed(2));
+          }
+        } else {
+          targetEntryPrice = finalPrice;
+        }
+      }
+
       activeVerdict = {
         ticker: symbol,
         assetClass: ['BTC', 'ETH', 'SOL', 'SUI', 'DOGE'].includes(symbol) ? 'CX' : 'EQ',
         currentPrice: finalPrice,
         action,
+        executionType,
+        targetEntryPrice,
         optimalSizePct: optimalSize,
         winRatePct: winRate,
         riskRewardRatio: Number((takeProfitPct / stopLossPct).toFixed(2)),
@@ -578,7 +619,114 @@ export function DebateConsole({
         </div>
       </div>
 
-      {/* Main Search & Instruction Input Deck */}
+      {/* DUAL VIEW MODE SELECTOR: QUORUM MATRIX VS LIVE CYBER COURTROOM */}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 bg-[#090a0f] border border-white/10 p-1.5 rounded-xl">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              playCyberClick();
+              setCouncilViewMode('MATRIX');
+            }}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              councilViewMode === 'MATRIX'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Quorum Matrix</span>
+            <span className="text-[9px] bg-white/10 text-zinc-300 px-1.5 py-0.5 rounded font-mono">DEFAULT</span>
+          </button>
+
+          <button
+            onClick={() => {
+              playCyberClick();
+              setCouncilViewMode('COURTROOM');
+            }}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              councilViewMode === 'COURTROOM'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Gavel className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Cyber Courtroom (Live Trial)</span>
+            <span className="text-[9px] bg-white/5 text-zinc-400 border border-white/10 px-1.5 py-0.5 rounded font-mono">
+              INTERACTIVE
+            </span>
+          </button>
+        </div>
+
+        {verdict && councilViewMode === 'MATRIX' && (
+          <button
+            onClick={() => {
+              playCyberClick();
+              setCouncilViewMode('COURTROOM');
+            }}
+            className="flex items-center gap-1.5 text-xs text-zinc-300 bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1 rounded-lg font-mono transition-all cursor-pointer"
+            title="Open animated courtroom trial with Gavel slam & cross-examination"
+          >
+            <Gavel className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Spectate Live Trial 🏛️</span>
+          </button>
+        )}
+      </div>
+
+      {councilViewMode === 'COURTROOM' ? (
+        <div className="space-y-4 animate-fadeIn">
+          {/* Main Search & Instruction Input Deck (Preserved in Courtroom Mode) */}
+          <div className="bg-[#090a0f] border border-white/10 rounded-lg p-3 space-y-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              {/* Universal Ticker Input */}
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-zinc-400">
+                  <Search className="w-3.5 h-3.5" />
+                </div>
+                <input
+                  type="text"
+                  value={ticker}
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === 'Enter' && !isDebating && startCouncilDeliberation()}
+                  className="w-full bg-[#07080c] border border-white/15 rounded-md pl-9 pr-3 py-2 text-xs text-white uppercase font-bold placeholder:text-zinc-500 placeholder:font-normal focus:border-white focus:ring-1 focus:ring-white outline-none transition-all"
+                  placeholder="ENTER ANY TICKER (e.g. BTC, ETH, SOL, PLTR, NVDA)"
+                />
+              </div>
+
+              {/* Convene Button */}
+              <button
+                onClick={() => startCouncilDeliberation()}
+                disabled={isDebating || !ticker.trim()}
+                className="bg-white hover:bg-zinc-200 text-black font-extrabold px-5 py-2 rounded-md text-xs transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-40 cursor-pointer"
+              >
+                <Gavel className="w-3.5 h-3.5 fill-black" />
+                <span>{isDebating ? 'CONVENING COURT...' : 'CONVENE TRIBUNAL'}</span>
+              </button>
+            </div>
+          </div>
+
+          <CyberCourtroomView
+            verdict={verdict}
+            ticker={ticker}
+            isDebating={isDebating}
+            onConveneNewTrial={(sym) => startCouncilDeliberation(sym)}
+            onSendToAutopilot={onSendToAutopilot}
+            onReturnToMatrix={() => setCouncilViewMode('MATRIX')}
+            soundActive={soundActive}
+            onToggleSound={handleToggleSound}
+            onApplyAmendedVerdict={(updatedVerdict) => {
+              setVerdict(updatedVerdict);
+              if (updatedVerdict.targetEntryPrice) {
+                setLivePriceData((prev) => ({
+                  price: updatedVerdict.currentPrice,
+                  change24h: prev?.change24h ?? 0,
+                }));
+              }
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Main Search & Instruction Input Deck */}
       <div className="bg-black/50 border border-white/10 rounded-lg p-3 mb-4 space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {/* Universal Ticker Input */}
@@ -953,19 +1101,33 @@ export function DebateConsole({
                 <Users className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-white tracking-wider flex items-center gap-2">
-                  CONSENSUS OUTCOME:{' '}
-                  <span className={verdict.action === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}>
+                <div className="text-xs font-bold text-white tracking-wider flex items-center gap-2 flex-wrap">
+                  <span>CONSENSUS OUTCOME:</span>
+                  <span className={verdict.action === 'BUY' ? 'text-emerald-400 font-extrabold' : 'text-rose-400 font-extrabold'}>
                     {verdict.action} {verdict.ticker}
                   </span>
-                  {livePriceData && (
-                    <span className="text-zinc-400 font-mono text-[11px]">
-                      (${livePriceData.price > 1000 ? livePriceData.price.toLocaleString() : livePriceData.price.toFixed(2)})
-                    </span>
-                  )}
+                  
+                  {/* Execution Instruction Badge: Market vs Limit */}
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-normal uppercase border ${
+                    verdict.executionType === 'LIMIT_PULLBACK'
+                      ? 'bg-amber-950/60 text-amber-300 border-amber-500/40'
+                      : verdict.executionType === 'BREAKOUT_STOP'
+                      ? 'bg-blue-950/60 text-blue-300 border-blue-500/40'
+                      : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
+                  }`}>
+                    {verdict.executionType === 'LIMIT_PULLBACK'
+                      ? `Limit Retest Entry @ $${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}`
+                      : verdict.executionType === 'BREAKOUT_STOP'
+                      ? `Breakout Stop @ $${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}`
+                      : `Market Entry @ Current: $${verdict.currentPrice.toLocaleString()}`}
+                  </span>
                 </div>
-                <div className="text-[10px] text-zinc-400">
-                  4-Agent Quorum Consensus • Ratified at {verdict.timestamp}
+                <div className="text-[10px] text-zinc-400 flex items-center gap-2 mt-0.5">
+                  <span>Live Market: <strong className="text-zinc-200 font-mono">${verdict.currentPrice.toLocaleString()}</strong></span>
+                  <span>•</span>
+                  <span>Target Entry: <strong className="text-white font-mono">${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}</strong></span>
+                  <span>•</span>
+                  <span>4-Agent Quorum Consensus • Ratified at {verdict.timestamp}</span>
                 </div>
               </div>
             </div>
@@ -1125,6 +1287,20 @@ export function DebateConsole({
             <p className="text-zinc-200 leading-relaxed text-[11px] font-sans">{verdict.synthesizedReasoning}</p>
           </div>
 
+          {/* Council Re-Huddle & Cross-Examination Chamber */}
+          <ReHuddlePanel
+            verdict={verdict}
+            onApplyAmendedVerdict={(updatedVerdict) => {
+              setVerdict(updatedVerdict);
+              if (updatedVerdict.targetEntryPrice) {
+                setLivePriceData((prev) => ({
+                  price: updatedVerdict.currentPrice,
+                  change24h: prev?.change24h ?? 0,
+                }));
+              }
+            }}
+          />
+
           {/* Dispatch to Autopilot Session */}
           <button
             onClick={handleDispatchToAutopilot}
@@ -1158,6 +1334,8 @@ export function DebateConsole({
             <span className="text-white font-bold">CONVENE COUNCIL</span>. The 4 agent personas (including NEXUS-RED Adversarial Red Team) deliberate in sequence using real-time search grounding.
           </p>
         </div>
+      )}
+        </>
       )}
     </div>
   );

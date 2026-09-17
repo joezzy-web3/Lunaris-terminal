@@ -2,6 +2,7 @@
 // Multi-Agent Quad-Persona Autonomous Deliberation & Consensus Engine (with Adversarial Red Team)
 
 import { TradeProposal } from './riskVeto';
+import { SEEDED_ASSETS } from './demoSeedData';
 
 export type AgentPersonaId = 'QUANT' | 'GUARDIAN' | 'MACRO' | 'NEXUS_RED';
 
@@ -87,6 +88,8 @@ export interface ConsensusVerdict {
   assetClass: 'CX' | 'EQ';
   currentPrice: number;
   action: 'BUY' | 'SELL' | 'HOLD';
+  executionType?: 'MARKET_ORDER' | 'LIMIT_PULLBACK' | 'BREAKOUT_STOP';
+  targetEntryPrice?: number;
   optimalSizePct: number;
   winRatePct: number;
   riskRewardRatio: number;
@@ -119,8 +122,9 @@ export function generateCouncilDebate(
   pulseContext?: PulseContext
 ): ConsensusVerdict {
   const ticker = (tickerRaw || 'BTC').trim().toUpperCase();
-  const isCrypto = ['BTC', 'ETH', 'SOL', 'AVAX', 'XRP', 'BNB', 'DOGE'].includes(ticker);
-  const price = currentPrice > 0 ? currentPrice : (isCrypto ? 87400 : 185);
+  const seedAsset = SEEDED_ASSETS[ticker] || SEEDED_ASSETS[ticker.replace('/USDT', '')];
+  const isCrypto = seedAsset ? seedAsset.class === 'CX' : ['BTC', 'ETH', 'SOL', 'AVAX', 'XRP', 'BNB', 'DOGE', 'SUI', 'PEPE', 'ADA', 'LINK'].includes(ticker);
+  const price = currentPrice > 0 ? currentPrice : (seedAsset?.basePrice || (isCrypto ? (ticker === 'BTC' ? 76500 : 1.0) : 100));
 
   // Dynamic parameters calibrated for this asset
   const baseWinRate = Math.round(76 + Math.random() * 8); // 76% - 84%
@@ -353,6 +357,8 @@ export function generateCouncilDebate(
     assetClass: isCrypto ? 'CX' : 'EQ',
     currentPrice: price,
     action: 'BUY',
+    executionType: 'MARKET_ORDER',
+    targetEntryPrice: price,
     optimalSizePct: optimalSize,
     winRatePct: baseWinRate,
     riskRewardRatio: riskReward,

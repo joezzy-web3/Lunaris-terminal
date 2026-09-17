@@ -26,8 +26,16 @@ export const ASSET_REGISTRY: Record<
   BTC: { name: 'Bitcoin', class: 'CX', geckoId: 'bitcoin' },
   ETH: { name: 'Ethereum', class: 'CX', geckoId: 'ethereum' },
   SOL: { name: 'Solana', class: 'CX', geckoId: 'solana' },
-  AVAX: { name: 'Avalanche', class: 'CX', geckoId: 'avalanche-2' },
+  SUI: { name: 'Sui Network', class: 'CX', geckoId: 'sui' },
+  DOGE: { name: 'Dogecoin', class: 'CX', geckoId: 'dogecoin' },
   XRP: { name: 'Ripple', class: 'CX', geckoId: 'ripple' },
+  AVAX: { name: 'Avalanche', class: 'CX', geckoId: 'avalanche-2' },
+  ADA: { name: 'Cardano', class: 'CX', geckoId: 'cardano' },
+  LINK: { name: 'Chainlink', class: 'CX', geckoId: 'chainlink' },
+  NEAR: { name: 'Near Protocol', class: 'CX', geckoId: 'near' },
+  PEPE: { name: 'Pepe', class: 'CX', geckoId: 'pepe' },
+  TAO: { name: 'Bittensor', class: 'CX', geckoId: 'bittensor' },
+  APT: { name: 'Aptos', class: 'CX', geckoId: 'aptos' },
   BNB: { name: 'BNB Chain', class: 'CX', geckoId: 'binancecoin' },
   AAPL: { name: 'Apple Inc.', class: 'EQ', yahooSymbol: 'AAPL' },
   TSLA: { name: 'Tesla Inc.', class: 'EQ', yahooSymbol: 'TSLA' },
@@ -41,6 +49,7 @@ export const ASSET_REGISTRY: Record<
   MSTR: { name: 'MicroStrategy', class: 'EQ', yahooSymbol: 'MSTR' },
   COIN: { name: 'Coinbase', class: 'EQ', yahooSymbol: 'COIN' },
   PLTR: { name: 'Palantir', class: 'EQ', yahooSymbol: 'PLTR' },
+  AMD: { name: 'Advanced Micro Devices', class: 'EQ', yahooSymbol: 'AMD' },
 };
 
 export const priceCache: Record<string, PriceSnapshot> = {};
@@ -126,13 +135,43 @@ export async function fetchPriceSnapshot(ticker: string): Promise<PriceSnapshot>
     // Continue to direct fallbacks
   }
 
+  // 1b. Direct server quote on-demand for any specific crypto/equity ticker
+  try {
+    const quoteRes = await fetch(`/api/market/quote?ticker=${encodeURIComponent(sym)}`);
+    if (quoteRes.ok) {
+      const quoteJson = await quoteRes.json();
+      if (quoteJson?.success && quoteJson.quote) {
+        const q = quoteJson.quote;
+        const validPrice = Number(q.price);
+        if (Number.isFinite(validPrice) && validPrice > 0) {
+          const snapshot: PriceSnapshot = {
+            ticker: sym,
+            price: validPrice,
+            change24h: Number.isFinite(q.change24h) ? q.change24h : 0,
+            source: 'live',
+            class: (q.class || asset.class) as 'CX' | 'EQ',
+            lastUpdated: Date.now(),
+            volume24h: q.volume,
+            high24h: q.high24h,
+            low24h: q.low24h,
+          };
+          priceCache[sym] = snapshot;
+          recordTickHistory(sym, snapshot.price);
+          return snapshot;
+        }
+      }
+    }
+  } catch {
+    // Continue to external feeds
+  }
+
   try {
     let rawPrice: number | null = null;
     let change24hVal: number | null = null;
 
     // Timeout controller so client never blocks on slow external API calls
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
 
     if (asset.class === 'CX' && asset.geckoId) {
       const res = await fetch(
@@ -163,24 +202,28 @@ export async function fetchPriceSnapshot(ticker: string): Promise<PriceSnapshot>
 
     const previousPrice = priceCache[ticker]?.price;
 
-    // Sanity Safeguard: Dev deviation threshold check (15%)
+    // Live price acceptance: accept real positive price from external feeds with sanity corridor check
     if (
       rawPrice !== null &&
-      isFinite(rawPrice) &&
-      rawPrice > 0 &&
-      (!previousPrice || Math.abs(rawPrice - previousPrice) / previousPrice <= 0.15)
+      Number.isFinite(rawPrice) &&
+      rawPrice > 0
     ) {
-      const snapshot: PriceSnapshot = {
-        ticker,
-        price: rawPrice,
-        change24h: change24hVal !== null ? change24hVal : ((rawPrice - (previousPrice || rawPrice)) / rawPrice) * 100,
-        source: 'live',
-        class: asset.class,
-        lastUpdated: Date.now(),
-      };
-      priceCache[ticker] = snapshot;
-      recordTickHistory(ticker, snapshot.price);
-      return snapshot;
+      const baseline = SEEDED_ASSETS[ticker]?.basePrice;
+      const isValidCorridor = !baseline || Math.abs(rawPrice - baseline) / baseline <= 0.50;
+
+      if (isValidCorridor) {
+        const snapshot: PriceSnapshot = {
+          ticker,
+          price: rawPrice,
+          change24h: change24hVal !== null ? change24hVal : (previousPrice ? ((rawPrice - previousPrice) / previousPrice) * 100 : 0),
+          source: 'live',
+          class: asset.class,
+          lastUpdated: Date.now(),
+        };
+        priceCache[ticker] = snapshot;
+        recordTickHistory(ticker, snapshot.price);
+        return snapshot;
+      }
     }
   } catch (err) {
     // Graceful fallback to Seeded Random-Walk Engine

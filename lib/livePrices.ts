@@ -197,9 +197,14 @@ export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { 
     // Continue to fallback
   }
 
-  // Fallback to public Binance endpoint for crypto if proxy is unreachable
+  // Fallback to public Binance endpoint for crypto if proxy is unreachable and environment allows
   try {
-    const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT"]');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT"]', {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
     if (!res.ok) return {};
     const data = await res.json();
     const result: Partial<Record<string, { price: number; change24h: number }>> = {};
@@ -226,8 +231,8 @@ export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { 
       notifySubscribers();
     }
     return result;
-  } catch (err) {
-    console.warn('Live crypto fetch fallback:', err);
+  } catch {
+    // Graceful fallback to seeded quote engine; avoid browser CORS noise
     return {};
   }
 }

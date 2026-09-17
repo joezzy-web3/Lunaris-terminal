@@ -34,7 +34,7 @@ export function HackathonCreditsModal({ isOpen, onClose }: { isOpen: boolean; on
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Competition Track:</span>
               <span className="text-cyan-300 font-bold px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30">
-                Agentic Trading Track — Cross-Asset Execution Agent Sub-Theme
+                Agentic Trading
               </span>
             </div>
             <div className="flex items-center justify-between pt-1 border-t border-white/5">

@@ -14,11 +14,19 @@ export interface AssetSeedConfig {
 }
 
 export const SEEDED_ASSETS: Record<string, AssetSeedConfig> = {
-  BTC: { ticker: 'BTC', name: 'Bitcoin', basePrice: 77300.0, volatility: 0.0035, class: 'CX', unitDecimals: 2 },
-  ETH: { ticker: 'ETH', name: 'Ethereum', basePrice: 2520.0, volatility: 0.004, class: 'CX', unitDecimals: 2 },
-  SOL: { ticker: 'SOL', name: 'Solana', basePrice: 101.5, volatility: 0.0055, class: 'CX', unitDecimals: 2 },
-  AVAX: { ticker: 'AVAX', name: 'Avalanche', basePrice: 28.6, volatility: 0.005, class: 'CX', unitDecimals: 2 },
-  XRP: { ticker: 'XRP', name: 'Ripple', basePrice: 2.14, volatility: 0.006, class: 'CX', unitDecimals: 4 },
+  BTC: { ticker: 'BTC', name: 'Bitcoin', basePrice: 76500.0, volatility: 0.0035, class: 'CX', unitDecimals: 2 },
+  ETH: { ticker: 'ETH', name: 'Ethereum', basePrice: 2435.0, volatility: 0.004, class: 'CX', unitDecimals: 2 },
+  SOL: { ticker: 'SOL', name: 'Solana', basePrice: 99.5, volatility: 0.0055, class: 'CX', unitDecimals: 2 },
+  SUI: { ticker: 'SUI', name: 'Sui Network', basePrice: 0.72, volatility: 0.006, class: 'CX', unitDecimals: 4 },
+  DOGE: { ticker: 'DOGE', name: 'Dogecoin', basePrice: 0.081, volatility: 0.006, class: 'CX', unitDecimals: 5 },
+  XRP: { ticker: 'XRP', name: 'Ripple', basePrice: 1.29, volatility: 0.005, class: 'CX', unitDecimals: 4 },
+  AVAX: { ticker: 'AVAX', name: 'Avalanche', basePrice: 7.52, volatility: 0.005, class: 'CX', unitDecimals: 2 },
+  ADA: { ticker: 'ADA', name: 'Cardano', basePrice: 0.198, volatility: 0.005, class: 'CX', unitDecimals: 4 },
+  LINK: { ticker: 'LINK', name: 'Chainlink', basePrice: 11.14, volatility: 0.004, class: 'CX', unitDecimals: 2 },
+  NEAR: { ticker: 'NEAR', name: 'Near Protocol', basePrice: 2.79, volatility: 0.006, class: 'CX', unitDecimals: 3 },
+  PEPE: { ticker: 'PEPE', name: 'Pepe', basePrice: 0.00000345, volatility: 0.008, class: 'CX', unitDecimals: 8 },
+  TAO: { ticker: 'TAO', name: 'Bittensor', basePrice: 226.2, volatility: 0.006, class: 'CX', unitDecimals: 2 },
+  APT: { ticker: 'APT', name: 'Aptos', basePrice: 0.575, volatility: 0.006, class: 'CX', unitDecimals: 4 },
   BNB: { ticker: 'BNB', name: 'BNB Chain', basePrice: 592.0, volatility: 0.003, class: 'CX', unitDecimals: 2 },
   AAPL: { ticker: 'AAPL', name: 'Apple Inc.', basePrice: 228.4, volatility: 0.002, class: 'EQ', unitDecimals: 2 },
   TSLA: { ticker: 'TSLA', name: 'Tesla Inc.', basePrice: 248.8, volatility: 0.006, class: 'EQ', unitDecimals: 2 },
@@ -32,6 +40,7 @@ export const SEEDED_ASSETS: Record<string, AssetSeedConfig> = {
   MSTR: { ticker: 'MSTR', name: 'MicroStrategy', basePrice: 131.0, volatility: 0.008, class: 'EQ', unitDecimals: 2 },
   COIN: { ticker: 'COIN', name: 'Coinbase Global', basePrice: 175.3, volatility: 0.007, class: 'EQ', unitDecimals: 2 },
   PLTR: { ticker: 'PLTR', name: 'Palantir Tech', basePrice: 68.7, volatility: 0.005, class: 'EQ', unitDecimals: 2 },
+  AMD: { ticker: 'AMD', name: 'Advanced Micro Devices', basePrice: 145.2, volatility: 0.005, class: 'EQ', unitDecimals: 2 },
 };
 
 // Internal tracked state for random walk continuous motion
@@ -52,12 +61,15 @@ export function clearAssetShocks() {
  * Returns seeded price with realistic random walk drift and strict deviation sanity guard.
  */
 export function getSeededPrice(ticker: string, currentPrice?: number): number {
-  const asset = SEEDED_ASSETS[ticker];
-  const targetBase = asset ? asset.basePrice : 100;
+  const normTicker = (ticker || 'BTC').toUpperCase().trim();
+  const asset = SEEDED_ASSETS[normTicker] || SEEDED_ASSETS[normTicker.replace('/USDT', '')];
+  
+  const candidate = currentPrice || lastGeneratedPrices[normTicker];
+  // If not seeded but candidate is a valid positive price, adopt candidate as targetBase
+  const targetBase = asset ? asset.basePrice : (candidate && candidate > 0 ? candidate : 100);
   
   // Strict Sanity Check: If currentPrice or cached price is corrupt or drifted > 20%, snap back to targetBase
   let base = targetBase;
-  const candidate = currentPrice || lastGeneratedPrices[ticker];
   if (candidate && Number.isFinite(candidate) && candidate > 0) {
     const deviation = Math.abs(candidate - targetBase) / targetBase;
     if (deviation <= 0.20) {

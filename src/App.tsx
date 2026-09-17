@@ -65,10 +65,65 @@ import {
   Key,
   Command,
   Headphones,
+  ArrowLeft,
+  ChevronLeft,
 } from 'lucide-react';
 
+export type TerminalTab = 'DECK' | 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'ALGO' | 'AUDIT';
+
+const TAB_LABELS: Record<TerminalTab, string> = {
+  DECK: 'Command Deck',
+  TERMINAL: 'Pro Cockpit',
+  AUTOPILOT: 'Autopilot',
+  COUNCIL: 'Council',
+  PULSE: 'Pulse Radar',
+  ALGO: 'Algo Builder',
+  AUDIT: 'Audit Ledger',
+};
+
+const TAB_PATHS: Record<TerminalTab, string> = {
+  DECK: '/',
+  TERMINAL: '/terminal',
+  AUTOPILOT: '/autopilot',
+  COUNCIL: '/council',
+  PULSE: '/pulse',
+  ALGO: '/algo',
+  AUDIT: '/auditlog',
+};
+
+export function getInitialTab(): TerminalTab {
+  if (typeof window === 'undefined') return 'DECK';
+  const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
+  const search = new URLSearchParams(window.location.search);
+  const tabParam = search.get('tab')?.toLowerCase();
+  const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
+
+  const matchTarget = tabParam || path || hash;
+
+  if (['audit', 'auditlog', 'audit-log', 'audit_log', 'ledger', 'trades'].includes(matchTarget)) {
+    return 'AUDIT';
+  }
+  if (['autopilot', 'loop', 'auto', 'autonomous'].includes(matchTarget)) {
+    return 'AUTOPILOT';
+  }
+  if (['council', 'debate', 'quorum'].includes(matchTarget)) {
+    return 'COUNCIL';
+  }
+  if (['pulse', 'radar', 'social'].includes(matchTarget)) {
+    return 'PULSE';
+  }
+  if (['algo', 'builder', 'algobuilder'].includes(matchTarget)) {
+    return 'ALGO';
+  }
+  if (['terminal', 'pro', 'cockpit', 'chart'].includes(matchTarget)) {
+    return 'TERMINAL';
+  }
+  return 'DECK';
+}
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'DECK' | 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'ALGO' | 'AUDIT'>('DECK');
+  const [activeTab, setActiveTab] = useState<TerminalTab>(() => getInitialTab());
+  const [tabHistory, setTabHistory] = useState<TerminalTab[]>([]);
   const [cockpitModule, setCockpitModule] = useState<'CHART' | 'AUTOPILOT' | 'COUNCIL' | 'PULSE' | 'DEPTH' | 'STATARB' | 'KILLSWITCH' | 'AUDIT' | 'ALL'>('CHART');
   const [councilSelectedTicker, setCouncilSelectedTicker] = useState<string>('BTC');
   const [incomingPulseContext, setIncomingPulseContext] = useState<(PulseContext & { ticker: string }) | null>(null);
@@ -127,10 +182,66 @@ export default function App() {
     setTradingFloorAudio(nextAmbience);
   };
 
+  // Listen to browser forward/back buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const tab = getInitialTab();
+      setActiveTab(tab);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Sync initial URL if on audit
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const initial = getInitialTab();
+      const currentPath = window.location.pathname.toLowerCase();
+      if (initial === 'AUDIT' && currentPath !== '/auditlog') {
+        window.history.replaceState({ tab: 'AUDIT' }, '', '/auditlog');
+      }
+    }
+  }, []);
+
+  // Navigates to a tab while pushing the current tab onto the history stack and updating the browser URL
+  const navigateToTab = (newTab: TerminalTab, pushUrl: boolean = true) => {
+    if (newTab === activeTab) return;
+    setTabHistory((prev) => [...prev, activeTab]);
+    setActiveTab(newTab);
+
+    if (pushUrl && typeof window !== 'undefined') {
+      const targetPath = TAB_PATHS[newTab] || '/';
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ tab: newTab }, '', targetPath);
+      }
+    }
+  };
+
+  // Return to the previous tab, or fallback to COMMAND DECK
+  const handleGoBack = () => {
+    playCyberClick();
+    if (tabHistory.length > 0) {
+      const prevTab = tabHistory[tabHistory.length - 1];
+      setTabHistory((prev) => prev.slice(0, -1));
+      setActiveTab(prevTab);
+      if (typeof window !== 'undefined') {
+        const targetPath = TAB_PATHS[prevTab] || '/';
+        window.history.pushState({ tab: prevTab }, '', targetPath);
+      }
+    } else {
+      setActiveTab('DECK');
+      if (typeof window !== 'undefined') {
+        window.history.pushState({ tab: 'DECK' }, '', '/');
+      }
+    }
+  };
+
+  const previousTab = tabHistory.length > 0 ? tabHistory[tabHistory.length - 1] : 'DECK';
+
   // Dispatch signal from Council, Algo Builder, or Demo Scenario directly into Autopilot
   const handleSendToAutopilot = (proposal: TradeProposal) => {
     setIncomingProposal(proposal);
-    setActiveTab('TERMINAL');
+    navigateToTab('TERMINAL');
     setCockpitModule('AUTOPILOT');
   };
 
@@ -149,7 +260,7 @@ export default function App() {
     if (activeTab === 'TERMINAL') {
       setCockpitModule('COUNCIL');
     } else {
-      setActiveTab('COUNCIL');
+      navigateToTab('COUNCIL');
     }
 
     // Scroll directly to the Council section
@@ -163,7 +274,7 @@ export default function App() {
 
   const handleSelectAssetFromMarquee = (ticker: string) => {
     setCouncilSelectedTicker(ticker);
-    setActiveTab('TERMINAL');
+    navigateToTab('TERMINAL');
     setCockpitModule('CHART');
   };
 
@@ -190,12 +301,28 @@ export default function App() {
       {/* Streamlined Cybernetic Navigation Header */}
       <header className="border-b border-[var(--lunaris-panel-border)] bg-[#070709]/95 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-          {/* Left: Brand Identity */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Left: Brand Identity & Dedicated Back Button */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Dedicated Cybernetic Back Button for non-home sections */}
+            {activeTab !== 'DECK' && (
+              <button
+                id="header-back-button"
+                onClick={handleGoBack}
+                title={`Back to ${TAB_LABELS[previousTab] || 'previous view'}`}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20 border border-[#00F0FF]/40 text-[#00F0FF] hover:text-white transition-all shadow-[0_0_12px_rgba(0,240,255,0.2)] hover:shadow-[0_0_18px_rgba(0,240,255,0.4)] cursor-pointer text-xs font-bold font-mono group"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+                <span className="hidden sm:inline">BACK</span>
+                <span className="hidden lg:inline text-[10px] text-zinc-400 group-hover:text-zinc-200">
+                  ({TAB_LABELS[previousTab] || 'Deck'})
+                </span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 playCyberClick();
-                setActiveTab('DECK');
+                navigateToTab('DECK');
               }}
               className="flex items-center gap-2.5 text-left group cursor-pointer"
             >
@@ -221,7 +348,7 @@ export default function App() {
             <button
               onClick={() => {
                 playCyberClick();
-                setActiveTab('DECK');
+                navigateToTab('DECK');
               }}
               className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'DECK'
@@ -235,7 +362,7 @@ export default function App() {
             <button
               onClick={() => {
                 playCyberClick();
-                setActiveTab('TERMINAL');
+                navigateToTab('TERMINAL');
               }}
               className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'TERMINAL'
@@ -249,7 +376,7 @@ export default function App() {
             <button
               onClick={() => {
                 playCyberClick();
-                setActiveTab('AUTOPILOT');
+                navigateToTab('AUTOPILOT');
               }}
               className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'AUTOPILOT'
@@ -263,7 +390,7 @@ export default function App() {
             <button
               onClick={() => {
                 playCyberClick();
-                setActiveTab('COUNCIL');
+                navigateToTab('COUNCIL');
               }}
               className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'COUNCIL'
@@ -277,7 +404,7 @@ export default function App() {
             <button
               onClick={() => {
                 playCyberClick();
-                setActiveTab('PULSE');
+                navigateToTab('PULSE');
               }}
               className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'PULSE'
@@ -293,7 +420,7 @@ export default function App() {
               id="nav-tab-audit-log"
               onClick={() => {
                 playCyberClick();
-                setActiveTab('AUDIT');
+                navigateToTab('AUDIT');
               }}
               className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeTab === 'AUDIT'
@@ -332,7 +459,7 @@ export default function App() {
                 playCyberClick();
                 setIsApiKeyModalOpen(true);
               }}
-              title={isBitgetConnected ? 'Bitget Read-Only Key Paired' : 'Pair Read-Only Bitget API Key'}
+              title={isBitgetConnected ? 'Bitget Read-Only Key Paired — Click to inspect live telemetry & verified assets' : 'Pair Read-Only Bitget API Key'}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-mono transition-colors border cursor-pointer ${
                 isBitgetConnected
                   ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
@@ -340,7 +467,7 @@ export default function App() {
               }`}
             >
               <Key className={`w-3.5 h-3.5 ${isBitgetConnected ? 'text-emerald-400' : 'text-[#00F0FF]'}`} />
-              <span className="hidden lg:inline">{isBitgetConnected ? 'BYOK: Paired' : 'BYOK'}</span>
+              <span className="hidden lg:inline">{isBitgetConnected ? 'Bitget: Paired' : 'BYOK'}</span>
             </button>
 
             {/* Trading Floor Ambient Synthesizer Toggle */}
@@ -397,22 +524,22 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 py-4 space-y-8">
+      <main className={`mx-auto px-4 py-4 space-y-8 transition-all duration-200 ${activeTab === 'AUDIT' ? 'max-w-[1680px]' : 'max-w-7xl'}`}>
         {/* VIEW 1: COMMAND DECK (Clean, Cinematic Gateway matching Moonberg Reference) */}
         {activeTab === 'DECK' && (
           <div className="space-y-8 animate-fadeIn">
             {/* Cyber Hero with 3D Wireframe Spheres & Typewriter */}
             <CommandDeckHero
               onLaunchTerminal={() => {
-                setActiveTab('TERMINAL');
+                navigateToTab('TERMINAL');
                 setCockpitModule('CHART');
               }}
               onOpenAlgoBuilder={() => {
-                setActiveTab('TERMINAL');
+                navigateToTab('TERMINAL');
                 setCockpitModule('ALGO');
               }}
               onOpenAuditLedger={() => {
-                setActiveTab('AUDIT');
+                navigateToTab('AUDIT');
               }}
             />
 
@@ -429,7 +556,7 @@ export default function App() {
                   </span>
                 </div>
                 <h3 className="text-sm font-bold text-white tracking-wide">
-                  Complete Autonomous Paper-Trading Audit Ledger & Institutional Metrics (Sept 3 – Present)
+                  Complete Autonomous Paper-Trading Audit Ledger & Institutional Metrics
                 </h3>
                 <p className="text-xs text-gray-400 max-w-3xl">
                   Inspect live-settled paper execution logs with exact UTC timestamps, instrument pairs, LONG/SHORT direction, sizing, execution price, Council Quorum reasoning, and settled balance changes ($100k → $107.9k). Includes 1-click CSV download for judge review.
@@ -440,7 +567,7 @@ export default function App() {
                 <button
                   onClick={() => {
                     playCyberClick();
-                    setActiveTab('AUDIT');
+                    navigateToTab('AUDIT');
                   }}
                   className="flex items-center gap-2 bg-[#00F0FF] hover:bg-[#38f6ff] text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all shadow-[0_0_15px_rgba(0,240,255,0.25)] hover:scale-102 cursor-pointer whitespace-nowrap"
                 >
@@ -464,13 +591,13 @@ export default function App() {
 
               <ThreePillarBento
                 onLaunchTerminal={() => {
-                  setActiveTab('TERMINAL');
+                  navigateToTab('TERMINAL');
                   setCockpitModule('CHART');
                 }}
                 onDeployAlgo={handleSendToAutopilot}
                 onSelectNode={(ticker) => handlePulseTickerSelect(ticker)}
                 onOpenStudio={() => {
-                  setActiveTab('TERMINAL');
+                  navigateToTab('TERMINAL');
                   setCockpitModule('CHART');
                 }}
               />
@@ -618,7 +745,13 @@ export default function App() {
             {/* 11. BITGET S2 OFFICIAL PAPER-TRADING AUDIT LEDGER */}
             {cockpitModule === 'AUDIT' && (
               <div className="space-y-4 animate-fadeIn">
-                <PaperTradingAuditView />
+                <PaperTradingAuditView
+                  onBack={handleGoBack}
+                  onNavigateToCockpit={(ticker) => {
+                    if (ticker) setCouncilSelectedTicker(ticker);
+                    setCockpitModule('CHART');
+                  }}
+                />
               </div>
             )}
 
@@ -717,14 +850,21 @@ export default function App() {
         {/* VIEW 7: BITGET S2 OFFICIAL PAPER-TRADING AUDIT LEDGER */}
         {activeTab === 'AUDIT' && (
           <div className="space-y-6 animate-fadeIn">
-            <PaperTradingAuditView />
+            <PaperTradingAuditView
+              onBack={handleGoBack}
+              onNavigateToCockpit={(ticker) => {
+                if (ticker) setCouncilSelectedTicker(ticker);
+                navigateToTab('TERMINAL');
+                setCockpitModule('CHART');
+              }}
+            />
           </div>
         )}
       </main>
 
       {/* Institutional Terminal Footer */}
       <footer className="border-t border-[var(--lunaris-panel-border)] bg-[#070709] py-6 mt-12 text-xs text-gray-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
+        <div className={`mx-auto px-4 flex flex-wrap items-center justify-between gap-4 transition-all duration-200 ${activeTab === 'AUDIT' ? 'max-w-[1680px]' : 'max-w-7xl'}`}>
           <div className="flex items-center gap-2.5">
             <div className="relative flex items-center justify-center">
               <div className="w-3.5 h-3.5 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-[#FACC15] to-[#D946EF] rotate-45 shadow-[0_0_10px_rgba(0,240,255,0.7)]" />
@@ -772,20 +912,20 @@ export default function App() {
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         onNavigateTab={(tab) => {
-          setActiveTab(tab);
+          navigateToTab(tab);
         }}
         onNavigateCockpitModule={(mod) => {
           setCockpitModule(mod);
         }}
         onConveneCouncil={(ticker, prompt) => {
           setCouncilSelectedTicker(ticker);
-          setActiveTab('COUNCIL');
+          navigateToTab('COUNCIL');
         }}
         onOpenFlashCrashDrill={() => {
           setIsBlackSwanDrillOpen(true);
         }}
         onOpenAuditLedger={() => {
-          setActiveTab('AUDIT');
+          navigateToTab('AUDIT');
         }}
       />
 
