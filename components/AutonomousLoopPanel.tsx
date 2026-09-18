@@ -663,6 +663,11 @@ export function AutonomousLoopPanel({
               <option value="SUI">SUI / USDT (Spot)</option>
               <option value="NVDAon">NVDAon (24/7 Equity)</option>
               <option value="TSLAon">TSLAon (24/7 Equity)</option>
+              <option value="PLTR">PLTR / USD (Palantir Tech)</option>
+              <option value="MARA">MARA / USD (MARA Holdings)</option>
+              <option value="MSFT">MSFT / USD (Microsoft Corp)</option>
+              <option value="AVGO">AVGO / USD (Broadcom)</option>
+              <option value="QQQ">QQQ / USD (Nasdaq 100 ETF)</option>
               <option value="BGB">BGB / USDT (Bitget)</option>
             </select>
           </div>

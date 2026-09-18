@@ -8,6 +8,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { CommandDeckHero } from '@/components/CommandDeckHero';
 import { ThreePillarBento } from '@/components/ThreePillarBento';
 import { LiveTickerMarquee } from '@/components/LiveTickerMarquee';
+import { UsStockExpansionBanner } from '@/components/UsStockExpansionBanner';
 
 function lazyWithRetry<T extends React.ComponentType<any>>(
   componentImport: () => Promise<{ default: T } | any>,
@@ -582,6 +583,15 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* 5-Day US Stocks Expansion Notice Banner */}
+      <UsStockExpansionBanner
+        onSelectTicker={handleSelectAssetFromMarquee}
+        onNavigateTab={(tab) => {
+          setActiveTab(tab);
+          window.history.pushState(null, '', TAB_PATHS[tab]);
+        }}
+      />
 
       {/* Infinite Real-Time Live Ticker Marquee (Crypto & Tokenized Stocks) */}
       <LiveTickerMarquee

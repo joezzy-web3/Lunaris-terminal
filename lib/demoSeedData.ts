@@ -41,6 +41,9 @@ export const SEEDED_ASSETS: Record<string, AssetSeedConfig> = {
   COIN: { ticker: 'COIN', name: 'Coinbase Global', basePrice: 175.3, volatility: 0.007, class: 'EQ', unitDecimals: 2 },
   PLTR: { ticker: 'PLTR', name: 'Palantir Tech', basePrice: 68.7, volatility: 0.005, class: 'EQ', unitDecimals: 2 },
   AMD: { ticker: 'AMD', name: 'Advanced Micro Devices', basePrice: 145.2, volatility: 0.005, class: 'EQ', unitDecimals: 2 },
+  MARA: { ticker: 'MARA', name: 'MARA Holdings', basePrice: 19.8, volatility: 0.009, class: 'EQ', unitDecimals: 2 },
+  AVGO: { ticker: 'AVGO', name: 'Broadcom Inc.', basePrice: 172.5, volatility: 0.004, class: 'EQ', unitDecimals: 2 },
+  QQQ: { ticker: 'QQQ', name: 'Invesco QQQ Trust', basePrice: 492.0, volatility: 0.002, class: 'EQ', unitDecimals: 2 },
 };
 
 // Internal tracked state for random walk continuous motion

@@ -9,6 +9,8 @@ interface LiveTickerMarqueeProps {
   activeTicker?: string;
 }
 
+const NEW_STOCKS = new Set(['PLTR', 'MARA', 'MSFT', 'AVGO', 'QQQ']);
+
 export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
   onSelectAsset,
   activeTicker,
@@ -30,6 +32,7 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
         {displayList.map((asset: AssetQuote, idx: number) => {
           const isUp = asset.change24h >= 0;
           const isSelected = activeTicker === asset.ticker;
+          const isNew = NEW_STOCKS.has(asset.ticker);
 
           return (
             <button
@@ -59,6 +62,12 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
               <span className={`font-bold tracking-wider ${isSelected ? 'text-black' : 'text-white'}`}>
                 {asset.ticker}
               </span>
+
+              {isNew && (
+                <span className="text-[8px] font-mono font-extrabold px-1 py-0.2 rounded bg-cyan-500/20 text-[#00F0FF] border border-cyan-500/40 tracking-wider">
+                  NEW
+                </span>
+              )}
 
               {/* Live Price */}
               <span className={`font-mono font-medium ${isSelected ? 'text-zinc-900' : 'text-zinc-200'}`}>

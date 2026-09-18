@@ -269,6 +269,11 @@ export function AutopilotLedgerView({
             <option value="SOL">SOL (Bitget Spot)</option>
             <option value="NVDA">NVDA (Equity)</option>
             <option value="TSLA">TSLA (Equity)</option>
+            <option value="PLTR">PLTR (Palantir Tech)</option>
+            <option value="MARA">MARA (MARA Holdings)</option>
+            <option value="MSFT">MSFT (Microsoft Corp)</option>
+            <option value="AVGO">AVGO (Broadcom Inc)</option>
+            <option value="QQQ">QQQ (Nasdaq 100 ETF)</option>
             <option value="SUI">SUI (Bitget Spot)</option>
           </select>
 

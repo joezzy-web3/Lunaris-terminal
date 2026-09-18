@@ -438,6 +438,11 @@ const ASSET_PRICE_CORRIDORS: Record<string, { min: number; max: number; realisti
   'TSLAon/USDT': { min: 140, max: 420, realistic: 248.0 },
   'SUI/USDT': { min: 1.8, max: 4.8, realistic: 3.18 },
   'AAPLon/USDT': { min: 150, max: 320, realistic: 226.5 },
+  'PLTR/USD': { min: 40, max: 280, realistic: 177.0 },
+  'MARA/USD': { min: 5, max: 55, realistic: 13.5 },
+  'MSFT/USD': { min: 300, max: 650, realistic: 496.0 },
+  'AVGO/USD': { min: 120, max: 550, realistic: 355.0 },
+  'QQQ/USD': { min: 400, max: 950, realistic: 720.0 },
 };
 
 /**
@@ -793,6 +798,11 @@ export function generateAutonomousTradeScenario(
     { name: 'BTC/USDT', ticker: 'BTC', fallbackPrice: 76820.0, class: 'Crypto' },
     { name: 'ETH/USDT', ticker: 'ETH', fallbackPrice: 2485.0, class: 'Crypto' },
     { name: 'SOL/USDT', ticker: 'SOL', fallbackPrice: 99.66, class: 'Crypto' },
+    { name: 'PLTR/USD', ticker: 'PLTR', fallbackPrice: 68.7, class: 'US Equity' },
+    { name: 'MARA/USD', ticker: 'MARA', fallbackPrice: 19.8, class: 'US Equity' },
+    { name: 'MSFT/USD', ticker: 'MSFT', fallbackPrice: 418.5, class: 'US Equity' },
+    { name: 'AVGO/USD', ticker: 'AVGO', fallbackPrice: 172.5, class: 'US Equity' },
+    { name: 'QQQ/USD', ticker: 'QQQ', fallbackPrice: 492.0, class: 'Index ETF' },
   ];
 
   const selectedInst = instruments[Math.floor(Math.random() * instruments.length)];
@@ -803,7 +813,9 @@ export function generateAutonomousTradeScenario(
 
   const isWin = Math.random() < 0.76; // 76% win rate aligned with council quorum
   const direction: 'LONG' | 'SHORT' = Math.random() > 0.3 ? 'LONG' : 'SHORT';
-  const leverage = selectedInst.class === 'rToken' ? 2 : Math.floor(Math.random() * 3) + 3; // 3x to 5x
+  const leverage = selectedInst.class === 'rToken' || selectedInst.class === 'US Equity' || selectedInst.class === 'Index ETF'
+    ? 2
+    : Math.floor(Math.random() * 3) + 3; // 3x to 5x
   const quantity = Math.floor(Math.random() * 8000) + 7000; // $7,000 - $15,000
 
   // Micro price deviation relative to current real Bitget market price (within 0.2%)
@@ -819,6 +831,8 @@ export function generateAutonomousTradeScenario(
     status = 'TAKE_PROFIT';
     if (selectedInst.class === 'rToken') {
       trigger = `Council Quorum: ${selectedInst.name} 7x24 tokenized liquidity surge + Atlas-Macro correlation`;
+    } else if (selectedInst.class === 'US Equity' || selectedInst.class === 'Index ETF') {
+      trigger = `Council Alpha: ${selectedInst.name} US Equity momentum breakout + Cross-Asset Macro confirmation`;
     } else {
       trigger = `Autopilot Pulse: ${selectedInst.name} Social Velocity spike (>82) + Quant-Omega Orderbook absorption`;
     }

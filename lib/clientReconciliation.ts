@@ -162,7 +162,7 @@ export async function runClientReconciliation(options: {
   let latestProcessedTimestamp = checkpoint.lastProcessedTimestamp;
   let latestProcessedTradeId = checkpoint.lastProcessedTradeId;
 
-  const validTickers = ['BTC', 'ETH', 'SOL', 'NVDA', 'TSLA', 'NVDAON', 'TSLAON', 'DOGE', 'XRP', 'AVAX', 'SUI', 'AAPL', 'AAPLON', 'MSTR', 'COIN', 'BNB'];
+  const validTickers = ['BTC', 'ETH', 'SOL', 'NVDA', 'TSLA', 'NVDAON', 'TSLAON', 'DOGE', 'XRP', 'AVAX', 'SUI', 'AAPL', 'AAPLON', 'MSTR', 'COIN', 'BNB', 'PLTR', 'MARA', 'MSFT', 'AVGO', 'QQQ'];
 
   for (let i = 0; i < sortedTrades.length; i++) {
     const trade = sortedTrades[i];

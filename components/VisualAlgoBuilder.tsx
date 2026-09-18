@@ -13,7 +13,7 @@ interface VisualAlgoBuilderProps {
 export function VisualAlgoBuilder({ onDeployToAutopilot }: VisualAlgoBuilderProps) {
   const [pulseActive, setPulseActive] = useState(false);
   const [activeStep, setActiveStep] = useState<number>(0);
-  const [selectedAsset, setSelectedAsset] = useState<'SOL' | 'BTC' | 'NVDA' | 'MSTR'>('SOL');
+  const [selectedAsset, setSelectedAsset] = useState<string>('SOL');
   const [conditionType, setConditionType] = useState<'MOMENTUM' | 'SENTIMENT_SPIKE' | 'CROSS_ASSET_DIV'>('MOMENTUM');
   const [riskVetoStrictness, setRiskVetoStrictness] = useState<'STANDARD' | 'PARANOID'>('STANDARD');
   const [deploySuccess, setDeploySuccess] = useState(false);
@@ -224,6 +224,11 @@ export function VisualAlgoBuilder({ onDeployToAutopilot }: VisualAlgoBuilderProp
               <option value="SOL">SOL (CX)</option>
               <option value="BTC">BTC (CX)</option>
               <option value="NVDA">NVDA (EQ)</option>
+              <option value="PLTR">PLTR (EQ)</option>
+              <option value="MARA">MARA (EQ)</option>
+              <option value="MSFT">MSFT (EQ)</option>
+              <option value="AVGO">AVGO (EQ)</option>
+              <option value="QQQ">QQQ (ETF)</option>
               <option value="MSTR">MSTR (EQ)</option>
             </select>
           </div>

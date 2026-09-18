@@ -50,6 +50,9 @@ export const ASSET_REGISTRY: Record<
   COIN: { name: 'Coinbase', class: 'EQ', yahooSymbol: 'COIN' },
   PLTR: { name: 'Palantir', class: 'EQ', yahooSymbol: 'PLTR' },
   AMD: { name: 'Advanced Micro Devices', class: 'EQ', yahooSymbol: 'AMD' },
+  MARA: { name: 'MARA Holdings', class: 'EQ', yahooSymbol: 'MARA' },
+  AVGO: { name: 'Broadcom Inc.', class: 'EQ', yahooSymbol: 'AVGO' },
+  QQQ: { name: 'Invesco QQQ Trust (Nasdaq 100)', class: 'EQ', yahooSymbol: 'QQQ' },
 };
 
 export const priceCache: Record<string, PriceSnapshot> = {};

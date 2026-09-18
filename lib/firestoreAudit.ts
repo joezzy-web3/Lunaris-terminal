@@ -288,6 +288,11 @@ export const INGESTION_PRICE_CORRIDORS: Record<string, { min: number; max: numbe
   'MSTR': { min: 85, max: 230, realistic: 132.0 },
   'COIN': { min: 110, max: 260, realistic: 165.0 },
   'BNB': { min: 600, max: 820, realistic: 720.0 },
+  'PLTR': { min: 40, max: 280, realistic: 177.0 },
+  'MARA': { min: 5, max: 55, realistic: 13.5 },
+  'MSFT': { min: 300, max: 650, realistic: 496.0 },
+  'AVGO': { min: 120, max: 550, realistic: 355.0 },
+  'QQQ': { min: 400, max: 950, realistic: 720.0 },
 };
 
 /**

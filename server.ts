@@ -182,7 +182,7 @@ async function refreshServerMarketCache(): Promise<Record<string, any>> {
     }
 
     // 3. Fetch real-time live equities from Yahoo Finance
-    const equitySymbols = ['NVDA', 'TSLA', 'AAPL', 'MSTR', 'COIN', 'PLTR', 'AMD', 'MSFT', 'GOOGL', 'AMZN', 'META'];
+    const equitySymbols = ['NVDA', 'TSLA', 'AAPL', 'MSTR', 'COIN', 'PLTR', 'AMD', 'MSFT', 'GOOGL', 'AMZN', 'META', 'MARA', 'AVGO', 'QQQ'];
     await Promise.allSettled(
       equitySymbols.map(async (sym) => {
         try {
@@ -262,6 +262,9 @@ async function refreshServerMarketCache(): Promise<Record<string, any>> {
     if (!results.GOOGL) results.GOOGL = { ticker: 'GOOGL', price: 172.6, change24h: 0.65, high24h: 174.5, low24h: 170.8, volume: '$6.5B', class: 'EQ' };
     if (!results.AMZN) results.AMZN = { ticker: 'AMZN', price: 198.3, change24h: 0.78, high24h: 201.0, low24h: 196.2, volume: '$7.8B', class: 'EQ' };
     if (!results.META) results.META = { ticker: 'META', price: 578.0, change24h: 1.12, high24h: 584.0, low24h: 572.5, volume: '$9.2B', class: 'EQ' };
+    if (!results.MARA) results.MARA = { ticker: 'MARA', price: 19.8, change24h: 3.42, high24h: 20.6, low24h: 19.1, volume: '$890M', class: 'EQ' };
+    if (!results.AVGO) results.AVGO = { ticker: 'AVGO', price: 172.5, change24h: 1.64, high24h: 175.2, low24h: 170.1, volume: '$4.1B', class: 'EQ' };
+    if (!results.QQQ) results.QQQ = { ticker: 'QQQ', price: 492.0, change24h: 0.92, high24h: 495.0, low24h: 488.5, volume: '$22.6B', class: 'EQ' };
 
     // Baseline fallbacks for top crypto if completely unreachable
     if (!results.BTC) results.BTC = { ticker: 'BTC', price: 76500.0, change24h: 0.45, high24h: 77500, low24h: 75800, volume: '$38.2B', class: 'CX' };
@@ -1192,7 +1195,7 @@ function runAutopilotDaemonTick() {
   const currentOpenCount = activePositions.length;
   const maxCapacity = state.maxOpenPositions || 3;
   if (currentOpenCount < maxCapacity && state.cashBalance >= 1500) {
-    const candidateTickers = ['BTC', 'ETH', 'SOL', 'SUI', 'NVDAon', 'TSLAon', 'BGB', 'MSTR'];
+    const candidateTickers = ['BTC', 'ETH', 'SOL', 'SUI', 'NVDAon', 'TSLAon', 'BGB', 'MSTR', 'PLTR', 'MARA', 'MSFT', 'AVGO', 'QQQ'];
     const unheld = candidateTickers.filter((t) => !findPositionKey(state.positions, t));
     if (unheld.length > 0) {
       const chosenTicker = unheld[Math.floor(Math.random() * unheld.length)];
@@ -1204,7 +1207,12 @@ function runAutopilotDaemonTick() {
         chosenTicker === 'SUI' ? 2.45 :
         chosenTicker === 'NVDAon' ? 182.5 :
         chosenTicker === 'TSLAon' ? 242.0 :
-        chosenTicker === 'BGB' ? 1.42 : 165.0
+        chosenTicker === 'BGB' ? 1.42 :
+        chosenTicker === 'PLTR' ? 177.0 :
+        chosenTicker === 'MARA' ? 13.5 :
+        chosenTicker === 'MSFT' ? 496.0 :
+        chosenTicker === 'AVGO' ? 355.0 :
+        chosenTicker === 'QQQ' ? 720.0 : 165.0
       );
       const entryPrice = parseFloat(p.toFixed(p < 10 ? 4 : 2));
       // Deploy between $1,500 and $6,000 (~12% of cash balance)
@@ -1281,6 +1289,11 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
     { name: 'BTC/USDT', ticker: 'BTC', fallbackPrice: 76820.0, class: 'Crypto' },
     { name: 'ETH/USDT', ticker: 'ETH', fallbackPrice: 2485.0, class: 'Crypto' },
     { name: 'SOL/USDT', ticker: 'SOL', fallbackPrice: 99.66, class: 'Crypto' },
+    { name: 'PLTR/USD', ticker: 'PLTR', fallbackPrice: 177.0, class: 'US Equity' },
+    { name: 'MARA/USD', ticker: 'MARA', fallbackPrice: 13.5, class: 'US Equity' },
+    { name: 'MSFT/USD', ticker: 'MSFT', fallbackPrice: 496.0, class: 'US Equity' },
+    { name: 'AVGO/USD', ticker: 'AVGO', fallbackPrice: 355.0, class: 'US Equity' },
+    { name: 'QQQ/USD', ticker: 'QQQ', fallbackPrice: 720.0, class: 'Index ETF' },
   ];
 
   const selectedInst =
@@ -1292,7 +1305,9 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
 
   const isWin = Math.random() < 0.76;
   const direction: 'LONG' | 'SHORT' = requestedDirection || (Math.random() > 0.3 ? 'LONG' : 'SHORT');
-  const leverage = selectedInst.class === 'rToken' ? 2 : Math.floor(Math.random() * 3) + 3;
+  const leverage = selectedInst.class === 'rToken' || selectedInst.class === 'US Equity' || selectedInst.class === 'Index ETF'
+    ? 2
+    : Math.floor(Math.random() * 3) + 3;
   const quantity = Math.floor(Math.random() * 8000) + 7000;
 
   const priceVariation = (Math.random() * 0.004 - 0.002) * currentLivePrice;
@@ -1307,6 +1322,8 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
     status = 'TAKE_PROFIT';
     if (selectedInst.class === 'rToken') {
       trigger = `Council Quorum: ${selectedInst.name} 7x24 tokenized liquidity surge + Atlas-Macro correlation`;
+    } else if (selectedInst.class === 'US Equity' || selectedInst.class === 'Index ETF') {
+      trigger = `Council Alpha: ${selectedInst.name} US Equity momentum breakout + Cross-Asset Macro confirmation`;
     } else {
       trigger = `Autopilot Pulse: ${selectedInst.name} Social Velocity spike (>82) + Quant-Omega Orderbook absorption`;
     }

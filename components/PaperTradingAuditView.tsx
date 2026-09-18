@@ -48,6 +48,7 @@ import {
   Eye,
   EyeOff,
   Skull,
+  HelpCircle,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -55,6 +56,7 @@ import {
 } from 'lucide-react';
 import { playCyberClick, playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
 import { TradeProofModal } from '@/components/TradeProofModal';
+import { CanonicalSequenceExplainerModal } from '@/components/CanonicalSequenceExplainerModal';
 
 interface PaperTradingAuditViewProps {
   onNavigateToCockpit?: (ticker?: string) => void;
@@ -66,7 +68,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   onBack,
 }) => {
   const [trades, setTrades] = useState<PaperTradeRecord[]>(() => getSavedPaperTrades());
-  const [filter, setFilter] = useState<'ALL' | 'LONG' | 'SHORT' | 'TAKE_PROFIT' | 'STOP_LOSS' | 'RTOKENS'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'LONG' | 'SHORT' | 'TAKE_PROFIT' | 'STOP_LOSS' | 'RTOKENS' | 'EQUITIES'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [pageSize, setPageSize] = useState<number | 'ALL'>(20);
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,6 +82,9 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     visible: boolean;
     message: string | null;
   }>({ visible: false, message: null });
+
+  // Canonical Sequence Explainer for Evaluators/Judges
+  const [isSeqExplainerModalOpen, setIsSeqExplainerModalOpen] = useState(false);
 
   // Security Access Verification Modal
   const [showAuthPasscode, setShowAuthPasscode] = useState(false);
@@ -531,7 +536,19 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       (filter === 'SHORT' && t.direction === 'SHORT') ||
       (filter === 'TAKE_PROFIT' && t.status === 'TAKE_PROFIT') ||
       (filter === 'STOP_LOSS' && t.status === 'STOP_LOSS') ||
-      (filter === 'RTOKENS' && (t.instrument.includes('NVDAon') || t.instrument.includes('TSLAon')));
+      (filter === 'RTOKENS' && (t.instrument.includes('NVDAon') || t.instrument.includes('TSLAon'))) ||
+      (filter === 'EQUITIES' && (
+        t.instrument.includes('PLTR') ||
+        t.instrument.includes('MARA') ||
+        t.instrument.includes('MSFT') ||
+        t.instrument.includes('AVGO') ||
+        t.instrument.includes('QQQ') ||
+        t.instrument.includes('NVDA') ||
+        t.instrument.includes('TSLA') ||
+        t.instrument.includes('AAPL') ||
+        t.instrument.includes('MSTR') ||
+        t.instrument.includes('COIN')
+      ));
 
     const matchesSearch =
       searchQuery.trim() === '' ||
@@ -847,6 +864,20 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Canonical Sequence Explainer for Evaluators / Hackathon Judges */}
+          <button
+            id="btn-seq-explainer"
+            onClick={() => {
+              playCyberClick();
+              setIsSeqExplainerModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-yellow-400/15 hover:bg-yellow-400/25 text-yellow-300 border border-yellow-400/40 cursor-pointer transition-colors shadow-sm"
+            title="Judges & Auditors: Why is Canonical Seq (#3569) different from Trade ID (PT-4267)?"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-yellow-400" />
+            <span>Why #Seq vs PT-ID?</span>
+          </button>
+
           <button
             id="btn-toggle-auto-loop"
             onClick={() => {
@@ -876,7 +907,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       <div className="bg-[#090a10] border border-white/10 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-xs text-gray-400 font-mono mr-1">Filter:</span>
-          {(['ALL', 'LONG', 'SHORT', 'TAKE_PROFIT', 'STOP_LOSS', 'RTOKENS'] as const).map((mode) => (
+          {(['ALL', 'LONG', 'SHORT', 'TAKE_PROFIT', 'STOP_LOSS', 'RTOKENS', 'EQUITIES'] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => {
@@ -890,7 +921,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                   : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5'
               }`}
             >
-              {mode === 'RTOKENS' ? 'NVDAon & TSLAon' : mode.replace('_', ' ')}
+              {mode === 'RTOKENS' ? 'NVDAon & TSLAon' : mode === 'EQUITIES' ? 'US Stocks' : mode.replace('_', ' ')}
             </button>
           ))}
         </div>
@@ -1005,9 +1036,18 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                           <>
                             <div className="font-bold text-white text-[11px] flex items-center gap-1.5">
                               {typeof trade.auditSeq === 'number' && (
-                                <span className="text-[9px] bg-white/10 text-yellow-300 font-mono px-1 py-0.2 rounded border border-yellow-400/20" title={`Canonical Monotonic Sequence #${trade.auditSeq}`}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    playCyberClick();
+                                    setIsSeqExplainerModalOpen(true);
+                                  }}
+                                  className="text-[9px] bg-white/10 hover:bg-yellow-400/25 text-yellow-300 font-mono px-1 py-0.2 rounded border border-yellow-400/30 cursor-pointer transition-colors"
+                                  title={`Canonical Verified Ledger Sequence #${trade.auditSeq}. Click to view explanation on #Seq vs Trade ID.`}
+                                >
                                   #{trade.auditSeq}
-                                </span>
+                                </button>
                               )}
                               <span>{trade.id}</span>
                               {isJustAdded && (
@@ -1425,6 +1465,13 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
           </div>
         </div>
       )}
+      {/* Canonical Sequence vs Raw ID Explainer Modal for Judges */}
+      <CanonicalSequenceExplainerModal
+        isOpen={isSeqExplainerModalOpen}
+        onClose={() => setIsSeqExplainerModalOpen(false)}
+        currentLatestTradeId={sortedTrades[0]?.id || 'PT-20260918-4267'}
+        currentLatestSeq={sortedTrades[0]?.auditSeq || 3569}
+      />
     </div>
   );
 };
