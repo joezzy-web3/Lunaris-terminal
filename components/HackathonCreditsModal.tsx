@@ -126,12 +126,12 @@ export function HackathonCreditsModal({ isOpen, onClose }: { isOpen: boolean; on
               </a>
 
               <a
-                href="https://forms.gle/GyWZCMCPocgJdJon6"
+                href="https://github.com/joezzy-web3/Lunaris-terminal"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded bg-black/40 border border-white/10 hover:border-purple-500/40 text-purple-400 flex items-center justify-between group transition-colors"
               >
-                <span>Submission Portal</span>
+                <span>GitHub Repository</span>
                 <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </a>
 

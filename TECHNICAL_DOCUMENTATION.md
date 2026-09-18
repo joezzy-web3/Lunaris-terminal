@@ -188,11 +188,16 @@ Hedge funds do not trade manually; systems run continuously. Lunaris features a 
 
 ### 6.1 Command Deck (`DECK`)
 The **Command Deck** is the flagship executive overview of Lunaris Terminal:
-- **Hero Display**: Live animated status displaying active autonomous trading status, current portfolio equity ($111,578.18+), 24h win rate (92.3%), and the active Bitget Gateway status.
+- **Hero Display**: Live animated status displaying active autonomous trading telemetry, real-time portfolio equity, win rate metrics, and the active Bitget Gateway status.
 - **Live Ticker Marquee**: Horizontally scrolling ticker strip tracking real-time prices, 24h delta percentages, and volume for BTC, ETH, SOL, SUI, BGB, NVDAon, TSLAon, and AAPLon.
 - **Three-Pillar Bento Grid**: Interactive cards detailing Multi-Agent Quorum, Deterministic Risk Guardrails, and Institutional rToken Arbitrage.
 - **What Lunaris Does Explainer**: High-level visual architectural breakdown for judges and institutional allocators.
-- **Cross-Asset Correlation Matrix**: Real-time correlation coefficient grid comparing crypto assets against US equities to spot decoupling opportunities.
+- **6×6 Cross-Asset Correlation & StatArb Matrix (`CrossAssetMatrix`)**:
+  - **Crypto ↔ 24/7 rTokens Bridge**: Quantifies rolling 24-hour Pearson correlation coefficients between Bitget spot crypto (`BTC`, `ETH`, `SOL`, `SUI`) and 24/7 tokenized US equities (`NVDAon`, `TSLAon`).
+  - **Bitget Cross-Margin Ready**: Highlights statistical arbitrage and pairs trading opportunities with cross-margin leverage.
+  - **Interactive 24h Pearson Heatmap**: Real-time cell visualizer color-coded by correlation intensity: Strong (`>0.75`), Moderate (`0.60–0.74`), and Weak (`<0.60`). Traders can click any cell to inspect pairwise dynamics.
+  - **Selected Pair Radar**: Displays pair-specific analytics (e.g., `SOL ⇄ NVDAon`), correlation percentage, 24h delta spread %, historical beta multiplier, and live quotes.
+  - **Automated StatArb Trade Handoff**: Formulates actionable mean-reversion theses (`LONG_A_SHORT_B`, `LONG_B_SHORT_A`, or `DELTA_NEUTRAL`) with one-click dispatch into the AI Council or Autopilot execution loop.
 - **Unified Data Constellation**: Interactive visual node network illustrating data flow between Bitget feeds, AI inference engines, and risk verifiers.
 - **Institutional Backtest Engine**: Interactive backtest suite allowing users to simulate multi-agent performance across historical market regimes (Bull Run, Chop Market, Black Swan Crash).
 
@@ -254,7 +259,7 @@ The **Paper Trading Audit View** provides mathematical proof of all trade execut
   - **Losing Days**: Displayed as deep rose cards with controlled risk drawdowns (e.g. `-$30.99`).
   - **Date Filter Interactivity**: Clicking any calendar date instantly filters the audit table below to display only transactions executed on that specific day.
 - **Distribution Bar Chart Toggle**: Alternative view displaying relative daily net profit/loss bars across the zero axis.
-- **Monthly Summary Performance Ribbon**: Instant breakdown of Month Net PnL (`+$11,578.18`), Trading Win Rate (`92.3%`), Best Day (`+$1.83K on Sep 12`), and Worst Day (`-$30.99 on Sep 01`).
+- **Monthly Summary Performance Ribbon**: Real-time breakdown of Month Net PnL, Trading Win Rate, Best Day, and Worst Day dynamically aggregated from the verifiable paper trade ledger.
 - **Cryptographic Ledger Table**: Comprehensive table with Trade ID, Timestamp, Instrument, Direction, Executed Price, Position Size, Leverage, Net PnL, Cumulative Balance, and Algorithmic Trigger Rationale.
 - **Export & Verification Tools**:
   - **Download CSV**: Instant download of the full ledger for external audit in Excel / Python.
@@ -290,8 +295,8 @@ Institutional judges can stress-test the risk architecture by simulating catastr
 - **Tactile Cybernetic Feedback**: Discrete cyber clicks for button presses, resonant chimes for approved profitable executions, and dual-tone klaxon alerts for Guardian risk vetoes.
 
 ### 7.5 Auditor Cloud Sanitizer & Passcode Gate
-- **Administrative Passcode**: `chllap5803`
-- **Purpose**: Protects critical ledger operations (Ledger Reset, Cloud Sanitization, and Daemon Pausing) from unauthorized or accidental triggers during judging evaluations.
+- **Administrative Passcode Protection**: Secured via administrative passcode authorization (configurable via server environment or customized by the authorized auditor in the in-app security manager).
+- **Purpose**: Protects critical ledger operations (Ledger Reset, Cloud Sanitization, and Daemon Pausing) from unauthorized or accidental triggers during live operations.
 - **Cloud Sanitizer**: Recalibrates historical price quotes into strict Bitget spot corridors, verifies sequential mathematical continuity from the $100,000.00 baseline, and commits reconciled records to Firestore and server disk storage simultaneously.
 
 ---

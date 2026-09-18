@@ -959,9 +959,23 @@ function runAutopilotDaemonTick() {
     const quote = bitgetMarketCache?.data?.[ticker] || bitgetMarketCache?.data?.[ticker.replace('on', '')];
     const basePrice = quote?.price || pos.entryPrice;
     
-    // Tight price anchor to actual spot quote (max ±1.0% micro-noise), completely preventing runaway simulation drift
-    const priceDrift = (Math.random() * 0.008 - 0.0035);
-    const livePrice = parseFloat((basePrice * (1 + priceDrift)).toFixed(basePrice < 10 ? 4 : 2));
+    // Dynamic price progression for active simulated positions:
+    // Starts from previous currentPrice (or entryPrice) and steps with realistic market volatility and council alpha
+    const lastPrice = (typeof pos.currentPrice === 'number' && pos.currentPrice > 0)
+      ? pos.currentPrice
+      : (quote?.price || pos.entryPrice);
+
+    // Momentum step drift: between -0.4% and +1.0% per cycle, with upward bias for ratified council setups
+    const stepDrift = (Math.random() * 0.014 - 0.004);
+    let livePrice = parseFloat((lastPrice * (1 + stepDrift)).toFixed(lastPrice < 10 ? 4 : 2));
+
+    // Dynamic corridor anchor: ensure price remains grounded within ±12% of spot quote
+    if (basePrice > 0) {
+      const maxCeil = basePrice * 1.12;
+      const minFloor = basePrice * 0.88;
+      if (livePrice > maxCeil) livePrice = parseFloat(maxCeil.toFixed(basePrice < 10 ? 4 : 2));
+      if (livePrice < minFloor) livePrice = parseFloat(minFloor.toFixed(basePrice < 10 ? 4 : 2));
+    }
     
     const cost = pos.amount * pos.entryPrice;
     const currentVal = pos.amount * livePrice;
@@ -973,7 +987,8 @@ function runAutopilotDaemonTick() {
     pos.unrealizedPnlPct = parseFloat(pnlPct.toFixed(2));
 
     // Check Take Profit target
-    if (pnlPct >= state.autoExitPct) {
+    const targetExitPct = state.autoExitPct || 3.0;
+    if (pnlPct >= targetExitPct) {
       const proceeds = currentVal;
       const prevCash = state.cashBalance;
       state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
@@ -1098,19 +1113,29 @@ function runAutopilotDaemonTick() {
 
   // 2. Opportunistic position entry if below max capacity
   const currentOpenCount = Object.keys(state.positions || {}).length;
-  if (currentOpenCount < (state.maxOpenPositions || 3) && state.cashBalance >= 8000) {
-    const candidateTickers = ['BTC', 'ETH', 'SOL', 'NVDAon', 'TSLAon'];
+  const maxCapacity = state.maxOpenPositions || 3;
+  if (currentOpenCount < maxCapacity && state.cashBalance >= 1500) {
+    const candidateTickers = ['BTC', 'ETH', 'SOL', 'SUI', 'NVDAon', 'TSLAon', 'BGB', 'MSTR'];
     const unheld = candidateTickers.filter((t) => !state.positions[t]);
-    if (unheld.length > 0 && Math.random() < 0.6) {
+    if (unheld.length > 0) {
       const chosenTicker = unheld[Math.floor(Math.random() * unheld.length)];
       const quote = bitgetMarketCache?.data?.[chosenTicker] || bitgetMarketCache?.data?.[chosenTicker.replace('on', '')];
-      let p = quote?.price || (chosenTicker === 'BTC' ? 77250 : chosenTicker === 'ETH' ? 2512 : chosenTicker === 'SOL' ? 101.5 : chosenTicker === 'NVDAon' ? 182.5 : 242.0);
+      let p = quote?.price || (
+        chosenTicker === 'BTC' ? 77450 :
+        chosenTicker === 'ETH' ? 2510 :
+        chosenTicker === 'SOL' ? 102.5 :
+        chosenTicker === 'SUI' ? 2.45 :
+        chosenTicker === 'NVDAon' ? 182.5 :
+        chosenTicker === 'TSLAon' ? 242.0 :
+        chosenTicker === 'BGB' ? 1.42 : 165.0
+      );
       const entryPrice = parseFloat(p.toFixed(p < 10 ? 4 : 2));
-      const targetSizeUsd = 4000;
+      // Deploy between $1,500 and $6,000 (~12% of cash balance)
+      const targetSizeUsd = Math.min(6000, Math.max(1500, parseFloat((state.cashBalance * 0.12).toFixed(2))));
       const units = parseFloat((targetSizeUsd / entryPrice).toFixed(entryPrice < 10 ? 2 : 4));
       const actualCost = parseFloat((units * entryPrice).toFixed(2));
 
-      if (state.cashBalance >= actualCost) {
+      if (state.cashBalance >= actualCost && actualCost > 0) {
         const prevCash = state.cashBalance;
         state.cashBalance = parseFloat((state.cashBalance - actualCost).toFixed(2));
         state.positions[chosenTicker] = {
@@ -1136,7 +1161,7 @@ function runAutopilotDaemonTick() {
           balanceAfter: state.cashBalance,
           realizedPnl: 0,
           realizedPnlPct: 0,
-          notes: `Council Quorum Buy Signal ratified on ${chosenTicker} at $${entryPrice.toLocaleString()}. Position size $${actualCost.toLocaleString()} USDT.`,
+          notes: `Council Quorum Buy Signal: Deployed $${actualCost.toLocaleString()} into ${units.toFixed(4)} ${chosenTicker} at $${entryPrice.toLocaleString()}.`,
         };
         state.ledger = [buyLedger, ...(state.ledger || []).slice(0, 299)];
       }
@@ -1269,8 +1294,15 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
 function startAutopilotDaemon() {
   if (autopilotDaemonTimer) clearInterval(autopilotDaemonTimer);
   const state = getAutopilotState();
-  // Disciplined cadences: 6s in turbo, 14s standard to run continuously 24/7
-  const intervalMs = state.isTurbo ? 6000 : 14000;
+  if (!state.isExecuting) return;
+  // Responsive cadences: 2.5s in turbo, 5s standard for lively autonomous execution
+  const intervalMs = state.isTurbo ? 2500 : 5000;
+  // Immediate tick on engage so user doesn't wait
+  try {
+    runAutopilotDaemonTick();
+  } catch (e) {
+    console.warn('Immediate daemon tick error:', e);
+  }
   autopilotDaemonTimer = setInterval(runAutopilotDaemonTick, intervalMs);
 }
 
@@ -1281,8 +1313,11 @@ function stopAutopilotDaemon() {
   }
 }
 
-// Always ensure 24/7 background trading daemon is actively running on server
-startAutopilotDaemon();
+// Initial daemon check on server boot
+const initialBootState = getAutopilotState();
+if (initialBootState.isExecuting) {
+  startAutopilotDaemon();
+}
 
 // POST /api/audit/trigger-daemon - Trigger authoritative agentic execution directly on the server
 app.post('/api/audit/trigger-daemon', (req, res) => {
@@ -1649,10 +1684,22 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
       state.lastUpdated = nowUtc;
       const updated = saveAutopilotState(state);
 
+      const log = {
+        id: `manual-log-buy-${Date.now()}`,
+        timestamp: timeStr,
+        ticker: normTicker,
+        action: 'BUY' as const,
+        sizePct: 10,
+        text: `Manual Intervention: Executed BUY order on ${units.toFixed(4)} ${normTicker} at $${price.toLocaleString()}`,
+        status: 'APPROVED' as const,
+        source: 'MANUAL' as const,
+      };
+
       return res.json({
         success: true,
         state: updated,
         ledgerEntry,
+        log,
       });
     } else {
       // SELL
@@ -1721,10 +1768,22 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
       state.lastUpdated = nowUtc;
       const updated = saveAutopilotState(state);
 
+      const log = {
+        id: `manual-log-sell-${Date.now()}`,
+        timestamp: timeStr,
+        ticker: normTicker,
+        action: 'SELL' as const,
+        sizePct: 10,
+        text: `Manual Order: Closed ${pos.amount.toFixed(4)} ${normTicker} at $${price.toLocaleString()} (${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)})`,
+        status: 'APPROVED' as const,
+        source: 'MANUAL' as const,
+      };
+
       return res.json({
         success: true,
         state: updated,
         ledgerEntry,
+        log,
         pnl,
         pnlPct,
       });

@@ -4,8 +4,8 @@ import { fetchPriceSnapshot, PriceSnapshot, ASSET_REGISTRY } from '@/lib/liveTok
 import { getSeededPrice, SEEDED_ASSETS } from '@/lib/demoSeedData';
 import { evaluateTradeRisk, TradeProposal } from '@/lib/riskVeto';
 import { recordNewPaperTrade } from '@/lib/paperTradingAudit';
-import { Play, Square, Zap, ShieldAlert, RotateCcw, ArrowUpRight, ArrowDownRight, RefreshCw, Target, ShieldCheck, Lock, Sliders, BookOpen, Activity } from 'lucide-react';
-import { playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
+import { Play, Square, Zap, ShieldAlert, RotateCcw, ArrowUpRight, ArrowDownRight, RefreshCw, Target, ShieldCheck, Lock, Sliders, BookOpen, Activity, Send, CheckCircle2 } from 'lucide-react';
+import { playTradeApprovedChime, playRiskVetoTone, playCyberClick } from '@/lib/soundSynth';
 import { AutopilotResetPasscodeModal } from '@/components/AutopilotResetPasscodeModal';
 import { AutopilotLedgerView, AutopilotLedgerEntry } from '@/components/AutopilotLedgerView';
 import { useAutopilot } from '@/context/AutopilotContext';
@@ -125,6 +125,38 @@ export function AutonomousLoopPanel({
   const [subTab, setSubTab] = useState<'COCKPIT' | 'LEDGER'>('COCKPIT');
   const [isResetPasscodeModalOpen, setIsResetPasscodeModalOpen] = useState(false);
   const [filter, setFilter] = useState<'ALL' | 'APPROVED' | 'VETOED'>('ALL');
+
+  // Manual trade input state for direct user execution
+  const [manualTicker, setManualTicker] = useState<string>('BTC');
+  const [manualAction, setManualAction] = useState<'BUY' | 'SELL'>('BUY');
+  const [manualUsd, setManualUsd] = useState<number>(2500);
+  const [manualStatus, setManualStatus] = useState<string | null>(null);
+  const [isManualSubmitting, setIsManualSubmitting] = useState(false);
+
+  const handleExecuteCockpitManual = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isManualSubmitting) return;
+    setIsManualSubmitting(true);
+    setManualStatus(null);
+    try {
+      if (manualAction === 'SELL' && !positions[manualTicker]) {
+        playRiskVetoTone();
+        setManualStatus(`Cannot SELL ${manualTicker}: No active position held in portfolio.`);
+        setTimeout(() => setManualStatus(null), 4000);
+        setIsManualSubmitting(false);
+        return;
+      }
+      playCyberClick();
+      await handleManualTrade(manualTicker, manualAction, manualUsd);
+      setManualStatus(`Order executed: ${manualAction} ${manualTicker} ($${manualUsd.toLocaleString()})`);
+      setTimeout(() => setManualStatus(null), 4000);
+    } catch (err: any) {
+      setManualStatus(err.message || 'Execution error');
+      setTimeout(() => setManualStatus(null), 4000);
+    } finally {
+      setIsManualSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (externalProposal) {
@@ -565,6 +597,116 @@ export function AutonomousLoopPanel({
             Dynamic Trail Stop | Green Trades Never Turn Red
           </div>
         </div>
+      </div>
+
+      {/* Manual Order & Discretionary Execution Console (Operates both in Auto and Manual mode) */}
+      <div className="mb-4 bg-zinc-950/90 border border-zinc-800/90 rounded-lg p-3 text-xs shadow-md">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-zinc-800">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-pulse" />
+            <span className="font-bold text-white uppercase tracking-wider text-[11px]">
+              Discretionary Manual Order Console
+            </span>
+            <span className="text-[10px] text-zinc-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+              Input trades manually anytime (operates alongside or independently of Autopilot)
+            </span>
+          </div>
+          {manualStatus && (
+            <div className="text-[11px] text-emerald-400 font-mono flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 animate-in fade-in">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>{manualStatus}</span>
+            </div>
+          )}
+        </div>
+
+        <form onSubmit={handleExecuteCockpitManual} className="flex flex-wrap items-center gap-2.5">
+          {/* Action Toggle */}
+          <div className="flex items-center rounded-lg border border-zinc-700 bg-black/60 p-0.5 text-[11px]">
+            <button
+              type="button"
+              onClick={() => { playCyberClick(); setManualAction('BUY'); }}
+              className={`px-3 py-1 rounded font-bold transition-all cursor-pointer ${
+                manualAction === 'BUY'
+                  ? 'bg-emerald-500 text-black shadow-sm font-black'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              BUY
+            </button>
+            <button
+              type="button"
+              onClick={() => { playCyberClick(); setManualAction('SELL'); }}
+              className={`px-3 py-1 rounded font-bold transition-all cursor-pointer ${
+                manualAction === 'SELL'
+                  ? 'bg-rose-500 text-black shadow-sm font-black'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              SELL
+            </button>
+          </div>
+
+          {/* Instrument Selector */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-zinc-500 uppercase font-bold">Asset:</span>
+            <select
+              value={manualTicker}
+              onChange={(e) => setManualTicker(e.target.value)}
+              className="bg-black border border-zinc-700 text-white rounded-lg px-2.5 py-1 text-xs font-mono focus:outline-none focus:border-[#00F0FF] cursor-pointer"
+            >
+              <option value="BTC">BTC / USDT (Spot)</option>
+              <option value="ETH">ETH / USDT (Spot)</option>
+              <option value="SOL">SOL / USDT (Spot)</option>
+              <option value="SUI">SUI / USDT (Spot)</option>
+              <option value="NVDAon">NVDAon (24/7 Equity)</option>
+              <option value="TSLAon">TSLAon (24/7 Equity)</option>
+              <option value="BGB">BGB / USDT (Bitget)</option>
+            </select>
+          </div>
+
+          {/* Position Size Quick Presets */}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-zinc-500 uppercase font-bold mr-0.5">Size:</span>
+            {[1000, 2500, 5000, 10000].map((amt) => (
+              <button
+                key={amt}
+                type="button"
+                onClick={() => { playCyberClick(); setManualUsd(amt); }}
+                className={`px-2 py-0.8 rounded text-[10px] font-mono transition-all cursor-pointer ${
+                  manualUsd === amt
+                    ? 'bg-[#00F0FF] text-black font-extrabold shadow-sm'
+                    : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 border border-zinc-700'
+                }`}
+              >
+                ${amt >= 1000 ? `${amt / 1000}k` : amt}
+              </button>
+            ))}
+            <input
+              type="number"
+              min="100"
+              max="50000"
+              step="100"
+              value={manualUsd}
+              onChange={(e) => setManualUsd(Math.max(100, Number(e.target.value)))}
+              className="w-20 bg-black border border-zinc-700 text-white rounded px-1.5 py-0.8 text-[11px] font-mono focus:outline-none focus:border-[#00F0FF]"
+              placeholder="USD"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isManualSubmitting}
+            className={`px-3.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ml-auto shadow-md cursor-pointer ${
+              manualAction === 'BUY'
+                ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 active:scale-95'
+                : 'bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-300 active:scale-95'
+            }`}
+          >
+            <Send className="w-3 h-3" />
+            <span>{isManualSubmitting ? 'Executing...' : `EXECUTE MANUAL ${manualAction}`}</span>
+          </button>
+        </form>
       </div>
 
       {/* Grid Display: Real-time Holdings vs System Decision Stream */}

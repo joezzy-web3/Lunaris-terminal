@@ -32,13 +32,14 @@ npm run dev
 ---
 
 ## 🧭 MODULE OVERVIEW FOR JUDGES
-- **DECK (`CommandDeckHero`)**: Flagship executive overview, live portfolio equity ($111,578.18+), 24h win rate (92.3%), three-pillar bento grid, cross-asset correlation matrix, and backtesting engine.
+- **DECK (`CommandDeckHero`)**: Flagship executive overview, live portfolio telemetry, three-pillar fail-safe architecture, 6×6 cross-asset correlation matrix, and quantitative backtesting engine.
 - **TERMINAL (`RealTimeTradingChart` & `LiquidityDepthHeatmap`)**: High-density trading workstation with multi-timeframe candlestick charts and Bitget Level-2 orderbook depth heatmaps.
-- **AUTOPILOT (`AutonomousLoopPanel`)**: 7×24 background trading daemon managing active positions, margin health, and real-time execution streaming.
-- **COUNCIL (`DebateConsole`)**: Transparent AI debate chamber where Quant-Omega, Guardian-01, and Atlas-Macro deliberate over trade signals.
+- **AUTOPILOT (`AutonomousLoopPanel`)**: Dual-mode execution engine. Runs autonomously as a background trading daemon when engaged with dynamic take-profit targets, trailing stops, and margin health monitoring, while also supporting direct manual trader orders and discretionary intervention anytime.
+- **COUNCIL (`DebateConsole`)**: Transparent AI debate chamber where Quant-Omega, Guardian-01, and Atlas-Macro deliberate over trade signals synthesized by Gemini 2.5 Flash.
 - **PULSE (`PulseRadarPanel`)**: Social sentiment velocity index (0–100), funding rate heatmaps, and whale volume anomaly detection.
 - **ALGO (`VisualAlgoBuilder`)**: Drag-and-drop block-based trading strategy builder with instant JSON strategy compilation.
-- **AUDIT (`PaperTradingAuditView`)**: Verifiable execution ledger, interactive **Daily PnL Calendar**, CSV export, SHA-256 transaction proof viewer, and Auditor Cloud Sanitizer (Passcode: `chllap5803`).
+- **MATRIX (`CrossAssetMatrix`)**: 6×6 Real-time Pearson correlation & statistical arbitrage matrix bridging Bitget spot crypto (`BTC`, `ETH`, `SOL`, `SUI`) with 24/7 tokenized US equities (`NVDAon`, `TSLAon`). Features interactive pairwise correlation radar, historical beta multiplier, 24h delta spread analysis, and one-click StatArb execution dispatch.
+- **AUDIT (`PaperTradingAuditView`)**: Verifiable execution ledger, interactive **Daily PnL Calendar**, CSV export, SHA-256 transaction proof viewer, and Auditor Cloud Sanitizer with administrative passcode protection.
 
 ---
 
