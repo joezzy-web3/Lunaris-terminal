@@ -584,7 +584,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* 10-Day US Stocks Expansion Notice Banner */}
+      {/* 5-Day US Stocks Expansion Notice Banner */}
       <UsStockExpansionBanner
         onSelectTicker={handleSelectAssetFromMarquee}
         onNavigateTab={(tab) => {
