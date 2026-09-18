@@ -13,11 +13,27 @@ interface UsStockExpansionBannerProps {
   onNavigateTab?: (tab: 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'AUDIT') => void;
 }
 
-// 5-day competition notice window: active for 5 days from Sep 18, 2026 until Sep 23, 2026 23:59:59 UTC.
+// 5-day competition announcement notice window:
+// Active for exactly 5 days (120 hours) from launch.
 // Once expired, this entire component unmounts and automatically disappears forever.
-const EXPANSION_START_TIME = new Date('2026-09-18T00:00:00Z').getTime();
-const EXPANSION_END_TIME = EXPANSION_START_TIME + 5 * 24 * 60 * 60 * 1000;
+const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 const STORAGE_KEY = 'LUNARIS_US_STOCKS_EXPANSION_BANNER_DISMISSED_V1';
+const ANNOUNCEMENT_START_KEY = 'LUNARIS_US_EXPANSION_LAUNCH_TIME_V1';
+
+function getAnnouncementExpiryTime(): number {
+  if (typeof window === 'undefined') return Date.now() + FIVE_DAYS_MS;
+  try {
+    let launchTime = localStorage.getItem(ANNOUNCEMENT_START_KEY);
+    if (!launchTime) {
+      launchTime = String(Date.now());
+      localStorage.setItem(ANNOUNCEMENT_START_KEY, launchTime);
+    }
+    const parsed = parseInt(launchTime, 10);
+    return isNaN(parsed) ? Date.now() + FIVE_DAYS_MS : parsed + FIVE_DAYS_MS;
+  } catch {
+    return Date.now() + FIVE_DAYS_MS;
+  }
+}
 
 const EXPANSION_TICKERS = [
   { ticker: 'PLTR', name: 'Palantir Tech', tag: 'AI Defense' },
@@ -31,7 +47,17 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
   onSelectTicker,
   onNavigateTab,
 }) => {
-  const [isExpired, setIsExpired] = useState<boolean>(() => Date.now() >= EXPANSION_END_TIME);
+  const [isExpired, setIsExpired] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const launch = localStorage.getItem(ANNOUNCEMENT_START_KEY);
+      if (launch && Date.now() >= parseInt(launch, 10) + FIVE_DAYS_MS) {
+        return true;
+      }
+    } catch {}
+    return false;
+  });
+
   const [isDismissed, setIsDismissed] = useState<boolean>(() => {
     try {
       return localStorage.getItem(STORAGE_KEY) === 'true';
@@ -46,16 +72,18 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
 
   // Compute countdown and automatically expire after 5 days
   useEffect(() => {
+    const targetExpiry = getAnnouncementExpiryTime();
+
     const updateCountdown = () => {
       const now = Date.now();
-      if (now >= EXPANSION_END_TIME) {
+      if (now >= targetExpiry) {
         setIsExpired(true);
         return;
       }
-      const msLeft = Math.max(0, EXPANSION_END_TIME - now);
+      const msLeft = Math.max(0, targetExpiry - now);
       const days = Math.floor(msLeft / (24 * 60 * 60 * 1000));
       const hours = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-      setDaysRemaining(Math.max(1, days));
+      setDaysRemaining(Math.min(5, Math.max(0, days)));
       setHoursRemaining(hours);
     };
 
