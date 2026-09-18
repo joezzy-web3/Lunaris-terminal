@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { SEED_PAPER_TRADES } from './lib/paperTradingAudit';
 import {
   isAnomalousTrade,
+  isTestTradeRecord,
   reconcileTradeCollection,
   normalizeTradeRecord,
   generateTradeIdempotencyKey,
@@ -715,14 +716,15 @@ function generateNextTradeId(trades: any[], dateIso: string): string {
 function saveAuditTrades(trades: any[]) {
   try {
     ensureAuditFile();
-    const reconciled = reconcileTradeCollection(Array.isArray(trades) ? trades : SEED_PAPER_TRADES);
+    const cleanTrades = Array.isArray(trades) ? trades.filter((t) => !isTestTradeRecord(t)) : SEED_PAPER_TRADES;
+    const reconciled = reconcileTradeCollection(cleanTrades);
     fs.writeFileSync(AUDIT_FILE_PATH, JSON.stringify(reconciled.length > 0 ? reconciled : SEED_PAPER_TRADES, null, 2), 'utf8');
 
     // Continuously push newest trade to Firestore cloud database so all sessions & new tabs stay in sync
     if (reconciled.length > 0) {
       const latest = reconciled[reconciled.length - 1];
       const db = getServerDb();
-      if (latest && latest.id && db) {
+      if (latest && latest.id && db && !isTestTradeRecord(latest)) {
         const d = doc(db, 'audit_trades', latest.id);
         const cleaned: Record<string, any> = {};
         for (const [k, v] of Object.entries(latest)) {
@@ -1109,7 +1111,7 @@ function runAutopilotDaemonTick() {
         balanceChangePct: parseFloat(pnlPct.toFixed(2)),
         accountBalance: 100000,
         trigger: `Autopilot Daemon: Target profit ratified (+${pnlPct.toFixed(2)}%) on ${ticker} by Tri-Persona Council`,
-        status: 'TAKE_PROFIT',
+        status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         sourceHandler: 'AUTOPILOT_DAEMON',
         idempotencyKey: idempKey,
       }, newTradeId);
@@ -1433,6 +1435,20 @@ app.post('/api/audit/trade', (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid trade payload' });
     }
 
+    // Ingestion filter: Quarantine test/debug trades to separate test collection
+    if (isTestTradeRecord(trade)) {
+      const db = getServerDb();
+      if (db && trade.id) {
+        const d = doc(db, 'test_audit_trades', String(trade.id));
+        setDoc(d, trade, { merge: true }).catch(() => {});
+      }
+      return res.status(200).json({
+        success: true,
+        quarantined: true,
+        message: 'Test or debug trade routed to isolated test_audit_trades collection',
+      });
+    }
+
     // Ingestion filter: Reject corrupt/anomalous trades
     if (isAnomalousTrade(trade)) {
       return res.status(400).json({ success: false, error: 'Rejected anomalous trade: value outside realistic corridor' });
@@ -1471,7 +1487,8 @@ app.post('/api/audit/sync', (req, res) => {
     if (!Array.isArray(trades)) {
       return res.status(400).json({ success: false, error: 'Invalid trades payload' });
     }
-    const reconciled = reconcileTradeCollection(trades);
+    const cleanTrades = trades.filter((t: any) => !isTestTradeRecord(t));
+    const reconciled = reconcileTradeCollection(cleanTrades);
     saveAuditTrades(reconciled);
     return res.json({
       success: true,

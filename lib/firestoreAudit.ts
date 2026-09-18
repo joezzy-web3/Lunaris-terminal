@@ -12,8 +12,25 @@ import { db } from './firebase';
 import { PaperTradeRecord, SEED_PAPER_TRADES, resolveTradePrices } from './paperTradingAudit';
 
 const TRADES_COLLECTION = 'audit_trades';
+export const TEST_TRADES_COLLECTION = 'test_audit_trades';
 const STATE_COLLECTION = 'autopilot_state';
 const GLOBAL_STATE_DOC = 'global_v1';
+
+/**
+ * Authoritative discriminator to identify test, sanity-check, or debugging records
+ * that must never enter the production trade ledger or production Firestore collection.
+ */
+export function isTestTradeRecord(trade: any): boolean {
+  if (!trade) return false;
+  if (trade.test === true || trade.isTest === true) return true;
+  const id = String(trade.id || '').toUpperCase();
+  if (id.includes('TEST') || id.includes('DUMMY') || id.includes('DEBUG') || id.includes('SANITY')) return true;
+  const trigger = String(trade.trigger || '').toLowerCase();
+  const notes = String(trade.notes || '').toLowerCase();
+  if (trigger.includes('test') || trigger.includes('dummy') || trigger.includes('debug') || trigger.includes('sanity')) return true;
+  if (notes.includes('test') || notes.includes('dummy') || notes.includes('debug') || notes.includes('sanity')) return true;
+  return false;
+}
 
 // Circuit breaker for Firestore free-tier daily quota exhaustion
 const QUOTA_EXCEEDED_STORAGE_KEY = 'LUNARIS_FIRESTORE_WRITE_QUOTA_EXCEEDED_DATE';
@@ -297,6 +314,7 @@ export function generateTradeIdempotencyKey(trade: any): string {
  */
 export function isAnomalousTrade(data: any): boolean {
   if (!data) return true;
+  if (isTestTradeRecord(data)) return true;
   const price = Number(data.price) || 0;
   const quantity = Number(data.quantity) || 0;
   const balanceChange = Number(data.balanceChange) || 0;
@@ -396,7 +414,18 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
     instrument,
     direction,
     trigger: data?.trigger || 'Autonomous Council Execution',
-    status: data?.status || (balanceChange >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS'),
+    status: (() => {
+      const rawStatus = data?.status;
+      let s: 'CLOSED' | 'OPEN' | 'STOP_LOSS' | 'TAKE_PROFIT' = rawStatus || (balanceChange >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS');
+      if (balanceChange < 0 && s === 'TAKE_PROFIT') {
+        s = 'STOP_LOSS';
+      } else if (balanceChange > 0 && s === 'STOP_LOSS') {
+        s = 'TAKE_PROFIT';
+      } else if (balanceChange === 0 && (s === 'TAKE_PROFIT' || s === 'STOP_LOSS')) {
+        s = 'CLOSED';
+      }
+      return s;
+    })(),
     sourceHandler: data?.sourceHandler || 'AUTOPILOT_DAEMON',
   };
 
@@ -439,6 +468,7 @@ export function reconcileTradeCollection(trades: (PaperTradeRecord | any)[]): Pa
     const id = item.id || item._id;
     if (!id || typeof id !== 'string') continue;
     if (SUPERSEDED_LEGACY_IDS.has(id)) continue;
+    if (isTestTradeRecord(item)) continue;
     if (isAnomalousTrade(item)) continue;
 
     const normalized = normalizeTradeRecord(item, id);
@@ -568,8 +598,9 @@ export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
     snapshot.forEach((docSnap) => {
       const raw = docSnap.data();
       if (raw && (raw.id || docSnap.id)) {
+        if (isTestTradeRecord(raw) || isTestTradeRecord({ ...raw, id: docSnap.id })) return;
         const normalized = normalizeTradeRecord(raw, docSnap.id);
-        if (normalized.id.startsWith('PT-')) {
+        if (normalized.id.startsWith('PT-') && !isTestTradeRecord(normalized)) {
           trades.push(normalized);
         }
       }
@@ -662,6 +693,18 @@ export async function flushPendingFirestoreTrades(): Promise<void> {
 export async function saveTradeToFirestore(trade: PaperTradeRecord): Promise<void> {
   if (!trade || !trade.id) return;
 
+  // Test or debug sanity trades are routed to isolated test_audit_trades collection, never production
+  if (isTestTradeRecord(trade)) {
+    try {
+      const docRef = doc(db, TEST_TRADES_COLLECTION, trade.id);
+      const cleaned = cleanFirestoreData(trade);
+      await setDoc(docRef, cleaned, { merge: true });
+    } catch (e) {
+      console.warn('Notice saving test trade to isolated test collection:', e);
+    }
+    return;
+  }
+
   // If daily write quota reached on free tier, skip cloud write immediately without queueing
   if (isFirestoreQuotaExceeded()) {
     return;
@@ -696,7 +739,8 @@ export async function seedFirestoreAuditTrades(
   }
 
   try {
-    const validIds = new Set(trades.map((t) => t.id));
+    const cleanTrades = trades.filter((t) => !isTestTradeRecord(t));
+    const validIds = new Set(cleanTrades.map((t) => t.id));
     if (purgeOthers) {
       try {
         const colRef = collection(db, TRADES_COLLECTION);
@@ -720,7 +764,7 @@ export async function seedFirestoreAuditTrades(
 
     const batch = writeBatch(db);
     // Slice to at most 100 items to guarantee Firestore batch limits and network responsiveness
-    const tradesSlice = trades.slice(0, 100);
+    const tradesSlice = cleanTrades.slice(0, 100);
     for (const t of tradesSlice) {
       const docRef = doc(db, TRADES_COLLECTION, t.id);
       const cleaned = cleanFirestoreData(t);
