@@ -4,26 +4,27 @@
  * Built for Bitget AI Hackathon by Joezzy (Joezzy Web3)
  */
 
-import React, { useState, useEffect } from 'react';
-import { AutonomousLoopPanel } from '@/components/AutonomousLoopPanel';
-import { DebateConsole } from '@/components/DebateConsole';
-import { PulseRadarPanel } from '@/components/PulseRadarPanel';
-import { DemoModeController } from '@/components/DemoModeController';
-import { HackathonCreditsModal } from '@/components/HackathonCreditsModal';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { CommandDeckHero } from '@/components/CommandDeckHero';
-import { VisualAlgoBuilder } from '@/components/VisualAlgoBuilder';
-import { UnifiedDataConstellation } from '@/components/UnifiedDataConstellation';
-import { WhatLunarisDoes } from '@/components/WhatLunarisDoes';
-import { CrossAssetMatrix } from '@/components/CrossAssetMatrix';
 import { ThreePillarBento } from '@/components/ThreePillarBento';
 import { LiveTickerMarquee } from '@/components/LiveTickerMarquee';
-import { RealTimeTradingChart } from '@/components/RealTimeTradingChart';
-import { LiquidityDepthHeatmap } from '@/components/LiquidityDepthHeatmap';
-import { DeterministicKillSwitch } from '@/components/DeterministicKillSwitch';
-import { PaperTradingAuditView } from '@/components/PaperTradingAuditView';
-import { CommandPaletteModal } from '@/components/CommandPaletteModal';
-import { BitgetApiKeyModal } from '@/components/BitgetApiKeyModal';
-import { BlackSwanDrillModal } from '@/components/BlackSwanDrillModal';
+
+// Code-split heavy views & modals for instant initial page paint (<400KB initial chunk)
+const AutonomousLoopPanel = lazy(() => import('@/components/AutonomousLoopPanel').then(m => ({ default: m.AutonomousLoopPanel })));
+const DebateConsole = lazy(() => import('@/components/DebateConsole').then(m => ({ default: m.DebateConsole })));
+const PulseRadarPanel = lazy(() => import('@/components/PulseRadarPanel').then(m => ({ default: m.PulseRadarPanel })));
+const DemoModeController = lazy(() => import('@/components/DemoModeController').then(m => ({ default: m.DemoModeController })));
+const HackathonCreditsModal = lazy(() => import('@/components/HackathonCreditsModal').then(m => ({ default: m.HackathonCreditsModal })));
+const VisualAlgoBuilder = lazy(() => import('@/components/VisualAlgoBuilder').then(m => ({ default: m.VisualAlgoBuilder })));
+const UnifiedDataConstellation = lazy(() => import('@/components/UnifiedDataConstellation').then(m => ({ default: m.UnifiedDataConstellation })));
+const CrossAssetMatrix = lazy(() => import('@/components/CrossAssetMatrix').then(m => ({ default: m.CrossAssetMatrix })));
+const RealTimeTradingChart = lazy(() => import('@/components/RealTimeTradingChart').then(m => ({ default: m.RealTimeTradingChart })));
+const LiquidityDepthHeatmap = lazy(() => import('@/components/LiquidityDepthHeatmap').then(m => ({ default: m.LiquidityDepthHeatmap })));
+const DeterministicKillSwitch = lazy(() => import('@/components/DeterministicKillSwitch').then(m => ({ default: m.DeterministicKillSwitch })));
+const PaperTradingAuditView = lazy(() => import('@/components/PaperTradingAuditView').then(m => ({ default: m.PaperTradingAuditView })));
+const CommandPaletteModal = lazy(() => import('@/components/CommandPaletteModal').then(m => ({ default: m.CommandPaletteModal })));
+const BitgetApiKeyModal = lazy(() => import('@/components/BitgetApiKeyModal').then(m => ({ default: m.BitgetApiKeyModal })));
+const BlackSwanDrillModal = lazy(() => import('@/components/BlackSwanDrillModal').then(m => ({ default: m.BlackSwanDrillModal })));
 import { TradeProposal } from '@/lib/riskVeto';
 import { clearAssetShocks } from '@/lib/demoSeedData';
 import { PulseContext } from '@/lib/councilDebateEngine';
@@ -121,6 +122,24 @@ export function getInitialTab(): TerminalTab {
   return 'DECK';
 }
 
+function TerminalLoadingFallback() {
+  return (
+    <div className="min-h-[440px] w-full flex flex-col items-center justify-center p-8 bg-[#0b0b10] border border-white/10 rounded-2xl animate-pulse">
+      <div className="relative flex items-center justify-center mb-4">
+        <div className="w-10 h-10 rounded-xs bg-gradient-to-tr from-[#00F0FF] via-[#FACC15] to-[#D946EF] rotate-45 animate-spin" style={{ animationDuration: '2.5s' }} />
+        <div className="absolute w-5 h-5 rounded-full bg-[#0b0b10]" />
+      </div>
+      <div className="flex items-center gap-2 font-mono text-xs text-cyan-400 font-bold uppercase tracking-widest">
+        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+        <span>STREAMING QUANT MODULE // TELEMETRY LINK</span>
+      </div>
+      <div className="text-[11px] text-gray-400 font-mono mt-2">
+        Sub-system streaming on demand...
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<TerminalTab>(() => getInitialTab());
   const [tabHistory, setTabHistory] = useState<TerminalTab[]>([]);
@@ -201,6 +220,18 @@ export default function App() {
         window.history.replaceState({ tab: 'AUDIT' }, '', '/auditlog');
       }
     }
+  }, []);
+
+  // Silently pre-warm heavy modules during browser idle time so tab transitions are instant
+  useEffect(() => {
+    const prefetchTimer = setTimeout(() => {
+      import('@/components/PaperTradingAuditView');
+      import('@/components/RealTimeTradingChart');
+      import('@/components/AutonomousLoopPanel');
+      import('@/components/DebateConsole');
+      import('@/components/PulseRadarPanel');
+    }, 1500);
+    return () => clearTimeout(prefetchTimer);
   }, []);
 
   // Navigates to a tab while pushing the current tab onto the history stack and updating the browser URL
@@ -418,6 +449,9 @@ export default function App() {
             {/* Official Bitget S2 Paper-Trading Audit Tab */}
             <button
               id="nav-tab-audit-log"
+              onMouseEnter={() => {
+                import('@/components/PaperTradingAuditView');
+              }}
               onClick={() => {
                 playCyberClick();
                 navigateToTab('AUDIT');
@@ -525,8 +559,9 @@ export default function App() {
 
       {/* Main Container */}
       <main className={`mx-auto px-4 py-4 space-y-8 transition-all duration-200 ${activeTab === 'AUDIT' ? 'max-w-[1680px]' : 'max-w-7xl'}`}>
-        {/* VIEW 1: COMMAND DECK (Clean, Cinematic Gateway matching Moonberg Reference) */}
-        {activeTab === 'DECK' && (
+        <Suspense fallback={<TerminalLoadingFallback />}>
+          {/* VIEW 1: COMMAND DECK (Clean, Cinematic Gateway matching Moonberg Reference) */}
+          {activeTab === 'DECK' && (
           <div className="space-y-8 animate-fadeIn">
             {/* Cyber Hero with 3D Wireframe Spheres & Typewriter */}
             <CommandDeckHero
@@ -565,6 +600,9 @@ export default function App() {
 
               <div className="flex items-center gap-3 shrink-0">
                 <button
+                  onMouseEnter={() => {
+                    import('@/components/PaperTradingAuditView');
+                  }}
                   onClick={() => {
                     playCyberClick();
                     navigateToTab('AUDIT');
@@ -860,6 +898,7 @@ export default function App() {
             />
           </div>
         )}
+        </Suspense>
       </main>
 
       {/* Institutional Terminal Footer */}
@@ -901,48 +940,51 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Hackathon Credits & Certification Modal */}
-      <HackathonCreditsModal
-        isOpen={isCreditsModalOpen}
-        onClose={() => setIsCreditsModalOpen(false)}
-      />
+      {/* Lazy Modals Wrapped in Suspense */}
+      <Suspense fallback={null}>
+        {/* Hackathon Credits & Certification Modal */}
+        <HackathonCreditsModal
+          isOpen={isCreditsModalOpen}
+          onClose={() => setIsCreditsModalOpen(false)}
+        />
 
-      {/* Quick Agentic Command Palette (Cmd + K / Ctrl + K) */}
-      <CommandPaletteModal
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        onNavigateTab={(tab) => {
-          navigateToTab(tab);
-        }}
-        onNavigateCockpitModule={(mod) => {
-          setCockpitModule(mod);
-        }}
-        onConveneCouncil={(ticker, prompt) => {
-          setCouncilSelectedTicker(ticker);
-          navigateToTab('COUNCIL');
-        }}
-        onOpenFlashCrashDrill={() => {
-          setIsBlackSwanDrillOpen(true);
-        }}
-        onOpenAuditLedger={() => {
-          navigateToTab('AUDIT');
-        }}
-      />
+        {/* Quick Agentic Command Palette (Cmd + K / Ctrl + K) */}
+        <CommandPaletteModal
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          onNavigateTab={(tab) => {
+            navigateToTab(tab);
+          }}
+          onNavigateCockpitModule={(mod) => {
+            setCockpitModule(mod);
+          }}
+          onConveneCouncil={(ticker, prompt) => {
+            setCouncilSelectedTicker(ticker);
+            navigateToTab('COUNCIL');
+          }}
+          onOpenFlashCrashDrill={() => {
+            setIsBlackSwanDrillOpen(true);
+          }}
+          onOpenAuditLedger={() => {
+            navigateToTab('AUDIT');
+          }}
+        />
 
-      {/* Bitget Institutional Read-Only API (BYOK) Modal */}
-      <BitgetApiKeyModal
-        isOpen={isApiKeyModalOpen}
-        onClose={() => setIsApiKeyModalOpen(false)}
-        onConnectionStatusChange={(connected) => {
-          setIsBitgetConnected(connected);
-        }}
-      />
+        {/* Bitget Institutional Read-Only API (BYOK) Modal */}
+        <BitgetApiKeyModal
+          isOpen={isApiKeyModalOpen}
+          onClose={() => setIsApiKeyModalOpen(false)}
+          onConnectionStatusChange={(connected) => {
+            setIsBitgetConnected(connected);
+          }}
+        />
 
-      {/* Black Swan / Flash Crash Emergency Drill Modal */}
-      <BlackSwanDrillModal
-        isOpen={isBlackSwanDrillOpen}
-        onClose={() => setIsBlackSwanDrillOpen(false)}
-      />
+        {/* Black Swan / Flash Crash Emergency Drill Modal */}
+        <BlackSwanDrillModal
+          isOpen={isBlackSwanDrillOpen}
+          onClose={() => setIsBlackSwanDrillOpen(false)}
+        />
+      </Suspense>
     </div>
   );
 }
