@@ -93,7 +93,7 @@ interface AutopilotContextType {
   handleIncomingCouncilSignal: (proposal: TradeProposal) => Promise<void>;
   dispatchProposal: (proposal: TradeProposal) => void;
   executeSimulatedBuy: (ticker: string, sizePct: number, currentPrice: number, assetClass: 'CX' | 'EQ') => BuyExecutionResult;
-  executeSimulatedSell: (ticker: string, currentPrice: number) => SellExecutionResult;
+  executeSimulatedSell: (ticker: string, currentPrice?: number) => Promise<SellExecutionResult> | SellExecutionResult;
   monitoredTickers: string[];
 }
 
@@ -216,6 +216,8 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const isTurboRef = useRef<boolean>(isTurbo);
   const autoExitPctRef = useRef<number>(autoExitPct);
   const maxOpenPositionsRef = useRef<number>(maxOpenPositions);
+  const lastManualTradeTimeRef = useRef<number>(0);
+  const lastUserConfigUpdateRef = useRef<number>(0);
 
   useEffect(() => {
     positionsRef.current = positions;
@@ -260,20 +262,28 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setIsTurbo(s.isTurbo);
         }
         if (typeof s.autoExitPct === 'number' && Number.isFinite(s.autoExitPct)) {
-          setAutoExitPct(s.autoExitPct);
-          autoExitPctRef.current = s.autoExitPct;
+          if (Date.now() - lastUserConfigUpdateRef.current > 4000) {
+            setAutoExitPct(s.autoExitPct);
+            autoExitPctRef.current = s.autoExitPct;
+          }
         }
         if (typeof s.maxOpenPositions === 'number' && Number.isFinite(s.maxOpenPositions)) {
-          setMaxOpenPositions(s.maxOpenPositions);
-          maxOpenPositionsRef.current = s.maxOpenPositions;
+          if (Date.now() - lastUserConfigUpdateRef.current > 4000) {
+            setMaxOpenPositions(s.maxOpenPositions);
+            maxOpenPositionsRef.current = s.maxOpenPositions;
+          }
         }
         if (typeof s.cashBalance === 'number' && Number.isFinite(s.cashBalance) && s.cashBalance >= 0) {
-          setCashBalance(s.cashBalance);
-          cashBalanceRef.current = s.cashBalance;
+          if (Date.now() - lastManualTradeTimeRef.current > 2500) {
+            setCashBalance(s.cashBalance);
+            cashBalanceRef.current = s.cashBalance;
+          }
         }
         if (s.positions && typeof s.positions === 'object') {
-          setPositions(s.positions);
-          positionsRef.current = s.positions;
+          if (Date.now() - lastManualTradeTimeRef.current > 2500) {
+            setPositions(s.positions);
+            positionsRef.current = s.positions;
+          }
         }
         if (Array.isArray(s.ledger)) {
           setLedger((prevLedger) => {
@@ -376,8 +386,10 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const handleSetAutoExitPct: React.Dispatch<React.SetStateAction<number>> = useCallback((val) => {
+    lastUserConfigUpdateRef.current = Date.now();
     setAutoExitPct((prev) => {
       const next = typeof val === 'function' ? (val as (p: number) => number)(prev) : val;
+      autoExitPctRef.current = next;
       fetch('/api/autopilot/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -388,8 +400,10 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const handleSetMaxOpenPositions: React.Dispatch<React.SetStateAction<number>> = useCallback((val) => {
+    lastUserConfigUpdateRef.current = Date.now();
     setMaxOpenPositions((prev) => {
       const next = typeof val === 'function' ? (val as (p: number) => number)(prev) : val;
+      maxOpenPositionsRef.current = next;
       fetch('/api/autopilot/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -491,43 +505,107 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [calculateTotalValue]);
 
   /**
-   * Sell execution delegating to authoritative server
+   * Sell execution delegating to authoritative server with instant state update & fallbacks
    */
-  const executeSimulatedSell = useCallback((ticker: string, currentPrice?: number): SellExecutionResult => {
-    const normTicker = ticker.toUpperCase();
-    fetch('/api/autopilot/manual-trade', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker: normTicker, action: 'SELL' }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success && data.state) {
-          setCashBalance(data.state.cashBalance);
-          cashBalanceRef.current = data.state.cashBalance;
-          setPositions(data.state.positions || {});
-          positionsRef.current = data.state.positions || {};
-          setLedger(data.state.ledger || []);
-          if (data.log) {
-            setLogs((prev) => [data.log, ...prev.slice(0, 59)]);
-          }
-          if (data.pnl >= 0) {
-            playTradeApprovedChime();
-          } else {
-            playRiskVetoTone();
-          }
+  const executeSimulatedSell = useCallback(async (ticker: string, currentPrice?: number): Promise<SellExecutionResult> => {
+    lastManualTradeTimeRef.current = Date.now();
+    const cleanTicker = String(ticker || '').trim();
+
+    // Look up position with alias handling
+    const currentPositions = positionsRef.current || {};
+    const posKey = Object.keys(currentPositions).find((k) => {
+      const upperK = k.toUpperCase().replace('/USDT', '').replace('ON', '');
+      const upperT = cleanTicker.toUpperCase().replace('/USDT', '').replace('ON', '');
+      return k.toUpperCase() === cleanTicker.toUpperCase() || upperK === upperT;
+    }) || cleanTicker;
+
+    const existingPos = currentPositions[posKey] || currentPositions[cleanTicker];
+    const exitPrice = (typeof currentPrice === 'number' && currentPrice > 0)
+      ? currentPrice
+      : (existingPos?.currentPrice || existingPos?.entryPrice || 0);
+
+    const units = existingPos?.amount || 0;
+    const entryPrice = existingPos?.entryPrice || exitPrice;
+    const totalProceeds = parseFloat((units * exitPrice).toFixed(2));
+    const totalCost = parseFloat((units * entryPrice).toFixed(2));
+    const pnl = parseFloat((totalProceeds - totalCost).toFixed(2));
+    const pnlPct = totalCost > 0 ? parseFloat((((exitPrice - entryPrice) / entryPrice) * 100).toFixed(2)) : 0;
+
+    try {
+      const res = await fetch('/api/autopilot/manual-trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker: posKey || cleanTicker,
+          action: 'SELL',
+          clientPrice: exitPrice > 0 ? exitPrice : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.state) {
+        lastManualTradeTimeRef.current = Date.now();
+        setCashBalance(data.state.cashBalance);
+        cashBalanceRef.current = data.state.cashBalance;
+        setPositions(data.state.positions || {});
+        positionsRef.current = data.state.positions || {};
+        if (Array.isArray(data.state.ledger)) {
+          setLedger(data.state.ledger);
         }
-      })
-      .catch((err) => console.warn('Server trade error:', err));
+        if (data.log) {
+          setLogs((prev) => [data.log, ...prev.slice(0, 59)]);
+        }
+        if ((data.pnl !== undefined ? data.pnl : pnl) >= 0) {
+          playTradeApprovedChime();
+        } else {
+          playRiskVetoTone();
+        }
+        return {
+          success: true,
+          ticker: cleanTicker,
+          units,
+          price: exitPrice,
+          proceeds: data.trade?.totalUsd || totalProceeds,
+          pnl: data.pnl !== undefined ? data.pnl : pnl,
+          pnlPct: data.pnlPct !== undefined ? data.pnlPct : pnlPct,
+        };
+      } else {
+        console.warn('Server manual trade returned:', data);
+        // Client fallback if position exists
+        if (existingPos && units > 0) {
+          const nextPositions = { ...currentPositions };
+          delete nextPositions[posKey];
+          delete nextPositions[cleanTicker];
+          const nextCash = parseFloat((cashBalanceRef.current + totalProceeds).toFixed(2));
+          setCashBalance(nextCash);
+          cashBalanceRef.current = nextCash;
+          setPositions(nextPositions);
+          positionsRef.current = nextPositions;
+          playTradeApprovedChime();
+        }
+      }
+    } catch (err) {
+      console.warn('Server trade error in executeSimulatedSell:', err);
+      if (existingPos && units > 0) {
+        const nextPositions = { ...currentPositions };
+        delete nextPositions[posKey];
+        delete nextPositions[cleanTicker];
+        const nextCash = parseFloat((cashBalanceRef.current + totalProceeds).toFixed(2));
+        setCashBalance(nextCash);
+        cashBalanceRef.current = nextCash;
+        setPositions(nextPositions);
+        positionsRef.current = nextPositions;
+        playTradeApprovedChime();
+      }
+    }
 
     return {
       success: true,
-      ticker: normTicker,
-      units: 0,
-      price: currentPrice || 0,
-      proceeds: 0,
-      pnl: 0,
-      pnlPct: 0,
+      ticker: cleanTicker,
+      units,
+      price: exitPrice,
+      proceeds: totalProceeds,
+      pnl,
+      pnlPct,
     };
   }, []);
 
@@ -619,6 +697,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * Manual Order Execution (Authoritative Server)
    */
   const handleManualTrade = useCallback(async (ticker: string, action: 'BUY' | 'SELL', usdAmount?: number) => {
+    lastManualTradeTimeRef.current = Date.now();
     const sym = ticker.toUpperCase();
     try {
       const res = await fetch('/api/autopilot/manual-trade', {
@@ -628,6 +707,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
       const data = await res.json();
       if (data.success && data.state) {
+        lastManualTradeTimeRef.current = Date.now();
         setCashBalance(data.state.cashBalance);
         cashBalanceRef.current = data.state.cashBalance;
         setPositions(data.state.positions || {});

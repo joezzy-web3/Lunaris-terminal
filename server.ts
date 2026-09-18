@@ -20,12 +20,23 @@ import firebaseConfig from './firebase-applet-config.json';
 
 dotenv.config();
 
-const serverFirebaseApp = getFirebaseApps().length > 0 ? getFirebaseApps()[0] : initFirebaseApp(firebaseConfig);
-const serverDb = getFirestore(serverFirebaseApp, firebaseConfig.firestoreDatabaseId || '(default)');
+// Lazy initialization of Firebase Firestore to prevent unhandled startup failure
+let serverDb: any = null;
+function getServerDb() {
+  if (!serverDb) {
+    try {
+      const serverFirebaseApp = getFirebaseApps().length > 0 ? getFirebaseApps()[0] : initFirebaseApp(firebaseConfig);
+      serverDb = getFirestore(serverFirebaseApp, firebaseConfig.firestoreDatabaseId || '(default)');
+    } catch (err) {
+      console.warn('Firebase Firestore initialization deferred:', err);
+    }
+  }
+  return serverDb;
+}
 
 const app = express();
-app.use(express.json({ limit: '2mb' }));
 const PORT = 3000;
+app.use(express.json({ limit: '2mb' }));
 
 // Lazy initialization of Gemini client
 let geminiClient: GoogleGenAI | null = null;
@@ -710,8 +721,9 @@ function saveAuditTrades(trades: any[]) {
     // Continuously push newest trade to Firestore cloud database so all sessions & new tabs stay in sync
     if (reconciled.length > 0) {
       const latest = reconciled[reconciled.length - 1];
-      if (latest && latest.id) {
-        const d = doc(serverDb, 'audit_trades', latest.id);
+      const db = getServerDb();
+      if (latest && latest.id && db) {
+        const d = doc(db, 'audit_trades', latest.id);
         const cleaned: Record<string, any> = {};
         for (const [k, v] of Object.entries(latest)) {
           if (v !== undefined) cleaned[k] = v;
@@ -811,41 +823,98 @@ function sanitizeLedgerCollection(ledger: any[]): any[] {
   return sanitized;
 }
 
+function normalizeTicker(ticker: string): string {
+  if (!ticker) return 'BTC';
+  const clean = String(ticker).trim().replace(/\/USDT$/i, '').replace(/-USD$/i, '');
+  const upper = clean.toUpperCase();
+  if (upper === 'NVDAON' || upper === 'NVDA') return 'NVDAon';
+  if (upper === 'TSLAON' || upper === 'TSLA') return 'TSLAon';
+  if (upper.endsWith('ON') && upper.length > 2) {
+    const base = upper.slice(0, -2);
+    return `${base}on`;
+  }
+  return upper;
+}
+
+function findPositionKey(positions: Record<string, any>, rawTicker: string): string | undefined {
+  if (!positions || typeof positions !== 'object') return undefined;
+  if (positions[rawTicker]) return rawTicker;
+  const targetUpper = String(rawTicker).trim().toUpperCase().replace(/\/USDT$/i, '');
+  for (const key of Object.keys(positions)) {
+    const keyUpper = key.trim().toUpperCase().replace(/\/USDT$/i, '');
+    if (keyUpper === targetUpper) return key;
+    if (keyUpper.replace(/ON$/, '') === targetUpper.replace(/ON$/, '')) return key;
+  }
+  return undefined;
+}
+
+function sanitizePositionsMap(positions: Record<string, any>): Record<string, any> {
+  if (!positions || typeof positions !== 'object') return {};
+  const cleaned: Record<string, any> = {};
+  for (const [key, pos] of Object.entries(positions)) {
+    if (!pos || typeof pos !== 'object') continue;
+    const amount = Number(pos.amount);
+    if (!Number.isFinite(amount) || amount <= 0) continue;
+    const normKey = normalizeTicker(key);
+    if (cleaned[normKey]) {
+      cleaned[normKey].amount = parseFloat((cleaned[normKey].amount + amount).toFixed(4));
+    } else {
+      cleaned[normKey] = {
+        ...pos,
+        ticker: normKey,
+        amount,
+        entryPrice: Number(pos.entryPrice) || 0,
+        currentPrice: Number(pos.currentPrice) || Number(pos.entryPrice) || 0,
+      };
+    }
+  }
+  return cleaned;
+}
+
+let cachedAutopilotState: ServerAutopilotState | null = null;
+
 function getAutopilotState(): ServerAutopilotState {
+  if (cachedAutopilotState) {
+    return cachedAutopilotState;
+  }
   try {
     ensureAutopilotFile();
     if (fs.existsSync(AUTOPILOT_FILE_PATH)) {
       const data = fs.readFileSync(AUTOPILOT_FILE_PATH, 'utf8');
       const parsed = JSON.parse(data);
       if (parsed && typeof parsed === 'object') {
-        return {
+        cachedAutopilotState = {
           ...DEFAULT_AUTOPILOT_STATE,
           ...parsed,
-          positions: parsed.positions || {},
+          positions: sanitizePositionsMap(parsed.positions || {}),
           ledger: sanitizeLedgerCollection(Array.isArray(parsed.ledger) ? parsed.ledger : DEFAULT_AUTOPILOT_STATE.ledger),
         };
+        return cachedAutopilotState;
       }
     }
   } catch (err) {
     console.error('Error reading autopilot state:', err);
   }
-  return { ...DEFAULT_AUTOPILOT_STATE };
+  cachedAutopilotState = { ...DEFAULT_AUTOPILOT_STATE };
+  return cachedAutopilotState;
 }
 
 function saveAutopilotState(state: Partial<ServerAutopilotState>) {
   try {
     ensureAutopilotFile();
     const current = getAutopilotState();
-    const updated = {
+    const updated: ServerAutopilotState = {
       ...current,
       ...state,
+      positions: state.positions !== undefined ? sanitizePositionsMap(state.positions) : current.positions,
       lastUpdated: new Date().toISOString(),
     };
+    cachedAutopilotState = updated;
     fs.writeFileSync(AUTOPILOT_FILE_PATH, JSON.stringify(updated, null, 2), 'utf8');
     return updated;
   } catch (err) {
     console.error('Error writing autopilot state:', err);
-    return getAutopilotState();
+    return cachedAutopilotState || getAutopilotState();
   }
 }
 
@@ -993,6 +1062,11 @@ function runAutopilotDaemonTick() {
       const prevCash = state.cashBalance;
       state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
       delete state.positions[ticker];
+      for (const k of Object.keys(state.positions)) {
+        if (k.toUpperCase().replace('/USDT', '') === ticker.toUpperCase().replace('/USDT', '')) {
+          delete state.positions[k];
+        }
+      }
       positionClosedThisTick = true;
 
       const ledgerEntry = {
@@ -1112,11 +1186,12 @@ function runAutopilotDaemonTick() {
   }
 
   // 2. Opportunistic position entry if below max capacity
-  const currentOpenCount = Object.keys(state.positions || {}).length;
+  const activePositions = Object.values(state.positions || {}).filter((p: any) => p && typeof p === 'object' && Number(p.amount) > 0);
+  const currentOpenCount = activePositions.length;
   const maxCapacity = state.maxOpenPositions || 3;
   if (currentOpenCount < maxCapacity && state.cashBalance >= 1500) {
     const candidateTickers = ['BTC', 'ETH', 'SOL', 'SUI', 'NVDAon', 'TSLAon', 'BGB', 'MSTR'];
-    const unheld = candidateTickers.filter((t) => !state.positions[t]);
+    const unheld = candidateTickers.filter((t) => !findPositionKey(state.positions, t));
     if (unheld.length > 0) {
       const chosenTicker = unheld[Math.floor(Math.random() * unheld.length)];
       const quote = bitgetMarketCache?.data?.[chosenTicker] || bitgetMarketCache?.data?.[chosenTicker.replace('on', '')];
@@ -1602,14 +1677,16 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
     const rawTicker = req.body?.ticker;
     const action = req.body?.action;
     const requestedUsd = Number(req.body?.usdAmount);
+    const clientPrice = Number(req.body?.clientPrice || req.body?.currentPrice);
 
     if (!rawTicker || (action !== 'BUY' && action !== 'SELL')) {
       return res.status(400).json({ success: false, error: 'Valid ticker and action (BUY or SELL) required' });
     }
 
-    const normTicker = String(rawTicker).toUpperCase().replace('/USDT', '');
-    const { price, assetClass } = getServerPrice(normTicker);
     const state = getAutopilotState();
+    const posKey = findPositionKey(state.positions, rawTicker);
+    const normTicker = normalizeTicker(posKey || rawTicker);
+    const { price, assetClass } = getServerPrice(normTicker, clientPrice);
     const nowUtc = new Date().toISOString();
     const timeStr = new Date().toLocaleTimeString();
 
@@ -1619,20 +1696,22 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         return res.status(400).json({ success: false, error: 'Insufficient cash balance (< $20)' });
       }
 
-      const currentOpenCount = Object.keys(state.positions || {}).length;
-      const isAlreadyHeld = Boolean(state.positions?.[normTicker]);
+      const activePositions = Object.values(state.positions || {}).filter((p: any) => p && typeof p === 'object' && Number(p.amount) > 0);
+      const currentOpenCount = activePositions.length;
+      const isAlreadyHeld = Boolean(posKey && state.positions[posKey]);
       const maxLimit = state.maxOpenPositions || 3;
 
       if (!isAlreadyHeld && currentOpenCount >= maxLimit) {
         return res.status(400).json({
           success: false,
-          error: `Capacity limit reached (${currentOpenCount}/${maxLimit} positions active).`,
+          error: `Capacity limit reached (${currentOpenCount}/${maxLimit} positions active). Close an existing slot first.`,
         });
       }
 
+      const effectivePrice = (Number.isFinite(clientPrice) && clientPrice > 0) ? clientPrice : price;
       const tradeUsd = Math.min(currentCash, Math.max(20, Number.isFinite(requestedUsd) && requestedUsd > 0 ? requestedUsd : 3000));
-      const units = parseFloat((tradeUsd / price).toFixed(price < 10 ? 2 : 4));
-      const actualCost = parseFloat((units * price).toFixed(2));
+      const units = parseFloat((tradeUsd / effectivePrice).toFixed(effectivePrice < 10 ? 2 : 4));
+      const actualCost = parseFloat((units * effectivePrice).toFixed(2));
 
       if (actualCost > currentCash) {
         return res.status(400).json({ success: false, error: 'Insufficient deployable cash balance' });
@@ -1641,24 +1720,26 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
       const prevCash = state.cashBalance;
       state.cashBalance = parseFloat((state.cashBalance - actualCost).toFixed(2));
 
-      if (state.positions[normTicker]) {
-        const existing = state.positions[normTicker];
+      const targetKey = posKey || normTicker;
+      if (state.positions[targetKey]) {
+        const existing = state.positions[targetKey];
         const totUnits = existing.amount + units;
-        const avgEntry = parseFloat(((existing.amount * existing.entryPrice + actualCost) / totUnits).toFixed(price < 10 ? 4 : 2));
-        state.positions[normTicker] = {
+        const avgEntry = parseFloat(((existing.amount * existing.entryPrice + actualCost) / totUnits).toFixed(effectivePrice < 10 ? 4 : 2));
+        state.positions[targetKey] = {
           ...existing,
+          ticker: targetKey,
           amount: totUnits,
           entryPrice: avgEntry,
-          currentPrice: price,
-          unrealizedPnl: parseFloat(((price - avgEntry) * totUnits).toFixed(2)),
-          unrealizedPnlPct: parseFloat((((price - avgEntry) / avgEntry) * 100).toFixed(2)),
+          currentPrice: effectivePrice,
+          unrealizedPnl: parseFloat(((effectivePrice - avgEntry) * totUnits).toFixed(2)),
+          unrealizedPnlPct: parseFloat((((effectivePrice - avgEntry) / avgEntry) * 100).toFixed(2)),
         };
       } else {
-        state.positions[normTicker] = {
-          ticker: normTicker,
+        state.positions[targetKey] = {
+          ticker: targetKey,
           amount: units,
-          entryPrice: price,
-          currentPrice: price,
+          entryPrice: effectivePrice,
+          currentPrice: effectivePrice,
           unrealizedPnl: 0,
           unrealizedPnlPct: 0,
           class: assetClass,
@@ -1666,19 +1747,19 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
       }
 
       const ledgerEntry = {
-        id: generateUniqueLedgerId('manual-buy', normTicker),
+        id: generateUniqueLedgerId('manual-buy', targetKey),
         timestamp: timeStr,
         utcTimestamp: nowUtc,
         type: 'MANUAL_INTERVENTION',
-        ticker: normTicker,
+        ticker: targetKey,
         amount: units,
-        price,
+        price: effectivePrice,
         totalUsd: actualCost,
         balanceBefore: prevCash,
         balanceAfter: state.cashBalance,
         realizedPnl: 0,
         realizedPnlPct: 0,
-        notes: `Manual Order: Executed BUY on ${units.toFixed(4)} ${normTicker} at $${price.toLocaleString()} ($${actualCost.toLocaleString()} deployed).`,
+        notes: `Manual Order: Executed BUY on ${units.toFixed(4)} ${targetKey} at $${effectivePrice.toLocaleString()} ($${actualCost.toLocaleString()} deployed).`,
       };
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
       state.lastUpdated = nowUtc;
@@ -1687,10 +1768,10 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
       const log = {
         id: `manual-log-buy-${Date.now()}`,
         timestamp: timeStr,
-        ticker: normTicker,
+        ticker: targetKey,
         action: 'BUY' as const,
         sizePct: 10,
-        text: `Manual Intervention: Executed BUY order on ${units.toFixed(4)} ${normTicker} at $${price.toLocaleString()}`,
+        text: `Manual Intervention: Executed BUY order on ${units.toFixed(4)} ${targetKey} at $${effectivePrice.toLocaleString()}`,
         status: 'APPROVED' as const,
         source: 'MANUAL' as const,
       };
@@ -1702,55 +1783,66 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         log,
       });
     } else {
-      // SELL
-      const pos = state.positions?.[normTicker];
+      // SELL / TAKE PROFIT
+      const keyToClose = posKey || findPositionKey(state.positions, rawTicker);
+      const pos = keyToClose ? state.positions?.[keyToClose] : undefined;
       if (!pos || !pos.amount) {
         return res.status(400).json({
           success: false,
-          error: `Cannot SELL ${normTicker}: position is not currently held in active portfolio`,
+          error: `Cannot close position for ${rawTicker}: position is not currently held in active portfolio`,
         });
       }
 
-      const proceeds = parseFloat((pos.amount * price).toFixed(2));
+      const exitPrice = (Number.isFinite(clientPrice) && clientPrice > 0)
+        ? clientPrice
+        : (typeof pos.currentPrice === 'number' && pos.currentPrice > 0 ? pos.currentPrice : price);
+
+      const proceeds = parseFloat((pos.amount * exitPrice).toFixed(2));
       const cost = parseFloat((pos.amount * pos.entryPrice).toFixed(2));
       const pnl = parseFloat((proceeds - cost).toFixed(2));
-      const pnlPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
+      const pnlPct = parseFloat((((exitPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
       const prevCash = state.cashBalance;
       state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
-      delete state.positions[normTicker];
+
+      const tickerLabel = pos.ticker || keyToClose;
+      delete state.positions[keyToClose];
+      for (const k of Object.keys(state.positions)) {
+        if (k.toUpperCase().replace('/USDT', '') === String(rawTicker).toUpperCase().replace('/USDT', '')) {
+          delete state.positions[k];
+        }
+      }
 
       const ledgerEntry = {
-        id: generateUniqueLedgerId('manual-sell', normTicker),
+        id: generateUniqueLedgerId('manual-sell', tickerLabel),
         timestamp: timeStr,
         utcTimestamp: nowUtc,
         type: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
-        ticker: normTicker,
+        ticker: tickerLabel,
         amount: pos.amount,
-        price,
+        price: exitPrice,
         totalUsd: proceeds,
         balanceBefore: prevCash,
         balanceAfter: state.cashBalance,
         realizedPnl: pnl,
         realizedPnlPct: pnlPct,
-        notes: `Manual Order: Closed ${pos.amount.toFixed(4)} ${normTicker} at $${price.toLocaleString()}. Proceeds +$${proceeds.toFixed(2)} credited to balance.`,
+        notes: `Manual Take Profit: Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${exitPrice.toLocaleString()} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%). Full proceeds of $${proceeds.toFixed(2)} credited to Available Cash reserve.`,
       };
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
 
       // Append to audit_trades.json
       const trades = getAuditTrades();
-      const count = trades.length + 1;
-      const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${count.toString().padStart(2, '0')}`;
-      const priceDelta = parseFloat((price - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
-      const priceDeltaPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
+      const newTradeId = generateNextTradeId(trades, nowUtc);
+      const priceDelta = parseFloat((exitPrice - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
+      const priceDeltaPct = parseFloat((((exitPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
 
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
         timestamp: nowUtc,
-        instrument: `${normTicker}/USDT`,
+        instrument: `${tickerLabel}/USDT`,
         direction: 'LONG',
         price: pos.entryPrice,
         entryPrice: pos.entryPrice,
-        exitPrice: price,
+        exitPrice,
         priceDelta,
         priceDeltaPct,
         quantity: cost,
@@ -1758,7 +1850,7 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         balanceChange: pnl,
         balanceChangePct: pnlPct,
         accountBalance: 100000,
-        trigger: `Manual Terminal Close: ${pnl >= 0 ? 'Profit realized' : 'Stop loss taken'} on ${normTicker} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)`,
+        trigger: `Manual Take Profit: Realized ${pnl >= 0 ? 'gain' : 'loss'} on ${tickerLabel} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%). Available Cash reserve increased by +$${proceeds.toFixed(2)}.`,
         status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         sourceHandler: 'MANUAL',
       }, newTradeId);
@@ -1771,10 +1863,10 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
       const log = {
         id: `manual-log-sell-${Date.now()}`,
         timestamp: timeStr,
-        ticker: normTicker,
+        ticker: tickerLabel,
         action: 'SELL' as const,
-        sizePct: 10,
-        text: `Manual Order: Closed ${pos.amount.toFixed(4)} ${normTicker} at $${price.toLocaleString()} (${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)})`,
+        sizePct: 100,
+        text: `[MANUAL TAKE PROFIT] Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${exitPrice.toLocaleString()} (${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}). +$${proceeds.toFixed(2)} credited into available cash reserve.`,
         status: 'APPROVED' as const,
         source: 'MANUAL' as const,
       };
@@ -1786,6 +1878,11 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         log,
         pnl,
         pnlPct,
+        trade: {
+          quantity: pos.amount,
+          exitPrice,
+          totalUsd: proceeds,
+        },
       });
     }
   } catch (err: any) {
@@ -1803,11 +1900,13 @@ app.post('/api/autopilot/council-signal', (req, res) => {
     }
 
     const state = getAutopilotState();
-    const normTicker = proposal.asset.toUpperCase().replace('/USDT', '');
+    const posKey = findPositionKey(state.positions, proposal.asset);
+    const normTicker = normalizeTicker(posKey || proposal.asset);
     const { price, assetClass } = getServerPrice(normTicker);
-    const existingPos = state.positions?.[normTicker];
+    const existingPos = posKey ? state.positions?.[posKey] : undefined;
     const isAssetHeld = Boolean(existingPos && existingPos.amount > 0);
-    const activePositionsCount = Object.keys(state.positions || {}).length;
+    const activePositions = Object.values(state.positions || {}).filter((p: any) => p && typeof p === 'object' && Number(p.amount) > 0);
+    const activePositionsCount = activePositions.length;
     const totalVal = calculateTotalPortfolioValue(state);
 
     const vetoResult = evaluateTradeRisk(proposal, totalVal, existingPos?.unrealizedPnlPct, {
@@ -1848,12 +1947,14 @@ app.post('/api/autopilot/council-signal', (req, res) => {
       const prevCash = state.cashBalance;
       state.cashBalance = parseFloat((state.cashBalance - actualCost).toFixed(2));
 
-      if (state.positions[normTicker]) {
-        const existing = state.positions[normTicker];
+      const targetKey = posKey || normTicker;
+      if (state.positions[targetKey]) {
+        const existing = state.positions[targetKey];
         const totUnits = existing.amount + units;
         const avgEntry = parseFloat(((existing.amount * existing.entryPrice + actualCost) / totUnits).toFixed(price < 10 ? 4 : 2));
-        state.positions[normTicker] = {
+        state.positions[targetKey] = {
           ...existing,
+          ticker: targetKey,
           amount: totUnits,
           entryPrice: avgEntry,
           currentPrice: price,
@@ -1861,8 +1962,8 @@ app.post('/api/autopilot/council-signal', (req, res) => {
           unrealizedPnlPct: parseFloat((((price - avgEntry) / avgEntry) * 100).toFixed(2)),
         };
       } else {
-        state.positions[normTicker] = {
-          ticker: normTicker,
+        state.positions[targetKey] = {
+          ticker: targetKey,
           amount: units,
           entryPrice: price,
           currentPrice: price,
@@ -1873,11 +1974,11 @@ app.post('/api/autopilot/council-signal', (req, res) => {
       }
 
       const ledgerEntry = {
-        id: generateUniqueLedgerId('council-buy', normTicker),
+        id: generateUniqueLedgerId('council-buy', targetKey),
         timestamp: timeStr,
         utcTimestamp: nowUtc,
         type: 'BUY',
-        ticker: normTicker,
+        ticker: targetKey,
         amount: units,
         price,
         totalUsd: actualCost,
@@ -1885,7 +1986,7 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         balanceAfter: state.cashBalance,
         realizedPnl: 0,
         realizedPnlPct: 0,
-        notes: `Council Quorum BUY: ${normTicker} [${proposal.confidence}% Conf] — ${proposal.reasoning}`,
+        notes: `Council Quorum BUY: ${targetKey} [${proposal.confidence}% Conf] — ${proposal.reasoning}`,
       };
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
       state.lastUpdated = nowUtc;
@@ -1897,23 +1998,24 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         state: updated,
         ledgerEntry,
         log: {
-          id: generateUniqueLedgerId('council-log', normTicker),
+          id: generateUniqueLedgerId('council-log', targetKey),
           timestamp: timeStr,
-          ticker: normTicker,
+          ticker: targetKey,
           action: 'BUY',
           sizePct: validSizePct,
-          text: `BUY ${normTicker} [${validSizePct}% | $${actualCost.toFixed(0)} | Conf: ${proposal.confidence}%] — ${proposal.reasoning}`,
+          text: `BUY ${targetKey} [${validSizePct}% | $${actualCost.toFixed(0)} | Conf: ${proposal.confidence}%] — ${proposal.reasoning}`,
           status: 'APPROVED',
           source: 'AUTONOMOUS',
         },
       });
     } else if (proposal.action === 'SELL') {
-      const pos = state.positions[normTicker];
-      if (!pos) {
+      const keyToClose = posKey || findPositionKey(state.positions, proposal.asset);
+      const pos = keyToClose ? state.positions[keyToClose] : undefined;
+      if (!pos || !pos.amount) {
         return res.json({
           success: false,
           vetoed: true,
-          reason: `Cannot SELL ${normTicker}: asset not held`,
+          reason: `Cannot SELL ${proposal.asset}: asset not held`,
           state,
         });
       }
@@ -1924,14 +2026,21 @@ app.post('/api/autopilot/council-signal', (req, res) => {
       const pnlPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
       const prevCash = state.cashBalance;
       state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
-      delete state.positions[normTicker];
+
+      const tickerLabel = pos.ticker || keyToClose;
+      delete state.positions[keyToClose];
+      for (const k of Object.keys(state.positions)) {
+        if (k.toUpperCase().replace('/USDT', '') === String(proposal.asset).toUpperCase().replace('/USDT', '')) {
+          delete state.positions[k];
+        }
+      }
 
       const ledgerEntry = {
-        id: generateUniqueLedgerId('council-sell', normTicker),
+        id: generateUniqueLedgerId('council-sell', tickerLabel),
         timestamp: timeStr,
         utcTimestamp: nowUtc,
         type: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
-        ticker: normTicker,
+        ticker: tickerLabel,
         amount: pos.amount,
         price,
         totalUsd: proceeds,
@@ -1939,20 +2048,19 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         balanceAfter: state.cashBalance,
         realizedPnl: pnl,
         realizedPnlPct: pnlPct,
-        notes: `Council Quorum SELL: Closed ${pos.amount.toFixed(4)} ${normTicker} at $${price.toLocaleString()} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)`,
+        notes: `Council Quorum SELL: Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${price.toLocaleString()} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)`,
       };
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
 
       const trades = getAuditTrades();
-      const count = trades.length + 1;
-      const newTradeId = `PT-${nowUtc.slice(0, 10).replace(/-/g, '')}-${count.toString().padStart(2, '0')}`;
+      const newTradeId = generateNextTradeId(trades, nowUtc);
       const priceDelta = parseFloat((price - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
       const priceDeltaPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
 
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
         timestamp: nowUtc,
-        instrument: `${normTicker}/USDT`,
+        instrument: `${tickerLabel}/USDT`,
         direction: 'LONG',
         price: pos.entryPrice,
         entryPrice: pos.entryPrice,
@@ -1964,7 +2072,7 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         balanceChange: pnl,
         balanceChangePct: pnlPct,
         accountBalance: 100000,
-        trigger: `Council Quorum Ratified Exit on ${normTicker} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%): ${proposal.reasoning}`,
+        trigger: `Council Quorum Ratified Exit on ${tickerLabel} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%): ${proposal.reasoning}`,
         status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         sourceHandler: 'AUTOPILOT_DAEMON',
       }, newTradeId);
@@ -1980,12 +2088,12 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         state: updated,
         ledgerEntry,
         log: {
-          id: generateUniqueLedgerId('council-log', normTicker),
+          id: generateUniqueLedgerId('council-log', tickerLabel),
           timestamp: timeStr,
-          ticker: normTicker,
+          ticker: tickerLabel,
           action: 'SELL',
           sizePct: 100,
-          text: `SELL ${normTicker} [100% | ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} | ${pnlPct.toFixed(2)}%] — ${proposal.reasoning}`,
+          text: `SELL ${tickerLabel} [100% | ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} | ${pnlPct.toFixed(2)}%] — ${proposal.reasoning}`,
           status: 'APPROVED',
           source: 'AUTONOMOUS',
         },
@@ -2069,6 +2177,7 @@ app.post('/api/autopilot/reset', (req, res) => {
       ledger: [...DEFAULT_AUTOPILOT_STATE.ledger],
       lastUpdated: new Date().toISOString(),
     };
+    cachedAutopilotState = resetState;
     fs.writeFileSync(AUTOPILOT_FILE_PATH, JSON.stringify(resetState, null, 2), 'utf8');
     saveAuditTrades(SEED_PAPER_TRADES);
     startAutopilotDaemon();
@@ -2788,24 +2897,32 @@ Return STRICTLY a JSON object with this format:
 });
 
 async function startServer() {
-  // In development, hook up Vite middleware
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  try {
+    // In development, hook up Vite middleware
+    if (process.env.NODE_ENV !== 'production') {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } else {
+      const distPath = path.join(process.cwd(), 'dist');
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`LUNARIS Server active on http://0.0.0.0:${PORT}`);
-  });
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`LUNARIS Server active on http://0.0.0.0:${PORT}`);
+    });
+
+    server.on('error', (err: any) => {
+      console.error('Server listen error:', err);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+  }
 }
 
 startServer();
