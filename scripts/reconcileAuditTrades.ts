@@ -389,6 +389,8 @@ export async function runIncrementalReconciliation(options: { dryRun?: boolean; 
       const math = calculateTradePnLMath(tradeWithCalibratedPrices);
       const auditedRecord = {
         ...tradeWithCalibratedPrices,
+        legacyId: trade.legacyId || trade.id || canonicalId,
+        auditSeq: cleanReconciledTrades.length + 1,
         accountBalance: expectedNewBalance,
         audited: true,
         auditVersion: 1,

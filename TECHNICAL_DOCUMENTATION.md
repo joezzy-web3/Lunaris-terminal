@@ -306,11 +306,17 @@ Institutional judges can stress-test the risk architecture by simulating catastr
 ### Trade Record Schema (`PaperTradeRecord`)
 ```typescript
 interface PaperTradeRecord {
-  id: string;              // e.g. "PT-2026-0908-11"
+  id: string;              // Primary Document Key e.g. "PT-2026-0908-11" (immutable)
+  legacyId?: string;       // Preserved original identifier guaranteeing non-repudiation
+  auditSeq?: number;       // Deterministic strictly monotonic chronological sequence integer (1..N)
   timestamp: string;       // ISO-8601 UTC timestamp
   instrument: string;      // "BTC/USDT", "NVDAon/USDT", etc.
   direction: 'LONG' | 'SHORT';
   price: number;          // Execution price
+  entryPrice?: number;    // Explicit entry execution price
+  exitPrice?: number;     // Explicit exit execution price
+  priceDelta?: number;    // Dollar price movement
+  priceDeltaPct?: number; // Percentage price movement
   quantity: number;       // Position notional value ($)
   leverage: number;       // Leverage multiplier (1x - 5x)
   balanceChange: number;  // Realized profit or loss in USD

@@ -34,6 +34,8 @@ export interface PaperTradeRecord {
   postMortem?: TradePostMortem;
   idempotencyKey?: string;
   sourceHandler?: 'AUTOPILOT_DAEMON' | 'COUNCIL_SIGNAL' | 'PULSE_RADAR' | 'MANUAL' | 'AUDIT_SIM';
+  auditSeq?: number;
+  legacyId?: string;
 }
 
 /**
@@ -743,7 +745,9 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
   ];
 
   const headers = [
+    'Audit Seq (#)',
     'Trade ID',
+    'Legacy ID',
     'Timestamp (UTC)',
     'Instrument',
     'Direction',
@@ -758,9 +762,11 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
     'Council Quorum / Trigger Rationale',
     'Status',
   ];
-  const rows = trades.map((t) => {
+  const rows = trades.map((t, idx) => {
     const prices = resolveTradePrices(t);
-    return `"${t.id}","${t.timestamp}","${t.instrument}","${t.direction}",${prices.entryPrice},${prices.exitPrice},${prices.priceDelta > 0 ? '+' : ''}${prices.priceDelta},${t.quantity},${t.leverage}x,${t.balanceChange > 0 ? '+' : ''}${t.balanceChange},${t.balanceChangePct > 0 ? '+' : ''}${t.balanceChangePct}%,${t.accountBalance},"${t.trigger.replace(/"/g, '""')}","${t.status}"`;
+    const seq = t.auditSeq ?? (idx + 1);
+    const legId = t.legacyId || t.id;
+    return `${seq},"${t.id}","${legId}","${t.timestamp}","${t.instrument}","${t.direction}",${prices.entryPrice},${prices.exitPrice},${prices.priceDelta > 0 ? '+' : ''}${prices.priceDelta},${t.quantity},${t.leverage}x,${t.balanceChange > 0 ? '+' : ''}${t.balanceChange},${t.balanceChangePct > 0 ? '+' : ''}${t.balanceChangePct}%,${t.accountBalance},"${t.trigger.replace(/"/g, '""')}","${t.status}"`;
   });
   return [...metadataComments, headers.join(','), ...rows].join('\n');
 }

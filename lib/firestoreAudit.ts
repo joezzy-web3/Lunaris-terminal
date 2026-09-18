@@ -427,6 +427,8 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
       return s;
     })(),
     sourceHandler: data?.sourceHandler || 'AUTOPILOT_DAEMON',
+    legacyId: data?.legacyId || id,
+    auditSeq: typeof data?.auditSeq === 'number' ? data.auditSeq : undefined,
   };
 
   normalized.idempotencyKey = data?.idempotencyKey || generateTradeIdempotencyKey(normalized);
@@ -494,10 +496,12 @@ export function reconcileTradeCollection(trades: (PaperTradeRecord | any)[]): Pa
     }
   }
 
-  // Sort strictly chronologically
-  const sorted = Array.from(idMap.values()).sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
+  // Sort strictly chronologically with deterministic secondary tie-breaker on ID
+  const sorted = Array.from(idMap.values()).sort((a, b) => {
+    const dt = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    if (dt !== 0) return dt;
+    return a.id.localeCompare(b.id);
+  });
 
   // Filter out any adjacent duplicates within 1.5 seconds on the exact same instrument
   const deduplicated: PaperTradeRecord[] = [];
@@ -515,11 +519,13 @@ export function reconcileTradeCollection(trades: (PaperTradeRecord | any)[]): Pa
   }
 
   let runningBalance = 100000;
-  return deduplicated.map((t) => {
+  return deduplicated.map((t, index) => {
     runningBalance = parseFloat((runningBalance + (Number(t.balanceChange) || 0)).toFixed(2));
     return {
       ...t,
       accountBalance: runningBalance,
+      legacyId: t.legacyId || t.id,
+      auditSeq: index + 1,
     };
   });
 }

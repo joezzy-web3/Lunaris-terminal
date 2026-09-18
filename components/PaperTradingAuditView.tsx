@@ -1019,7 +1019,12 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                         const { dateStr, timeStr } = formatAuditTimestamp(trade.timestamp, trade.id);
                         return (
                           <>
-                            <div className="font-bold text-white text-[11px] flex items-center gap-1">
+                            <div className="font-bold text-white text-[11px] flex items-center gap-1.5">
+                              {typeof trade.auditSeq === 'number' && (
+                                <span className="text-[9px] bg-white/10 text-yellow-300 font-mono px-1 py-0.2 rounded border border-yellow-400/20" title={`Canonical Monotonic Sequence #${trade.auditSeq}`}>
+                                  #{trade.auditSeq}
+                                </span>
+                              )}
                               <span>{trade.id}</span>
                               {isJustAdded && (
                                 <span className="text-[9px] bg-[#00F0FF] text-black px-1.5 rounded font-extrabold uppercase">

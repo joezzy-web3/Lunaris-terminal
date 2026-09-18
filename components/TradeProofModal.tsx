@@ -197,8 +197,11 @@ Mathematical Source of Truth: Verified
               <span className="text-xs font-bold text-[#00F0FF] uppercase tracking-wider">
                 Proof of Execution // Trade Post-Mortem
               </span>
-              <span className="text-[10px] bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/10">
-                {trade.id}
+              <span className="text-[10px] bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/10 flex items-center gap-1">
+                {typeof trade.auditSeq === 'number' && (
+                  <span className="text-yellow-400 font-bold">Seq #{trade.auditSeq} &bull;</span>
+                )}
+                <span>{trade.id}</span>
               </span>
               <span className="text-[10px] bg-cyan-950/40 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 flex items-center gap-1 font-mono">
                 <Clock className="w-3 h-3 text-cyan-400" />
