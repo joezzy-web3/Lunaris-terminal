@@ -130,12 +130,17 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const processIncomingAuthoritativeTrades = (incoming: PaperTradeRecord[]) => {
     if (!incoming || incoming.length === 0) return;
     setTrades((prevTrades) => {
-      const prevCount = lastKnownTradeCountRef.current;
-      const prevId = lastKnownTradeIdRef.current;
+      const prevCount = prevTrades.length;
+      const prevId = prevTrades[prevTrades.length - 1]?.id || null;
       const newLatest = incoming[incoming.length - 1];
 
+      // Exact match: zero state change, zero re-render, zero flicker
+      if (incoming.length === prevCount && newLatest?.id === prevId) {
+        return prevTrades;
+      }
+
       if (incoming.length > prevCount || (newLatest && newLatest.id !== prevId)) {
-        if (prevCount > 0 && newLatest) {
+        if (prevCount > 0 && newLatest && newLatest.id !== prevId) {
           setLatestTradeId(newLatest.id);
           if (newLatest.balanceChange >= 0) {
             playTradeApprovedChime();
@@ -146,7 +151,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
         lastKnownTradeCountRef.current = incoming.length;
         lastKnownTradeIdRef.current = newLatest?.id || null;
         return incoming;
-      } else if (incoming.length !== prevTrades.length || (incoming.length > 0 && incoming[incoming.length - 1]?.id !== prevTrades[prevTrades.length - 1]?.id)) {
+      } else if (incoming.length !== prevTrades.length) {
         lastKnownTradeCountRef.current = incoming.length;
         lastKnownTradeIdRef.current = incoming[incoming.length - 1]?.id || null;
         return incoming;
@@ -185,28 +190,27 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     const unsubscribeFirestore = subscribeToFirestoreAuditTrades((cloudTrades) => {
       if (!isMounted || !cloudTrades || cloudTrades.length === 0) return;
       setTrades((prevTrades) => {
-        // Build map keyed by ID from authoritative previous state
-        const map = new Map<string, PaperTradeRecord>();
-        for (const pt of prevTrades) {
-          map.set(pt.id, pt);
-        }
-        // Only append cloud trades that are genuinely new (not already settled in authoritative ledger)
-        let addedAny = false;
-        for (const ct of cloudTrades) {
-          if (ct && ct.id && !map.has(ct.id)) {
-            map.set(ct.id, ct);
-            addedAny = true;
-          }
-        }
-        if (!addedAny) return prevTrades;
-        const merged = reconcileTradeCollection(Array.from(map.values()));
+        const existingIds = new Set(prevTrades.map((pt) => pt.id));
+        const trulyNew = cloudTrades.filter((ct) => ct && ct.id && !existingIds.has(ct.id));
+        if (trulyNew.length === 0) return prevTrades;
+
+        const merged = reconcileTradeCollection([...prevTrades, ...trulyNew]);
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('LUNARIS_BITGET_S2_PAPER_TRADES_V2', JSON.stringify(merged));
           } catch {}
         }
+        const newest = merged[merged.length - 1];
+        if (newest && !existingIds.has(newest.id)) {
+          setLatestTradeId(newest.id);
+          if (newest.balanceChange >= 0) {
+            playTradeApprovedChime();
+          } else {
+            playRiskVetoTone();
+          }
+        }
         lastKnownTradeCountRef.current = merged.length;
-        lastKnownTradeIdRef.current = merged[merged.length - 1]?.id || null;
+        lastKnownTradeIdRef.current = newest?.id || null;
         return merged;
       });
     });

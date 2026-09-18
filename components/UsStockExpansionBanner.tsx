@@ -2,16 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useLiveMarketQuotes, AssetQuote } from '@/lib/livePrices';
 import { playCyberClick } from '@/lib/soundSynth';
 import {
-  TrendingUp,
-  TrendingDown,
   Sparkles,
   X,
   ChevronRight,
-  Flame,
-  Bot,
-  Scale,
   Clock,
-  Layers,
 } from 'lucide-react';
 
 interface UsStockExpansionBannerProps {
@@ -19,7 +13,8 @@ interface UsStockExpansionBannerProps {
   onNavigateTab?: (tab: 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'AUDIT') => void;
 }
 
-// 5-day competition window starting Sep 18, 2026 until Sep 23, 2026 23:59:59 UTC
+// 5-day competition notice window: active for 5 days from Sep 18, 2026 until Sep 23, 2026 23:59:59 UTC.
+// Once expired, this entire component unmounts and automatically disappears forever.
 const EXPANSION_START_TIME = new Date('2026-09-18T00:00:00Z').getTime();
 const EXPANSION_END_TIME = EXPANSION_START_TIME + 5 * 24 * 60 * 60 * 1000;
 const STORAGE_KEY = 'LUNARIS_US_STOCKS_EXPANSION_BANNER_DISMISSED_V1';
@@ -36,6 +31,7 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
   onSelectTicker,
   onNavigateTab,
 }) => {
+  const [isExpired, setIsExpired] = useState<boolean>(() => Date.now() >= EXPANSION_END_TIME);
   const [isDismissed, setIsDismissed] = useState<boolean>(() => {
     try {
       return localStorage.getItem(STORAGE_KEY) === 'true';
@@ -46,14 +42,13 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
 
   const [daysRemaining, setDaysRemaining] = useState<number>(5);
   const [hoursRemaining, setHoursRemaining] = useState<number>(0);
-  const [isExpired, setIsExpired] = useState<boolean>(false);
   const { quotes, getQuote } = useLiveMarketQuotes();
 
-  // Compute countdown and check expiration
+  // Compute countdown and automatically expire after 5 days
   useEffect(() => {
     const updateCountdown = () => {
       const now = Date.now();
-      if (now > EXPANSION_END_TIME) {
+      if (now >= EXPANSION_END_TIME) {
         setIsExpired(true);
         return;
       }
@@ -89,12 +84,12 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
     }
   };
 
-  // If expired past 5 days, unmount cleanly
+  // Permanently unmounts and vanishes after 5 days
   if (isExpired) {
     return null;
   }
 
-  // If dismissed, render a subtle, non-intrusive compact badge so user can restore it if desired
+  // If dismissed, render a subtle compact bar
   if (isDismissed) {
     return (
       <div className="w-full bg-[#0a0c14]/90 border-b border-cyan-500/20 py-1.5 px-4 text-xs font-mono flex items-center justify-between text-zinc-400">
@@ -123,7 +118,7 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
 
   return (
     <div className="w-full bg-gradient-to-r from-[#04060c] via-[#091122] to-[#04060c] border-b border-cyan-500/30 relative shadow-[0_4px_24px_rgba(0,240,255,0.08)] select-none animate-fadeIn">
-      {/* Decorative cybernetic glow bars */}
+      {/* Decorative cybernetic glow bar */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#00F0FF] to-transparent opacity-80" />
 
       <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5">
@@ -137,9 +132,6 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
             <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
               <Clock className="w-3 h-3" />
               Active for Next 5 Days ({daysRemaining}d {hoursRemaining}h left)
-            </span>
-            <span className="text-[10px] text-zinc-400 font-mono hidden lg:inline">
-              Real-Time Yahoo Finance Feeds
             </span>
           </div>
 
@@ -205,36 +197,11 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
           })}
         </div>
 
-        {/* Right: Quick Action & Close */}
+        {/* Right: Close Button only */}
         <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-          {onNavigateTab && (
-            <div className="hidden xl:flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  playCyberClick();
-                  onNavigateTab('AUTOPILOT');
-                }}
-                className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 rounded-md transition-all cursor-pointer"
-              >
-                <Bot className="w-3.5 h-3.5 text-[#00F0FF]" />
-                <span>Autopilot</span>
-              </button>
-              <button
-                onClick={() => {
-                  playCyberClick();
-                  onNavigateTab('COUNCIL');
-                }}
-                className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 rounded-md transition-all cursor-pointer"
-              >
-                <Scale className="w-3.5 h-3.5 text-amber-400" />
-                <span>Council</span>
-              </button>
-            </div>
-          )}
-
           <button
             onClick={handleDismiss}
-            title="Dismiss announcement (accessible via compact bar)"
+            title="Dismiss announcement"
             className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/10 rounded-md transition-all cursor-pointer"
           >
             <X className="w-4 h-4" />

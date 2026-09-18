@@ -7,6 +7,7 @@ import {
   onSnapshot,
   query,
   limit,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { PaperTradeRecord, SEED_PAPER_TRADES, resolveTradePrices } from './paperTradingAudit';
@@ -485,8 +486,8 @@ export function reconcileTradeCollection(trades: (PaperTradeRecord | any)[]): Pa
     if (semanticMap.has(idempKey)) {
       const existing = semanticMap.get(idempKey)!;
       // If the incoming trade is an official seed trade, prefer it
-      const isItemSeed = id.startsWith('PT-2026-09') && parseInt(id.slice(11), 10) >= 3;
-      const isExistingSeed = existing.id.startsWith('PT-2026-09') && parseInt(existing.id.slice(11), 10) >= 3;
+      const isItemSeed = (id.startsWith('PT-2026-09') || id.startsWith('PT-2026090')) && parseInt(id.slice(11), 10) >= 3;
+      const isExistingSeed = (existing.id.startsWith('PT-2026-09') || existing.id.startsWith('PT-2026090')) && parseInt(existing.id.slice(11), 10) >= 3;
       if (isItemSeed && !isExistingSeed) {
         idMap.delete(existing.id);
         idMap.set(id, normalized);
@@ -508,15 +509,20 @@ export function reconcileTradeCollection(trades: (PaperTradeRecord | any)[]): Pa
     return a.id.localeCompare(b.id);
   });
 
-  // Filter out any adjacent duplicates within 1.5 seconds on the exact same instrument
+  // Filter out any adjacent true accidental duplicates within 1.5 seconds on the exact same instrument, direction, and price
   const deduplicated: PaperTradeRecord[] = [];
   for (let i = 0; i < sorted.length; i++) {
     const curr = sorted[i];
     if (deduplicated.length > 0) {
       const prev = deduplicated[deduplicated.length - 1];
       const diffMs = Math.abs(new Date(curr.timestamp).getTime() - new Date(prev.timestamp).getTime());
-      if (diffMs < 1500 && curr.instrument === prev.instrument) {
-        // Skip rapid duplicate write
+      if (
+        diffMs < 1500 &&
+        curr.instrument === prev.instrument &&
+        curr.direction === prev.direction &&
+        Math.abs(curr.price - prev.price) < 0.0001
+      ) {
+        // Skip true accidental duplicate write
         continue;
       }
     }
@@ -752,36 +758,46 @@ export async function seedFirestoreAuditTrades(
   try {
     const cleanTrades = trades.filter((t) => !isTestTradeRecord(t));
     const validIds = new Set(cleanTrades.map((t) => t.id));
+
     if (purgeOthers) {
       try {
         const colRef = collection(db, TRADES_COLLECTION);
-        const snap = await withTimeout(getDocs(colRef), 2000, 'Firestore purge fetch timeout');
-        const deleteBatch = writeBatch(db);
-        let deleteCount = 0;
+        const snap = await withTimeout(getDocs(colRef), 5000, 'Firestore purge fetch timeout');
+        const toDelete: string[] = [];
         snap.forEach((d) => {
           if (!validIds.has(d.id)) {
-            deleteBatch.delete(d.ref);
-            deleteCount++;
+            toDelete.push(d.id);
           }
         });
-        if (deleteCount > 0) {
-          await withTimeout(deleteBatch.commit(), 2500, 'Firestore purge commit timeout');
-          console.log(`🧹 [Firestore] Purged ${deleteCount} anomalous/stale cloud trade records.`);
+
+        // Delete in chunks of 400 (well within Firestore 500-op batch limit)
+        const BATCH_SIZE = 400;
+        for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
+          const chunk = toDelete.slice(i, i + BATCH_SIZE);
+          const deleteBatch = writeBatch(db);
+          chunk.forEach((id) => {
+            deleteBatch.delete(doc(db, TRADES_COLLECTION, id));
+          });
+          await withTimeout(deleteBatch.commit(), 4000, 'Firestore purge batch commit timeout');
+        }
+        if (toDelete.length > 0) {
+          console.log(`🧹 [Firestore] Purged ${toDelete.length} anomalous/stale cloud trade records.`);
         }
       } catch (delErr) {
         console.warn('⚠️ [Firestore] Optional purge notice:', delErr);
       }
     }
 
+    // Commit clean trades in chunks of 400 (most recent first)
+    const BATCH_SIZE = 400;
+    const tradesSlice = cleanTrades.slice(-400); // commit recent slice to cloud
     const batch = writeBatch(db);
-    // Slice to at most 100 items to guarantee Firestore batch limits and network responsiveness
-    const tradesSlice = cleanTrades.slice(0, 100);
     for (const t of tradesSlice) {
       const docRef = doc(db, TRADES_COLLECTION, t.id);
       const cleaned = cleanFirestoreData(t);
       batch.set(docRef, cleaned, { merge: true });
     }
-    await withTimeout(batch.commit(), 3000, 'Firestore batch commit timeout');
+    await withTimeout(batch.commit(), 4000, 'Firestore batch commit timeout');
     console.log(`✅ [Firestore] Successfully committed ${tradesSlice.length} trades to cloud.`);
   } catch (err: any) {
     if (checkIsQuotaError(err)) {
@@ -794,6 +810,7 @@ export async function seedFirestoreAuditTrades(
 
 /**
  * Real-time cloud listener for audit trades.
+ * Subscribes to the latest 50 trades in real-time.
  * Invokes callback whenever any user, browser, or server executes a trade.
  */
 export function subscribeToFirestoreAuditTrades(
@@ -804,33 +821,28 @@ export function subscribeToFirestoreAuditTrades(
 
   try {
     const colRef = collection(db, TRADES_COLLECTION);
-    const q = query(colRef, limit(2000));
+    const q = query(colRef, orderBy('timestamp', 'desc'), limit(50));
 
     activeUnsubscribe = onSnapshot(
       q,
       (snapshot) => {
         if (snapshot.empty) {
-          onTradesUpdate(SEED_PAPER_TRADES);
           return;
         }
-        const updatedTrades: PaperTradeRecord[] = [];
+        const recentTrades: PaperTradeRecord[] = [];
         snapshot.forEach((docSnap) => {
           const raw = docSnap.data();
           if (raw && (raw.id || docSnap.id)) {
             const normalized = normalizeTradeRecord(raw, docSnap.id);
-            if (normalized.id.startsWith('PT-')) {
-              updatedTrades.push(normalized);
+            if (normalized.id.startsWith('PT-') && !isTestTradeRecord(normalized) && !isAnomalousTrade(normalized)) {
+              recentTrades.push(normalized);
             }
           }
         });
 
-        if (updatedTrades.length === 0) {
-          onTradesUpdate(SEED_PAPER_TRADES);
-          return;
+        if (recentTrades.length > 0) {
+          onTradesUpdate(recentTrades);
         }
-
-        const reconciled = reconcileTradeCollection(updatedTrades);
-        onTradesUpdate(reconciled);
       },
       (error: any) => {
         if (checkIsQuotaError(error)) {

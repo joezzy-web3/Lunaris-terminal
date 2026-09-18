@@ -1278,8 +1278,8 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
       lastServerAgenticTrade = existing[existing.length - 1];
     }
   }
-  // Multi-tab cooldown: if called within 4.5 seconds without specific manual overrides, return existing latest trade
-  if (!requestedInstrument && !requestedDirection && now - lastServerAgenticTradeTime < 4500 && lastServerAgenticTrade) {
+  // Multi-tab cooldown: if called within 10 seconds without specific manual overrides, return existing latest trade
+  if (!requestedInstrument && !requestedDirection && now - lastServerAgenticTradeTime < 10000 && lastServerAgenticTrade) {
     return lastServerAgenticTrade;
   }
 
@@ -1389,8 +1389,8 @@ function startAutopilotDaemon() {
   if (autopilotDaemonTimer) clearInterval(autopilotDaemonTimer);
   const state = getAutopilotState();
   if (!state.isExecuting) return;
-  // Responsive cadences: 2.5s in turbo, 5s standard for lively autonomous execution
-  const intervalMs = state.isTurbo ? 2500 : 5000;
+  // Responsive cadences: 5s in turbo, 14s standard for synchronized autonomous execution across all terminals
+  const intervalMs = state.isTurbo ? 5000 : 14000;
   // Immediate tick on engage so user doesn't wait
   try {
     runAutopilotDaemonTick();

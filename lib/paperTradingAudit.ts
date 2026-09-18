@@ -223,8 +223,13 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   // We strictly use the server's trades. This guarantees every browser session and judge sees the exact same trades.
   if (serverTradesLoaded && tradeMap.size > 0) {
     const authoritativeList = reconcileTradeCollection(Array.from(tradeMap.values()));
+    const hasChanged =
+      !inMemoryTradesCache ||
+      inMemoryTradesCache.length !== authoritativeList.length ||
+      inMemoryTradesCache[inMemoryTradesCache.length - 1]?.id !== authoritativeList[authoritativeList.length - 1]?.id;
+
     inMemoryTradesCache = authoritativeList;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && hasChanged) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(authoritativeList));
         window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: authoritativeList }));
