@@ -9,22 +9,54 @@ import { CommandDeckHero } from '@/components/CommandDeckHero';
 import { ThreePillarBento } from '@/components/ThreePillarBento';
 import { LiveTickerMarquee } from '@/components/LiveTickerMarquee';
 
-// Code-split heavy views & modals for instant initial page paint (<400KB initial chunk)
-const AutonomousLoopPanel = lazy(() => import('@/components/AutonomousLoopPanel').then(m => ({ default: m.AutonomousLoopPanel })));
-const DebateConsole = lazy(() => import('@/components/DebateConsole').then(m => ({ default: m.DebateConsole })));
-const PulseRadarPanel = lazy(() => import('@/components/PulseRadarPanel').then(m => ({ default: m.PulseRadarPanel })));
-const DemoModeController = lazy(() => import('@/components/DemoModeController').then(m => ({ default: m.DemoModeController })));
-const HackathonCreditsModal = lazy(() => import('@/components/HackathonCreditsModal').then(m => ({ default: m.HackathonCreditsModal })));
-const VisualAlgoBuilder = lazy(() => import('@/components/VisualAlgoBuilder').then(m => ({ default: m.VisualAlgoBuilder })));
-const UnifiedDataConstellation = lazy(() => import('@/components/UnifiedDataConstellation').then(m => ({ default: m.UnifiedDataConstellation })));
-const CrossAssetMatrix = lazy(() => import('@/components/CrossAssetMatrix').then(m => ({ default: m.CrossAssetMatrix })));
-const RealTimeTradingChart = lazy(() => import('@/components/RealTimeTradingChart').then(m => ({ default: m.RealTimeTradingChart })));
-const LiquidityDepthHeatmap = lazy(() => import('@/components/LiquidityDepthHeatmap').then(m => ({ default: m.LiquidityDepthHeatmap })));
-const DeterministicKillSwitch = lazy(() => import('@/components/DeterministicKillSwitch').then(m => ({ default: m.DeterministicKillSwitch })));
-const PaperTradingAuditView = lazy(() => import('@/components/PaperTradingAuditView').then(m => ({ default: m.PaperTradingAuditView })));
-const CommandPaletteModal = lazy(() => import('@/components/CommandPaletteModal').then(m => ({ default: m.CommandPaletteModal })));
-const BitgetApiKeyModal = lazy(() => import('@/components/BitgetApiKeyModal').then(m => ({ default: m.BitgetApiKeyModal })));
-const BlackSwanDrillModal = lazy(() => import('@/components/BlackSwanDrillModal').then(m => ({ default: m.BlackSwanDrillModal })));
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  componentImport: () => Promise<{ default: T } | any>,
+  retriesLeft = 3,
+  interval = 1200
+): React.LazyExoticComponent<T> {
+  return lazy(() =>
+    new Promise<{ default: T }>((resolve, reject) => {
+      const attempt = (remaining: number) => {
+        componentImport()
+          .then((module) => {
+            if (module && module.default) {
+              resolve({ default: module.default });
+            } else if (module) {
+              const exportKey = Object.keys(module).find((k) => typeof module[k] === 'function') || 'default';
+              resolve({ default: module[exportKey] });
+            } else {
+              reject(new Error('Empty module'));
+            }
+          })
+          .catch((error) => {
+            if (remaining <= 1) {
+              reject(error);
+              return;
+            }
+            setTimeout(() => attempt(remaining - 1), interval);
+          });
+      };
+      attempt(retriesLeft);
+    })
+  );
+}
+
+// Code-split heavy views & modals with resilient automatic retry
+const AutonomousLoopPanel = lazyWithRetry(() => import('@/components/AutonomousLoopPanel').then(m => ({ default: m.AutonomousLoopPanel })));
+const DebateConsole = lazyWithRetry(() => import('@/components/DebateConsole').then(m => ({ default: m.DebateConsole })));
+const PulseRadarPanel = lazyWithRetry(() => import('@/components/PulseRadarPanel').then(m => ({ default: m.PulseRadarPanel })));
+const DemoModeController = lazyWithRetry(() => import('@/components/DemoModeController').then(m => ({ default: m.DemoModeController })));
+const HackathonCreditsModal = lazyWithRetry(() => import('@/components/HackathonCreditsModal').then(m => ({ default: m.HackathonCreditsModal })));
+const VisualAlgoBuilder = lazyWithRetry(() => import('@/components/VisualAlgoBuilder').then(m => ({ default: m.VisualAlgoBuilder })));
+const UnifiedDataConstellation = lazyWithRetry(() => import('@/components/UnifiedDataConstellation').then(m => ({ default: m.UnifiedDataConstellation })));
+const CrossAssetMatrix = lazyWithRetry(() => import('@/components/CrossAssetMatrix').then(m => ({ default: m.CrossAssetMatrix })));
+const RealTimeTradingChart = lazyWithRetry(() => import('@/components/RealTimeTradingChart').then(m => ({ default: m.RealTimeTradingChart })));
+const LiquidityDepthHeatmap = lazyWithRetry(() => import('@/components/LiquidityDepthHeatmap').then(m => ({ default: m.LiquidityDepthHeatmap })));
+const DeterministicKillSwitch = lazyWithRetry(() => import('@/components/DeterministicKillSwitch').then(m => ({ default: m.DeterministicKillSwitch })));
+const PaperTradingAuditView = lazyWithRetry(() => import('@/components/PaperTradingAuditView').then(m => ({ default: m.PaperTradingAuditView })));
+const CommandPaletteModal = lazyWithRetry(() => import('@/components/CommandPaletteModal').then(m => ({ default: m.CommandPaletteModal })));
+const BitgetApiKeyModal = lazyWithRetry(() => import('@/components/BitgetApiKeyModal').then(m => ({ default: m.BitgetApiKeyModal })));
+const BlackSwanDrillModal = lazyWithRetry(() => import('@/components/BlackSwanDrillModal').then(m => ({ default: m.BlackSwanDrillModal })));
 import { TradeProposal } from '@/lib/riskVeto';
 import { clearAssetShocks } from '@/lib/demoSeedData';
 import { PulseContext } from '@/lib/councilDebateEngine';
@@ -131,7 +163,7 @@ function TerminalLoadingFallback() {
       </div>
       <div className="flex items-center gap-2 font-mono text-xs text-cyan-400 font-bold uppercase tracking-widest">
         <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-        <span>STREAMING QUANT MODULE // TELEMETRY LINK</span>
+        <span>STREAMING QUANT MODULE</span>
       </div>
       <div className="text-[11px] text-gray-400 font-mono mt-2">
         Sub-system streaming on demand...

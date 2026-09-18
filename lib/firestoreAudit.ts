@@ -133,14 +133,10 @@ function checkIsQuotaError(err: any): boolean {
   const code = err.code || '';
   return (
     code === 'resource-exhausted' ||
-    code === 'deadline-exceeded' ||
-    msg.includes('Quota exceeded') ||
     msg.includes('RESOURCE_EXHAUSTED') ||
+    msg.includes('Quota exceeded') ||
     msg.includes('Quota limit exceeded') ||
-    msg.includes('Free daily write units') ||
-    msg.includes('rate limit') ||
-    msg.includes('Rate limit') ||
-    msg.includes('timeout')
+    msg.includes('quota has been exhausted')
   );
 }
 
@@ -817,78 +813,20 @@ export function subscribeToFirestoreAuditTrades(
 }
 
 /**
- * Save Autopilot global portfolio and ledger state to Firestore.
+ * Save Autopilot state: Autopilot runs locally and independently per judge device.
+ * To protect Firebase free-tier quotas and prevent cross-device interference,
+ * Autopilot high-frequency ticks are maintained strictly in device-local storage.
  */
-export async function saveAutopilotStateToFirestore(state: any): Promise<void> {
-  if (isFirestoreQuotaExceeded()) {
-    return;
-  }
-
-  try {
-    const docRef = doc(db, STATE_COLLECTION, GLOBAL_STATE_DOC);
-    await setDoc(
-      docRef,
-      {
-        ...state,
-        lastCloudSync: new Date().toISOString(),
-      },
-      { merge: true }
-    );
-  } catch (err: any) {
-    if (checkIsQuotaError(err)) {
-      flagFirestoreQuotaExceeded(err);
-      console.warn('🛡️ [Firestore Safe Mode] State sync paused: Free daily quota reached. Local & server persistence intact.');
-    } else {
-      console.warn('⚠️ [Firestore] Failed to persist autopilot state:', err);
-    }
-  }
+export async function saveAutopilotStateToFirestore(_state: any): Promise<void> {
+  // Device sandbox mode: no Firestore writes needed for autopilot state
+  return;
 }
 
 /**
- * Subscribe to Autopilot global portfolio state across all browser sessions.
+ * Subscribe to Autopilot state: Autopilot is device-isolated so judges have independent sandboxes.
  */
 export function subscribeToAutopilotState(
-  onStateUpdate: (state: any) => void
+  _onStateUpdate: (state: any) => void
 ): () => void {
-  let activeUnsubscribe: (() => void) | null = null;
-
-  try {
-    const docRef = doc(db, STATE_COLLECTION, GLOBAL_STATE_DOC);
-    activeUnsubscribe = onSnapshot(
-      docRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          onStateUpdate(docSnap.data());
-        }
-      },
-      (err: any) => {
-        if (checkIsQuotaError(err)) {
-          flagFirestoreQuotaExceeded(err);
-          if (activeUnsubscribe) {
-            try {
-              activeUnsubscribe();
-            } catch {}
-            activeUnsubscribe = null;
-          }
-        } else {
-          console.warn('⚠️ [Firestore] Autopilot state subscription error:', err);
-        }
-      }
-    );
-    return () => {
-      if (activeUnsubscribe) {
-        try {
-          activeUnsubscribe();
-        } catch {}
-        activeUnsubscribe = null;
-      }
-    };
-  } catch (err: any) {
-    if (checkIsQuotaError(err)) {
-      flagFirestoreQuotaExceeded(err);
-    } else {
-      console.warn('⚠️ [Firestore] Could not listen to autopilot state:', err);
-    }
-    return () => {};
-  }
+  return () => {};
 }

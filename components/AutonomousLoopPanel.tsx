@@ -243,6 +243,9 @@ export function AutonomousLoopPanel({
               <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-500/30">
                 Core Loop Tier 1
               </span>
+              <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 font-mono" title="Isolated Device Sandbox: test independently without cross-device interference">
+                Device Sandbox
+              </span>
             </div>
             <p className="text-[11px] text-gray-400">Deterministic Autonomous Trade Inference & Risk Safeguard</p>
           </div>
