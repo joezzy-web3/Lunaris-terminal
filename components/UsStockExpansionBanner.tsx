@@ -13,10 +13,10 @@ interface UsStockExpansionBannerProps {
   onNavigateTab?: (tab: 'TERMINAL' | 'AUTOPILOT' | 'COUNCIL' | 'AUDIT') => void;
 }
 
-// 5-day competition announcement notice window:
-// Launched: Sep 18, 2026. Exactly 5 days later (Sep 23, 2026 23:59:59 UTC), this announcement expires.
+// 10-day competition announcement notice window:
+// Launched: Sep 18, 2026. Exactly 10 days later (Sep 28, 2026 23:59:59 UTC), this announcement expires.
 // Once expired, this entire component unmounts and automatically disappears forever.
-const ANNOUNCEMENT_EXPIRY_TIMESTAMP = new Date('2026-09-23T23:59:59Z').getTime();
+const ANNOUNCEMENT_EXPIRY_TIMESTAMP = new Date('2026-09-28T23:59:59Z').getTime();
 const STORAGE_KEY = 'LUNARIS_US_STOCKS_EXPANSION_BANNER_DISMISSED_V1';
 
 const EXPANSION_TICKERS = [
@@ -41,11 +41,11 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
     }
   });
 
-  const [daysRemaining, setDaysRemaining] = useState<number>(5);
+  const [daysRemaining, setDaysRemaining] = useState<number>(10);
   const [hoursRemaining, setHoursRemaining] = useState<number>(0);
   const { quotes, getQuote } = useLiveMarketQuotes();
 
-  // Compute countdown and automatically expire after 5 days
+  // Compute countdown and automatically expire after 10 days
   useEffect(() => {
     const updateCountdown = () => {
       const now = Date.now();
@@ -56,7 +56,7 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
       const msLeft = Math.max(0, ANNOUNCEMENT_EXPIRY_TIMESTAMP - now);
       const days = Math.floor(msLeft / (24 * 60 * 60 * 1000));
       const hours = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-      setDaysRemaining(Math.min(5, Math.max(0, days)));
+      setDaysRemaining(Math.min(10, Math.max(0, days)));
       setHoursRemaining(hours);
     };
 
@@ -85,7 +85,7 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
     }
   };
 
-  // Permanently unmounts and vanishes after 5 days
+  // Permanently unmounts and vanishes after 10 days
   if (isExpired) {
     return null;
   }
@@ -128,11 +128,11 @@ export const UsStockExpansionBanner: React.FC<UsStockExpansionBannerProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/40">
               <Sparkles className="w-3 h-3 animate-pulse text-[#00F0FF]" />
-              HACKATHON EXPANSION · 5-DAY NOTICE
+              HACKATHON EXPANSION · 10-DAY NOTICE
             </span>
             <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
               <Clock className="w-3 h-3" />
-              Active for Next 5 Days ({daysRemaining}d {hoursRemaining}h left)
+              Active for Next 10 Days ({daysRemaining}d {hoursRemaining}h left)
             </span>
           </div>
 
