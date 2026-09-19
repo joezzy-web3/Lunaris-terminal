@@ -1,5 +1,31 @@
 [
   {
+    "id": "REJ-BTC-1789821925307-107",
+    "timestamp": "2026-09-19T12:45:25.307Z",
+    "instrument": "BTC/USDT",
+    "incomingPrice": 10000,
+    "rollingMedian": 60050,
+    "deviationPct": 83.35,
+    "thresholdPct": 15,
+    "source": "TEST_FEED",
+    "corroborated": false,
+    "reason": "Price $10000 deviated 83.35% from rolling median $60050.00 (threshold 15%) without external corroboration",
+    "action": "REJECTED"
+  },
+  {
+    "id": "REJ-BTC-1789821925307-730",
+    "timestamp": "2026-09-19T12:45:25.307Z",
+    "instrument": "BTC/USDT",
+    "incomingPrice": 157000,
+    "rollingMedian": 60050,
+    "deviationPct": 161.45,
+    "thresholdPct": 15,
+    "source": "TEST_FEED",
+    "corroborated": false,
+    "reason": "Price $157000 deviated 161.45% from rolling median $60050.00 (threshold 15%) without external corroboration",
+    "action": "REJECTED"
+  },
+  {
     "id": "REJ-BTC-1789820225172-275",
     "timestamp": "2026-09-19T12:17:05.172Z",
     "instrument": "BTC/USDT",

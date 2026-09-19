@@ -75,11 +75,47 @@ async function fetchServerBitgetTickers(): Promise<Record<string, any> | null> {
   serverFetchPromise = (async () => {
     try {
       const res = await fetch('/api/bitget/tickers');
-      if (res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const json = await res.json();
         if (json && json.data) {
           serverBitgetCache = { timestamp: Date.now(), data: json.data };
           return json.data;
+        }
+      }
+    } catch {
+      // Continue to direct Bitget client fallback
+    }
+
+    // Direct Bitget Spot API fallback for client-only deployments (Vercel SPA)
+    try {
+      const directRes = await fetch('https://api.bitget.com/api/v2/spot/market/tickers', {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+      });
+      if (directRes.ok) {
+        const payload = await directRes.json();
+        if (payload?.code === '00000' && Array.isArray(payload.data)) {
+          const map: Record<string, any> = {};
+          payload.data.forEach((item: any) => {
+            const sym = item.symbol;
+            if (typeof sym === 'string' && sym.endsWith('USDT')) {
+              let coin = sym.slice(0, -4);
+              if (coin === 'RNVDA') coin = 'NVDAon';
+              if (coin === 'RTSLA') coin = 'TSLAon';
+              const rawP = parseFloat(item.lastPr || item.close || '0');
+              if (Number.isFinite(rawP) && rawP > 0) {
+                map[coin] = {
+                  ticker: coin,
+                  price: rawP,
+                  change24h: Number((parseFloat(item.change24h || '0') * 100).toFixed(2)),
+                  volume: item.usdtVolume,
+                  class: 'CX',
+                };
+              }
+            }
+          });
+          serverBitgetCache = { timestamp: Date.now(), data: map };
+          return map;
         }
       }
     } catch {

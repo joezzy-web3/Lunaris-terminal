@@ -119,26 +119,43 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1];
 
+      // If price deviated substantially (>2.5%) because fresh network data just arrived over initial baseline,
+      // smoothly rescale previous historical candles so the entire chart baseline transitions seamlessly without a cliff:
+      const totalDeviation = Math.abs(latestPrice - last.close) / (last.close || 1);
+      let baseList = prev;
+      if (totalDeviation > 0.025) {
+        const ratio = latestPrice / (last.close || latestPrice);
+        baseList = prev.map((c) => ({
+          ...c,
+          open: Number((c.open * ratio).toFixed(2)),
+          high: Number((c.high * ratio).toFixed(2)),
+          low: Number((c.low * ratio).toFixed(2)),
+          close: Number((c.close * ratio).toFixed(2)),
+        }));
+      }
+
+      const activeLast = baseList[baseList.length - 1];
+
       // Check if price moved enough for spike effect
-      const priceDiffRatio = Math.abs(latestPrice - last.close) / last.close;
+      const priceDiffRatio = Math.abs(latestPrice - activeLast.close) / activeLast.close;
       if (priceDiffRatio > 0.0008) {
         setSpikeIntensity(dir === 'UP' ? 1 : -1);
         setTimeout(() => setSpikeIntensity(0), 1000);
       }
 
       const updatedLast: PriceCandle = {
-        ...last,
-        high: Math.max(last.high, latestPrice),
-        low: Math.min(last.low, latestPrice),
+        ...activeLast,
+        high: Math.max(activeLast.high, latestPrice),
+        low: Math.min(activeLast.low, latestPrice),
         close: latestPrice,
-        volume: last.volume + Math.floor(Math.random() * 15) + 2,
+        volume: activeLast.volume + Math.floor(Math.random() * 15) + 2,
         direction: dir,
       };
 
       // If time interval elapsed, create a new candle
       const now = Date.now();
       const intervalMs = timeframe === '1s' ? 1500 : timeframe === '1m' ? 60000 : 300000;
-      if (now - last.timestamp > intervalMs) {
+      if (now - activeLast.timestamp > intervalMs) {
         const newCandle: PriceCandle = {
           timestamp: now,
           open: latestPrice,
@@ -148,10 +165,10 @@ export const RealTimeTradingChart: React.FC<RealTimeTradingChartProps> = ({
           volume: Math.floor(Math.random() * 40) + 10,
           direction: dir,
         };
-        return [...prev.slice(-60), newCandle];
+        return [...baseList.slice(-60), newCandle];
       }
 
-      return [...prev.slice(0, -1), updatedLast];
+      return [...baseList.slice(0, -1), updatedLast];
     });
   }, [liveQuote.price, liveQuote.lastUpdated]);
 

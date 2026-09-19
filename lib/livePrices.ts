@@ -20,47 +20,47 @@ export const INITIAL_ASSET_QUOTES: Record<string, AssetQuote> = {
     ticker: 'BTC',
     name: 'Bitcoin',
     class: 'CX',
-    price: 76819.69,
-    change24h: -0.58,
-    high24h: 77454.0,
-    low24h: 76390.0,
-    volume: '$38.2B',
-    lastTickDirection: 'DOWN',
+    price: 81273.80,
+    change24h: 3.98,
+    high24h: 82500.0,
+    low24h: 79800.0,
+    volume: '$42.8B',
+    lastTickDirection: 'UP',
     lastUpdated: Date.now(),
   },
   ETH: {
     ticker: 'ETH',
     name: 'Ethereum',
     class: 'CX',
-    price: 2485.11,
-    change24h: -1.59,
-    high24h: 2527.6,
-    low24h: 2461.7,
-    volume: '$18.6B',
-    lastTickDirection: 'DOWN',
+    price: 2640.30,
+    change24h: 5.30,
+    high24h: 2690.0,
+    low24h: 2510.0,
+    volume: '$22.4B',
+    lastTickDirection: 'UP',
     lastUpdated: Date.now(),
   },
   SOL: {
     ticker: 'SOL',
     name: 'Solana',
     class: 'CX',
-    price: 99.66,
-    change24h: -2.04,
-    high24h: 102.3,
-    low24h: 99.0,
-    volume: '$6.4B',
-    lastTickDirection: 'DOWN',
+    price: 111.74,
+    change24h: 5.39,
+    high24h: 114.5,
+    low24h: 106.2,
+    volume: '$8.1B',
+    lastTickDirection: 'UP',
     lastUpdated: Date.now(),
   },
   SUI: {
     ticker: 'SUI',
     name: 'Sui Network',
     class: 'CX',
-    price: 2.14,
-    change24h: 1.85,
-    high24h: 2.28,
-    low24h: 2.05,
-    volume: '$790M',
+    price: 0.8502,
+    change24h: 6.54,
+    high24h: 0.92,
+    low24h: 0.79,
+    volume: '$680M',
     lastTickDirection: 'UP',
     lastUpdated: Date.now(),
   },
@@ -68,34 +68,34 @@ export const INITIAL_ASSET_QUOTES: Record<string, AssetQuote> = {
     ticker: 'NVDAon',
     name: 'NVIDIA Corp (rToken 7x24)',
     class: 'EQ',
-    price: 218.29,
-    change24h: -0.03,
-    high24h: 222.0,
-    low24h: 218.15,
-    volume: '$68.4M',
-    lastTickDirection: 'DOWN',
+    price: 222.12,
+    change24h: 1.26,
+    high24h: 226.0,
+    low24h: 219.0,
+    volume: '$74.2M',
+    lastTickDirection: 'UP',
     lastUpdated: Date.now(),
   },
   TSLAon: {
     ticker: 'TSLAon',
     name: 'Tesla Inc (rToken 7x24)',
     class: 'EQ',
-    price: 365.44,
-    change24h: 0.52,
-    high24h: 368.6,
-    low24h: 361.6,
-    volume: '$52.1M',
-    lastTickDirection: 'UP',
+    price: 364.54,
+    change24h: -0.81,
+    high24h: 372.0,
+    low24h: 360.5,
+    volume: '$58.6M',
+    lastTickDirection: 'DOWN',
     lastUpdated: Date.now(),
   },
   NVDA: {
     ticker: 'NVDA',
     name: 'NVIDIA Corp',
     class: 'EQ',
-    price: 218.3,
-    change24h: 1.45,
-    high24h: 221.0,
-    low24h: 215.2,
+    price: 222.12,
+    change24h: 1.26,
+    high24h: 226.0,
+    low24h: 219.0,
     volume: '$31.8B',
     lastTickDirection: 'UP',
     lastUpdated: Date.now(),
@@ -210,12 +210,30 @@ export const INITIAL_ASSET_QUOTES: Record<string, AssetQuote> = {
   },
 };
 
-// Central synchronized real-time state
-let currentMarketQuotes: Record<string, AssetQuote> = { ...INITIAL_ASSET_QUOTES };
+const MARKET_STORAGE_KEY = 'lunaris_last_known_market_quotes';
+
+function loadInitialQuotes(): Record<string, AssetQuote> {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const saved = localStorage.getItem(MARKET_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && parsed.BTC && parsed.BTC.price > 1000) {
+          return { ...INITIAL_ASSET_QUOTES, ...parsed };
+        }
+      }
+    } catch {}
+  }
+  return { ...INITIAL_ASSET_QUOTES };
+}
+
+// Central synchronized real-time state with persistent local caching
+let currentMarketQuotes: Record<string, AssetQuote> = loadInitialQuotes();
 const quoteListeners = new Set<(quotes: Record<string, AssetQuote>) => void>();
 let pollingInterval: any = null;
 let jitterInterval: any = null;
 let activeSubscriberCount = 0;
+let saveStorageTimeout: any = null;
 
 function notifySubscribers() {
   const snapshot = { ...currentMarketQuotes };
@@ -226,13 +244,59 @@ function notifySubscribers() {
       console.error('Error notifying quote listener:', e);
     }
   });
+
+  // Debounced cache to localStorage so tab reloads or incognito tabs have live prices immediately
+  if (typeof window !== 'undefined' && window.localStorage) {
+    if (!saveStorageTimeout) {
+      saveStorageTimeout = setTimeout(() => {
+        saveStorageTimeout = null;
+        try {
+          localStorage.setItem(MARKET_STORAGE_KEY, JSON.stringify(currentMarketQuotes));
+        } catch {}
+      }, 1500);
+    }
+  }
 }
 
-// Public real crypto and equity price sync from official Bitget/Yahoo API proxy
+function updateQuoteItem(
+  key: string,
+  price: number,
+  change24h: number,
+  high24h?: number,
+  low24h?: number,
+  volume?: string
+) {
+  if (!currentMarketQuotes[key]) return;
+  const prev = currentMarketQuotes[key];
+  const dir: 'UP' | 'DOWN' | 'NEUTRAL' = price > prev.price ? 'UP' : price < prev.price ? 'DOWN' : prev.lastTickDirection;
+  currentMarketQuotes[key] = {
+    ...prev,
+    price,
+    change24h: Number(change24h.toFixed(2)),
+    high24h: high24h && high24h > 0 ? high24h : prev.high24h,
+    low24h: low24h && low24h > 0 ? low24h : prev.low24h,
+    volume: volume || prev.volume,
+    lastTickDirection: dir,
+    lastUpdated: Date.now(),
+  };
+}
+
+// Multi-tier resilient crypto and equity price sync:
+// Tier 1: Express Server API (/api/bitget/tickers)
+// Tier 2: Direct Bitget Spot API with CORS (works on Vercel, client SPAs, static hosts)
+// Tier 3: Binance & CoinGecko fallback
 export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { price: number; change24h: number }>>> {
+  // 1. Try Express backend proxy if available
   try {
-    const res = await fetch('/api/bitget/tickers');
-    if (res.ok) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch('/api/bitget/tickers', { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    // On static Vercel SPA deployments, /api/bitget/tickers rewrites to /index.html with status 200 text/html!
+    // We MUST verify content-type is json before parsing to prevent syntax errors:
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       const json = await res.json();
       if (json.success && json.data) {
         const result: Partial<Record<string, { price: number; change24h: number }>> = {};
@@ -240,21 +304,61 @@ export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { 
           if (val && typeof val.price === 'number') {
             const formattedChange = Number((val.change24h ?? 0).toFixed(2));
             result[key] = { price: val.price, change24h: formattedChange };
+            updateQuoteItem(key, val.price, formattedChange, val.high24h, val.low24h, val.volume);
+          }
+        });
 
-            // Update in-memory quotes
-            if (currentMarketQuotes[key]) {
-              const prevPrice = currentMarketQuotes[key].price;
-              const dir = val.price > prevPrice ? 'UP' : val.price < prevPrice ? 'DOWN' : currentMarketQuotes[key].lastTickDirection;
-              currentMarketQuotes[key] = {
-                ...currentMarketQuotes[key],
-                price: val.price,
-                change24h: formattedChange,
-                high24h: val.high24h || currentMarketQuotes[key].high24h,
-                low24h: val.low24h || currentMarketQuotes[key].low24h,
-                volume: val.volume || currentMarketQuotes[key].volume,
-                lastTickDirection: dir,
-                lastUpdated: Date.now(),
-              };
+        notifySubscribers();
+        if (Object.keys(result).length > 0) {
+          return result;
+        }
+      }
+    }
+  } catch {
+    // Continue to Tier 2
+  }
+
+  // 2. Direct Bitget Public API (CORS enabled globally: access-control-allow-origin: *)
+  // Works natively in browser on Vercel with zero server functions needed!
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const res = await fetch('https://api.bitget.com/api/v2/spot/market/tickers', {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.code === '00000' && Array.isArray(json.data)) {
+        const result: Partial<Record<string, { price: number; change24h: number }>> = {};
+        json.data.forEach((item: any) => {
+          const sym = item.symbol;
+          if (typeof sym === 'string' && sym.endsWith('USDT')) {
+            let key = sym.slice(0, -4);
+            if (key === 'RNVDA') key = 'NVDAon';
+            if (key === 'RTSLA') key = 'TSLAon';
+
+            const rawP = parseFloat(item.lastPr || item.close || '0');
+            if (Number.isFinite(rawP) && rawP > 0) {
+              const chg = Number((parseFloat(item.change24h || '0') * 100).toFixed(2));
+              result[key] = { price: rawP, change24h: chg };
+              updateQuoteItem(
+                key,
+                rawP,
+                chg,
+                parseFloat(item.high24h || '0'),
+                parseFloat(item.low24h || '0'),
+                item.usdtVolume ? `$${(parseFloat(item.usdtVolume) / 1e6).toFixed(1)}M` : undefined
+              );
+
+              // Also reflect equity spot for NVDA / TSLA if matching
+              if (key === 'NVDAon' && currentMarketQuotes['NVDA']) {
+                updateQuoteItem('NVDA', rawP, chg);
+              }
+              if (key === 'TSLAon' && currentMarketQuotes['TSLA']) {
+                updateQuoteItem('TSLA', rawP, chg);
+              }
             }
           }
         });
@@ -266,10 +370,10 @@ export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { 
       }
     }
   } catch {
-    // Continue to fallback
+    // Continue to Tier 3
   }
 
-  // Fallback to public Binance endpoint for crypto if proxy is unreachable and environment allows
+  // 3. Fallback to public Binance endpoint for crypto if proxy & Bitget are unreachable
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -288,16 +392,7 @@ export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { 
           const price = parseFloat(item.lastPrice);
           const change24h = Number(parseFloat(item.priceChangePercent).toFixed(2));
           result[key] = { price, change24h };
-
-          const prevPrice = currentMarketQuotes[key].price;
-          const dir = price > prevPrice ? 'UP' : price < prevPrice ? 'DOWN' : currentMarketQuotes[key].lastTickDirection;
-          currentMarketQuotes[key] = {
-            ...currentMarketQuotes[key],
-            price,
-            change24h,
-            lastTickDirection: dir,
-            lastUpdated: Date.now(),
-          };
+          updateQuoteItem(key, price, change24h);
         }
       });
       notifySubscribers();
