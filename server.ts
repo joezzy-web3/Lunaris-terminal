@@ -1101,6 +1101,7 @@ function runAutopilotDaemonTick() {
         quantity: parseFloat(cost.toFixed(2)),
         leverage: 3,
         currentBalance: state.cashBalance,
+        enforceCollar: true,
       });
 
       const prevCash = state.cashBalance;
@@ -1178,6 +1179,7 @@ function runAutopilotDaemonTick() {
         quantity: parseFloat(cost.toFixed(2)),
         leverage: 3,
         currentBalance: state.cashBalance,
+        enforceCollar: true,
       });
 
       const prevCash = state.cashBalance;
@@ -1908,6 +1910,7 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         quantity: cost,
         leverage: 3,
         currentBalance: state.cashBalance,
+        enforceCollar: true,
       });
 
       const prevCash = state.cashBalance;
@@ -2143,6 +2146,7 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         quantity: cost,
         leverage: 3,
         currentBalance: state.cashBalance,
+        enforceCollar: true,
       });
 
       const prevCash = state.cashBalance;

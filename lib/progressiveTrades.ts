@@ -12,6 +12,7 @@
 
 import { PaperTradeRecord } from './paperTradingAudit';
 import { resolveTradePrices } from './paperTradingAudit';
+import { MAX_SLIPPAGE_PCT, enforceSlippageCollar } from './riskVeto';
 import AUDIT_TRADES_JSON from '../data/audit_trades.json';
 
 export const AUTOPILOT_CADENCE_MS = 14000; // 14-second standard cadence matching UI countdown
@@ -111,20 +112,25 @@ export function generateDeterministicTradeRecord(
   const slippageBps = parseFloat((slippageRate * 10000).toFixed(1));
   const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
 
-  const grossPnl = parseFloat((quantity * (pnlPct / 100)).toFixed(2));
-  const netRealizedPnl = parseFloat((grossPnl - totalFees - slippageCost).toFixed(2));
-  const netPnlPct = parseFloat(((netRealizedPnl / quantity) * 100).toFixed(2));
-
-  // 8. Exit price resolution based on position direction and leverage
-  let exitPrice: number;
+  // 8. Exit price resolution based on position direction, leverage, and documented 0.5% slippage collar
+  let rawExitPrice: number;
   if (direction === 'SHORT') {
-    exitPrice = entryPrice * (1 - pnlPct / (100 * leverage));
+    rawExitPrice = entryPrice * (1 - pnlPct / (100 * leverage));
   } else {
-    exitPrice = entryPrice * (1 + pnlPct / (100 * leverage));
+    rawExitPrice = entryPrice * (1 + pnlPct / (100 * leverage));
   }
-  const finalExitPrice = parseFloat(exitPrice.toFixed(decimals));
+  const clampedExit = enforceSlippageCollar(entryPrice, rawExitPrice, direction);
+  const finalExitPrice = parseFloat(clampedExit.toFixed(decimals));
   const priceDelta = parseFloat((finalExitPrice - entryPrice).toFixed(decimals));
   const priceDeltaPct = parseFloat((((finalExitPrice - entryPrice) / entryPrice) * 100).toFixed(2));
+
+  // Authoritative Single Source of Truth: PnL derived from filled execution prices
+  const returnPct = direction === 'SHORT'
+    ? (entryPrice - finalExitPrice) / entryPrice
+    : (finalExitPrice - entryPrice) / entryPrice;
+  const grossPnl = parseFloat((notional * returnPct).toFixed(2));
+  const netRealizedPnl = parseFloat((grossPnl - totalFees - slippageCost).toFixed(2));
+  const netPnlPct = parseFloat(((netRealizedPnl / quantity) * 100).toFixed(2));
 
   // 9. Running account balance
   const accountBalance = parseFloat((runningBalanceBefore + netRealizedPnl).toFixed(2));
@@ -219,11 +225,25 @@ export function generateProgressiveAuditTrades(
     currentIdSeq = currentSeq;
   }
 
+  const seenSignatures = new Set<string>();
+  for (const t of activeBase) {
+    if (t.status === 'ADJUSTMENT') continue;
+    const entry = Number(t.entryPrice || t.price || 0).toFixed(4);
+    const exit = Number(t.exitPrice || 0).toFixed(4);
+    const pnl = Number(t.netPnl !== undefined ? t.netPnl : t.balanceChange).toFixed(2);
+    seenSignatures.add(`${t.instrument}|${entry}|${exit}|${pnl}`);
+  }
+
   for (let s = 1; s <= missingSlots; s++) {
     const slotTimeMs = lastTradeTime + s * AUTOPILOT_CADENCE_MS;
     currentSeq += 1;
     currentIdSeq += 1;
     const trade = generateDeterministicTradeRecord(currentSeq, slotTimeMs, runningBalance, currentIdSeq);
+    const tradeSig = `${trade.instrument}|${trade.entryPrice.toFixed(4)}|${trade.exitPrice.toFixed(4)}|${trade.netPnl.toFixed(2)}`;
+    if (seenSignatures.has(tradeSig)) {
+      continue;
+    }
+    seenSignatures.add(tradeSig);
     runningBalance = trade.accountBalance;
     newTrades.push(trade);
   }

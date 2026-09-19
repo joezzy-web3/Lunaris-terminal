@@ -6,6 +6,9 @@
  * Size (Margin vs Notional), P&L, Fees, Funding, and Balance Chaining.
  */
 
+import { MAX_SLIPPAGE_PCT, enforceSlippageCollar, validateSlippageCollar } from './riskVeto';
+export { MAX_SLIPPAGE_PCT, enforceSlippageCollar, validateSlippageCollar };
+
 export interface TradePnLMathResult {
   instrument: string;
   direction: 'LONG' | 'SHORT';
@@ -365,6 +368,7 @@ export interface FinalizeTradeCloseParams {
   customFeeRate?: number;
   fee?: number;
   slippage?: number;
+  enforceCollar?: boolean;
 }
 
 export interface FinalizedTradeCloseResult {
@@ -400,11 +404,16 @@ export function finalizeTradeClose(params: FinalizeTradeCloseParams): FinalizedT
     instrument,
     direction,
     entryPrice,
-    exitPrice,
     quantity,
     leverage,
     currentBalance = 100000,
+    enforceCollar = false,
   } = params;
+
+  let exitPrice = params.exitPrice;
+  if (enforceCollar) {
+    exitPrice = enforceSlippageCollar(entryPrice, exitPrice, direction);
+  }
 
   const notional = quantity * leverage;
   const decimals = entryPrice < 10 ? 4 : 2;

@@ -24,6 +24,56 @@ export interface RiskCheckResult {
 
 export const MAX_POSITION_PCT = 25.0; // Max 25% allocation per single trade
 export const DRAWDOWN_LIMIT_PCT = 10.0; // Circuit breaker at 10% unrealized loss
+export const MAX_SLIPPAGE_PCT = 0.005; // 0.5% maximum deviation slippage collar per documented Bitget standard
+
+/**
+ * Validates whether an exitPrice is within the documented 0.5% slippage collar relative to entry/spot price.
+ */
+export function validateSlippageCollar(
+  entryPrice: number,
+  exitPrice: number,
+  maxSlippagePct: number = MAX_SLIPPAGE_PCT
+): boolean {
+  if (!Number.isFinite(entryPrice) || !Number.isFinite(exitPrice) || entryPrice <= 0) {
+    return false;
+  }
+  const deviation = Math.abs(exitPrice - entryPrice) / entryPrice;
+  return deviation <= maxSlippagePct + 1e-6;
+}
+
+/**
+ * Enforces the 0.5% maximum execution slippage collar.
+ * If exitPrice exceeds the collar relative to entryPrice (or spotPrice),
+ * clamps exitPrice to entryPrice * (1 ± MAX_SLIPPAGE_PCT) in the trade direction.
+ */
+export function enforceSlippageCollar(
+  entryPrice: number,
+  exitPrice: number,
+  direction: 'LONG' | 'SHORT' = 'LONG',
+  lastSpotPrice?: number
+): number {
+  if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+    return exitPrice;
+  }
+  const refPrice = (Number.isFinite(lastSpotPrice) && (lastSpotPrice as number) > 0)
+    ? (lastSpotPrice as number)
+    : entryPrice;
+
+  const deviation = Math.abs(exitPrice - refPrice) / refPrice;
+  const decimals = entryPrice < 10 ? 4 : 2;
+
+  if (deviation > MAX_SLIPPAGE_PCT) {
+    // Clamp to entryPrice * (1 ± MAX_SLIPPAGE_PCT) in the appropriate direction.
+    // Round conservatively towards refPrice so rounding never pushes deviation over MAX_SLIPPAGE_PCT.
+    const factor = Math.pow(10, decimals);
+    const clamped = exitPrice >= refPrice
+      ? Math.floor(refPrice * (1 + MAX_SLIPPAGE_PCT) * factor) / factor
+      : Math.ceil(refPrice * (1 - MAX_SLIPPAGE_PCT) * factor) / factor;
+    return parseFloat(clamped.toFixed(decimals));
+  }
+
+  return parseFloat(exitPrice.toFixed(decimals));
+}
 
 export interface PortfolioRiskContext {
   activePositionsCount?: number;
