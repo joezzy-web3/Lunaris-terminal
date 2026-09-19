@@ -38,10 +38,10 @@ export interface PaperTradeRecord {
   grossPnl?: number; // Gross PnL ($) before fees & slippage
   netPnl?: number; // Net Realized PnL ($)
   trigger: string; // e.g. "Council Quorum: Quant-Omega + Atlas-Macro (92% Conf)"
-  status: 'CLOSED' | 'OPEN' | 'STOP_LOSS' | 'TAKE_PROFIT';
+  status: 'CLOSED' | 'OPEN' | 'STOP_LOSS' | 'TAKE_PROFIT' | 'ADJUSTMENT';
   postMortem?: TradePostMortem;
   idempotencyKey?: string;
-  sourceHandler?: 'AUTOPILOT_DAEMON' | 'COUNCIL_SIGNAL' | 'PULSE_RADAR' | 'MANUAL' | 'AUDIT_SIM';
+  sourceHandler?: 'AUTOPILOT_DAEMON' | 'COUNCIL_SIGNAL' | 'PULSE_RADAR' | 'MANUAL' | 'AUDIT_SIM' | 'ADJUSTMENT';
   auditSeq?: number;
   legacyId?: string;
 }
@@ -354,7 +354,7 @@ export function recordNewPaperTrade(
     createdAt?: string;
     accountBalance?: number;
     idempotencyKey?: string;
-    sourceHandler?: 'AUTOPILOT_DAEMON' | 'COUNCIL_SIGNAL' | 'PULSE_RADAR' | 'MANUAL' | 'AUDIT_SIM';
+    sourceHandler?: 'AUTOPILOT_DAEMON' | 'COUNCIL_SIGNAL' | 'PULSE_RADAR' | 'MANUAL' | 'AUDIT_SIM' | 'ADJUSTMENT';
   }
 ): PaperTradeRecord {
   const currentTrades = getSavedPaperTrades();
@@ -390,14 +390,46 @@ export function recordNewPaperTrade(
   const dateStr = timestamp.slice(0, 10).replace(/-/g, '');
   const id = tradeData.id || `PT-${dateStr}-${nextSeq.toString().padStart(2, '0')}`;
 
-  const notional = (tradeData.quantity || 5000) * (tradeData.leverage || 1);
-  const feeRate = tradeData.feeRate ?? getBitgetTakerFeeRate(tradeData.instrument);
-  const totalFees = tradeData.fee ?? parseFloat((notional * feeRate * 2).toFixed(2));
-  const slippageInfo = estimateL2OrderbookSlippage(notional);
-  const slippageCost = tradeData.slippage ?? slippageInfo.slippageCost;
-  const slippageBps = tradeData.slippageBps ?? slippageInfo.slippageBps;
-  const grossPnl = tradeData.grossPnl ?? (tradeData.balanceChange !== undefined ? parseFloat((tradeData.balanceChange + totalFees + slippageCost).toFixed(2)) : 0);
-  const netPnl = tradeData.netPnl ?? (tradeData.balanceChange !== undefined ? tradeData.balanceChange : parseFloat((grossPnl - totalFees - slippageCost).toFixed(2)));
+  const isAdjustment = tradeData.status === 'ADJUSTMENT' || tradeData.sourceHandler === 'ADJUSTMENT';
+
+  let totalFees: number;
+  let feeRate: number;
+  let slippageCost: number;
+  let slippageBps: number;
+  let grossPnl: number;
+  let netPnl: number;
+
+  if (isAdjustment) {
+    totalFees = tradeData.fee ?? 0;
+    feeRate = tradeData.feeRate ?? 0;
+    slippageCost = tradeData.slippage ?? 0;
+    slippageBps = tradeData.slippageBps ?? 0;
+    grossPnl = tradeData.grossPnl ?? 0;
+    netPnl = tradeData.netPnl ?? tradeData.balanceChange ?? 0;
+  } else {
+    const notional = (tradeData.quantity || 5000) * (tradeData.leverage || 1);
+    feeRate = tradeData.feeRate ?? getBitgetTakerFeeRate(tradeData.instrument);
+    totalFees = tradeData.fee ?? parseFloat((notional * feeRate * 2).toFixed(2));
+    const slippageInfo = estimateL2OrderbookSlippage(notional);
+    slippageCost = tradeData.slippage ?? slippageInfo.slippageCost;
+    slippageBps = tradeData.slippageBps ?? slippageInfo.slippageBps;
+
+    if (tradeData.grossPnl !== undefined) {
+      grossPnl = tradeData.grossPnl;
+    } else if (tradeData.entryPrice && tradeData.exitPrice) {
+      const returnPct = tradeData.direction === 'SHORT'
+        ? (tradeData.entryPrice - tradeData.exitPrice) / tradeData.entryPrice
+        : (tradeData.exitPrice - tradeData.entryPrice) / tradeData.entryPrice;
+      grossPnl = parseFloat((notional * returnPct).toFixed(2));
+    } else if (tradeData.balanceChange !== undefined) {
+      grossPnl = parseFloat((tradeData.balanceChange + totalFees + slippageCost).toFixed(2));
+    } else {
+      grossPnl = 0;
+    }
+
+    // Strict Mathematical Invariant: Net Realized PnL == Gross PnL - Fee - Slippage
+    netPnl = parseFloat((grossPnl - totalFees - slippageCost).toFixed(2));
+  }
 
   const rawNewRecord: PaperTradeRecord = {
     ...tradeData,
@@ -411,6 +443,7 @@ export function recordNewPaperTrade(
     grossPnl,
     netPnl,
     balanceChange: netPnl,
+    balanceChangePct: tradeData.balanceChangePct ?? parseFloat(((netPnl / (tradeData.quantity || 5000)) * 100).toFixed(2)),
     sourceHandler: tradeData.sourceHandler || 'AUTOPILOT_DAEMON',
     accountBalance: 100000,
   };
@@ -496,6 +529,17 @@ export function sanitizeAuditTrades(trades: PaperTradeRecord[]): {
 
   // 2. Identify & clamp price and PnL outliers
   const normalizedTrades: PaperTradeRecord[] = sorted.map((t, idx) => {
+    // Authoritative adjustment records must never be clamped by single-trade PnL heuristics
+    if (
+      t.status === 'ADJUSTMENT' ||
+      t.sourceHandler === 'ADJUSTMENT' ||
+      String(t.id || '').toUpperCase().includes('ADJUST') ||
+      String(t.instrument || '').toUpperCase().includes('ADJUSTMENT') ||
+      String(t.trigger || '').includes('Audit Reconciliation Adjustment')
+    ) {
+      return t;
+    }
+
     let wasModified = false;
     let price = Number(t.price) || 0;
     let balanceChangePct = Number(t.balanceChangePct) || 0;

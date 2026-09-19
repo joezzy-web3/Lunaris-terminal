@@ -13,6 +13,8 @@ import {
   normalizeTradeRecord,
   generateTradeIdempotencyKey,
 } from './lib/firestoreAudit';
+import { validatePriceTick, getRejectedTicksLog } from './lib/priceSanityGuard';
+import { getBitgetTakerFeeRate, estimateL2OrderbookSlippage, finalizeTradeClose } from './lib/tradeMath';
 import { runIncrementalReconciliation } from './scripts/reconcileAuditTrades';
 import { generateProgressiveAuditTrades } from './lib/progressiveTrades';
 import { evaluateTradeRisk, TradeProposal } from './lib/riskVeto';
@@ -110,8 +112,11 @@ async function refreshServerMarketCache(): Promise<Record<string, any>> {
             const sym = item.symbol;
             if (typeof sym === 'string' && sym.endsWith('USDT')) {
               const coin = sym.slice(0, -4);
-              const p = parseFloat(item.lastPr || item.close || '0');
-              if (Number.isFinite(p) && p > 0) {
+              const rawP = parseFloat(item.lastPr || item.close || '0');
+              if (Number.isFinite(rawP) && rawP > 0) {
+                // Validate incoming tick against rolling median buffer
+                const sanity = validatePriceTick(coin, rawP, 'bitget_spot');
+                const p = sanity.sanitizedPrice;
                 const chg = Number((parseFloat(item.change24h || '0') * 100).toFixed(2));
                 const volNum = parseFloat(item.usdtVolume || item.quoteVolume || '0');
                 const volStr = volNum >= 1e9
@@ -152,8 +157,10 @@ async function refreshServerMarketCache(): Promise<Record<string, any>> {
               if (typeof b.symbol === 'string' && b.symbol.endsWith('USDT')) {
                 const coin = b.symbol.slice(0, -4);
                 if (!results[coin]) {
-                  const p = parseFloat(b.lastPrice);
-                  if (Number.isFinite(p) && p > 0) {
+                  const rawP = parseFloat(b.lastPrice);
+                  if (Number.isFinite(rawP) && rawP > 0) {
+                    const sanity = validatePriceTick(coin, rawP, 'binance_fallback');
+                    const p = sanity.sanitizedPrice;
                     const chg = Number(parseFloat(b.priceChangePercent || '0').toFixed(2));
                     const volNum = parseFloat(b.quoteVolume || '0');
                     const volStr = volNum >= 1e9
@@ -202,7 +209,9 @@ async function refreshServerMarketCache(): Promise<Record<string, any>> {
             const stockData: any = await stockRes.json();
             const meta = stockData.chart?.result?.[0]?.meta;
             if (meta?.regularMarketPrice) {
-              const price = parseFloat(meta.regularMarketPrice.toFixed(2));
+              const rawPrice = parseFloat(meta.regularMarketPrice.toFixed(2));
+              const sanity = validatePriceTick(sym, rawPrice, 'yahoo_equity');
+              const price = sanity.sanitizedPrice;
               const prev = meta.chartPreviousClose || price;
               const chg = Number((((price - prev) / prev) * 100).toFixed(2));
               results[sym] = {
@@ -346,7 +355,9 @@ app.get('/api/market/quote', async (req, res) => {
         const payload: any = await bitgetRes.json();
         const item = payload?.data?.[0];
         if (item && item.lastPr) {
-          const p = parseFloat(item.lastPr);
+          const rawP = parseFloat(item.lastPr);
+          const sanity = validatePriceTick(clean, rawP, 'bitget_direct');
+          const p = sanity.sanitizedPrice;
           const chg = Number((parseFloat(item.change24h || '0') * 100).toFixed(2));
           const quote = {
             ticker: clean,
@@ -375,7 +386,9 @@ app.get('/api/market/quote', async (req, res) => {
         const stockData: any = await stockRes.json();
         const meta = stockData.chart?.result?.[0]?.meta;
         if (meta?.regularMarketPrice) {
-          const price = parseFloat(meta.regularMarketPrice.toFixed(2));
+          const rawPrice = parseFloat(meta.regularMarketPrice.toFixed(2));
+          const sanity = validatePriceTick(clean, rawPrice, 'yahoo_direct');
+          const price = sanity.sanitizedPrice;
           const prev = meta.chartPreviousClose || price;
           const chg = Number((((price - prev) / prev) * 100).toFixed(2));
           const quote = {
@@ -410,6 +423,14 @@ app.get('/api/market/quote', async (req, res) => {
       volume: '$120M',
       class: assetClass,
     },
+  });
+});
+
+// Price feed sanity check rejection telemetry
+app.get('/api/market/rejected-ticks', (req, res) => {
+  res.json({
+    success: true,
+    rejectedTicks: getRejectedTicksLog(),
   });
 });
 
@@ -1072,9 +1093,19 @@ function runAutopilotDaemonTick() {
     // Check Take Profit target
     const targetExitPct = state.autoExitPct || 3.0;
     if (pnlPct >= targetExitPct) {
-      const proceeds = currentVal;
+      const closed = finalizeTradeClose({
+        instrument: `${ticker}/USDT`,
+        direction: 'LONG',
+        entryPrice: pos.entryPrice,
+        exitPrice: livePrice,
+        quantity: parseFloat(cost.toFixed(2)),
+        leverage: 3,
+        currentBalance: state.cashBalance,
+      });
+
       const prevCash = state.cashBalance;
-      state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
+      const netProceeds = parseFloat((cost + closed.netPnl).toFixed(2));
+      state.cashBalance = parseFloat((state.cashBalance + netProceeds).toFixed(2));
       delete state.positions[ticker];
       for (const k of Object.keys(state.positions)) {
         if (k.toUpperCase().replace('/USDT', '') === ticker.toUpperCase().replace('/USDT', '')) {
@@ -1091,12 +1122,12 @@ function runAutopilotDaemonTick() {
         ticker,
         amount: pos.amount,
         price: livePrice,
-        totalUsd: parseFloat(proceeds.toFixed(2)),
+        totalUsd: netProceeds,
         balanceBefore: prevCash,
         balanceAfter: state.cashBalance,
-        realizedPnl: parseFloat(pnl.toFixed(2)),
-        realizedPnlPct: parseFloat(pnlPct.toFixed(2)),
-        notes: `Take Profit Target Reached (+${pnlPct.toFixed(2)}%): Closed ${pos.amount.toFixed(4)} ${ticker} at $${livePrice.toLocaleString()}. Proceeds +$${proceeds.toFixed(2)} credited to balance.`,
+        realizedPnl: closed.netPnl,
+        realizedPnlPct: closed.balanceChangePct,
+        notes: `Take Profit Target Reached (+${pnlPct.toFixed(2)}%): Closed ${pos.amount.toFixed(4)} ${ticker} at $${livePrice.toLocaleString()}. Net proceeds +$${netProceeds.toFixed(2)} credited (Gross PnL: +$${closed.grossPnl.toFixed(2)}, Fee: -$${closed.fee.toFixed(2)}, Slippage: -$${closed.slippage.toFixed(2)}).`,
       };
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
 
@@ -1104,17 +1135,6 @@ function runAutopilotDaemonTick() {
       const trades = getAuditTrades();
       const newTradeId = generateNextTradeId(trades, nowUtc);
       const idempKey = `daemon_tp_${ticker}_${Math.floor(new Date(nowUtc).getTime() / 2000)}`;
-      const priceDelta = parseFloat((livePrice - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
-      const priceDeltaPct = parseFloat((((livePrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
-
-      // Bitget VIP-0 Taker Fee (0.06% Crypto, 0.10% rTokens) + Dynamic L2 Slippage
-      const notional = cost * 3;
-      const feeRate = ticker.toUpperCase().includes('ON') ? 0.0010 : 0.0006;
-      const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
-      const slippageRate = 0.0002 + Math.min(0.0003, (notional / 50000) * 0.0002);
-      const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
-      const netRealizedPnl = parseFloat((pnl - totalFees - slippageCost).toFixed(2));
-      const netRealizedPnlPct = parseFloat(((netRealizedPnl / cost) * 100).toFixed(2));
 
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
@@ -1124,21 +1144,21 @@ function runAutopilotDaemonTick() {
         price: pos.entryPrice,
         entryPrice: pos.entryPrice,
         exitPrice: livePrice,
-        priceDelta,
-        priceDeltaPct,
-        quantity: parseFloat(cost.toFixed(2)),
-        leverage: 3,
-        fee: totalFees,
-        feeRate,
-        slippage: slippageCost,
-        slippageBps: parseFloat((slippageRate * 10000).toFixed(1)),
-        grossPnl: parseFloat(pnl.toFixed(2)),
-        netPnl: netRealizedPnl,
-        balanceChange: netRealizedPnl,
-        balanceChangePct: netRealizedPnlPct,
+        priceDelta: closed.priceDelta,
+        priceDeltaPct: closed.priceDeltaPct,
+        quantity: closed.quantity,
+        leverage: closed.leverage,
+        fee: closed.fee,
+        feeRate: closed.feeRate,
+        slippage: closed.slippage,
+        slippageBps: closed.slippageBps,
+        grossPnl: closed.grossPnl,
+        netPnl: closed.netPnl,
+        balanceChange: closed.netPnl,
+        balanceChangePct: closed.balanceChangePct,
         accountBalance: 100000,
         trigger: `Autopilot Daemon: Target profit ratified (+${pnlPct.toFixed(2)}%) on ${ticker} by Council Quorum (Quant-Omega, Atlas-Macro, NEXUS-RED, Guardian-01)`,
-        status: netRealizedPnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        status: closed.netPnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         sourceHandler: 'AUTOPILOT_DAEMON',
         idempotencyKey: idempKey,
       }, newTradeId);
@@ -1150,9 +1170,19 @@ function runAutopilotDaemonTick() {
 
     // Check Stop Loss (<= -2.4%) -> Generates Self-Reflective Loss Post-Mortem
     if (pnlPct <= -2.4) {
-      const proceeds = currentVal;
+      const closed = finalizeTradeClose({
+        instrument: `${ticker}/USDT`,
+        direction: 'LONG',
+        entryPrice: pos.entryPrice,
+        exitPrice: livePrice,
+        quantity: parseFloat(cost.toFixed(2)),
+        leverage: 3,
+        currentBalance: state.cashBalance,
+      });
+
       const prevCash = state.cashBalance;
-      state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
+      const netProceeds = parseFloat((cost + closed.netPnl).toFixed(2));
+      state.cashBalance = parseFloat((state.cashBalance + netProceeds).toFixed(2));
       delete state.positions[ticker];
       positionClosedThisTick = true;
 
@@ -1171,28 +1201,18 @@ function runAutopilotDaemonTick() {
         ticker,
         amount: pos.amount,
         price: livePrice,
-        totalUsd: parseFloat(proceeds.toFixed(2)),
+        totalUsd: netProceeds,
         balanceBefore: prevCash,
         balanceAfter: state.cashBalance,
-        realizedPnl: parseFloat(pnl.toFixed(2)),
-        realizedPnlPct: parseFloat(pnlPct.toFixed(2)),
-        notes: `Stop Loss Risk Sentinel Triggered: Closed ${pos.amount.toFixed(4)} ${ticker} at $${livePrice.toLocaleString()}. Incident post-mortem recorded.`,
+        realizedPnl: closed.netPnl,
+        realizedPnlPct: closed.balanceChangePct,
+        notes: `Stop Loss Risk Sentinel Triggered: Closed ${pos.amount.toFixed(4)} ${ticker} at $${livePrice.toLocaleString()}. Net realized PnL -$${Math.abs(closed.netPnl).toFixed(2)} (Gross: -$${Math.abs(closed.grossPnl).toFixed(2)}, Fee: -$${closed.fee.toFixed(2)}, Slippage: -$${closed.slippage.toFixed(2)}).`,
       };
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
 
       const trades = getAuditTrades();
       const newTradeId = generateNextTradeId(trades, nowUtc);
       const idempKey = `daemon_sl_${ticker}_${Math.floor(new Date(nowUtc).getTime() / 2000)}`;
-      const priceDelta = parseFloat((livePrice - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
-      const priceDeltaPct = parseFloat((((livePrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
-
-      const notional = cost * 3;
-      const feeRate = ticker.toUpperCase().includes('ON') ? 0.0010 : 0.0006;
-      const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
-      const slippageRate = 0.0002 + Math.min(0.0003, (notional / 50000) * 0.0002);
-      const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
-      const netRealizedPnl = parseFloat((pnl - totalFees - slippageCost).toFixed(2));
-      const netRealizedPnlPct = parseFloat(((netRealizedPnl / cost) * 100).toFixed(2));
 
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
@@ -1202,18 +1222,18 @@ function runAutopilotDaemonTick() {
         price: pos.entryPrice,
         entryPrice: pos.entryPrice,
         exitPrice: livePrice,
-        priceDelta,
-        priceDeltaPct,
-        quantity: parseFloat(cost.toFixed(2)),
-        leverage: 3,
-        fee: totalFees,
-        feeRate,
-        slippage: slippageCost,
-        slippageBps: parseFloat((slippageRate * 10000).toFixed(1)),
-        grossPnl: parseFloat(pnl.toFixed(2)),
-        netPnl: netRealizedPnl,
-        balanceChange: netRealizedPnl,
-        balanceChangePct: netRealizedPnlPct,
+        priceDelta: closed.priceDelta,
+        priceDeltaPct: closed.priceDeltaPct,
+        quantity: closed.quantity,
+        leverage: closed.leverage,
+        fee: closed.fee,
+        feeRate: closed.feeRate,
+        slippage: closed.slippage,
+        slippageBps: closed.slippageBps,
+        grossPnl: closed.grossPnl,
+        netPnl: closed.netPnl,
+        balanceChange: closed.netPnl,
+        balanceChangePct: closed.balanceChangePct,
         accountBalance: 100000,
         trigger: `Guardian-01 Risk Veto: Stop-loss protection executed on ${ticker}. Forensic post-mortem committed.`,
         status: 'STOP_LOSS',
@@ -1878,14 +1898,22 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         ? clientPrice
         : (typeof pos.currentPrice === 'number' && pos.currentPrice > 0 ? pos.currentPrice : price);
 
-      const proceeds = parseFloat((pos.amount * exitPrice).toFixed(2));
-      const cost = parseFloat((pos.amount * pos.entryPrice).toFixed(2));
-      const pnl = parseFloat((proceeds - cost).toFixed(2));
-      const pnlPct = parseFloat((((exitPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
-      const prevCash = state.cashBalance;
-      state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
-
       const tickerLabel = pos.ticker || keyToClose;
+      const cost = parseFloat((pos.amount * pos.entryPrice).toFixed(2));
+      const closed = finalizeTradeClose({
+        instrument: `${tickerLabel}/USDT`,
+        direction: 'LONG',
+        entryPrice: pos.entryPrice,
+        exitPrice,
+        quantity: cost,
+        leverage: 3,
+        currentBalance: state.cashBalance,
+      });
+
+      const prevCash = state.cashBalance;
+      const netProceeds = parseFloat((cost + closed.netPnl).toFixed(2));
+      state.cashBalance = parseFloat((state.cashBalance + netProceeds).toFixed(2));
+
       delete state.positions[keyToClose];
       for (const k of Object.keys(state.positions)) {
         if (k.toUpperCase().replace('/USDT', '') === String(rawTicker).toUpperCase().replace('/USDT', '')) {
@@ -1897,24 +1925,22 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         id: generateUniqueLedgerId('manual-sell', tickerLabel),
         timestamp: timeStr,
         utcTimestamp: nowUtc,
-        type: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        type: closed.netPnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         ticker: tickerLabel,
         amount: pos.amount,
         price: exitPrice,
-        totalUsd: proceeds,
+        totalUsd: netProceeds,
         balanceBefore: prevCash,
         balanceAfter: state.cashBalance,
-        realizedPnl: pnl,
-        realizedPnlPct: pnlPct,
-        notes: `Manual Take Profit: Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${exitPrice.toLocaleString()} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%). Full proceeds of $${proceeds.toFixed(2)} credited to Available Cash reserve.`,
+        realizedPnl: closed.netPnl,
+        realizedPnlPct: closed.balanceChangePct,
+        notes: `Manual Close: Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${exitPrice.toLocaleString()} (${closed.netPnl >= 0 ? '+' : ''}${closed.balanceChangePct.toFixed(2)}%). Net proceeds +$${netProceeds.toFixed(2)} credited (Gross: $${closed.grossPnl.toFixed(2)}, Fee: -$${closed.fee.toFixed(2)}, Slippage: -$${closed.slippage.toFixed(2)}).`,
       };
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
 
       // Append to audit_trades.json
       const trades = getAuditTrades();
       const newTradeId = generateNextTradeId(trades, nowUtc);
-      const priceDelta = parseFloat((exitPrice - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
-      const priceDeltaPct = parseFloat((((exitPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
 
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
@@ -1924,15 +1950,21 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         price: pos.entryPrice,
         entryPrice: pos.entryPrice,
         exitPrice,
-        priceDelta,
-        priceDeltaPct,
+        priceDelta: closed.priceDelta,
+        priceDeltaPct: closed.priceDeltaPct,
         quantity: cost,
         leverage: 3,
-        balanceChange: pnl,
-        balanceChangePct: pnlPct,
+        fee: closed.fee,
+        feeRate: closed.feeRate,
+        slippage: closed.slippage,
+        slippageBps: closed.slippageBps,
+        grossPnl: closed.grossPnl,
+        netPnl: closed.netPnl,
+        balanceChange: closed.netPnl,
+        balanceChangePct: closed.balanceChangePct,
         accountBalance: 100000,
-        trigger: `Manual Take Profit: Realized ${pnl >= 0 ? 'gain' : 'loss'} on ${tickerLabel} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%). Available Cash reserve increased by +$${proceeds.toFixed(2)}.`,
-        status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        trigger: `Manual Close: Realized ${closed.netPnl >= 0 ? 'gain' : 'loss'} on ${tickerLabel} (${closed.netPnl >= 0 ? '+' : ''}${closed.balanceChangePct.toFixed(2)}%). Available Cash reserve increased by +$${netProceeds.toFixed(2)}.`,
+        status: closed.netPnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         sourceHandler: 'MANUAL',
       }, newTradeId);
       trades.push(normalizedTrade);
@@ -1947,7 +1979,7 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         ticker: tickerLabel,
         action: 'SELL' as const,
         sizePct: 100,
-        text: `[MANUAL TAKE PROFIT] Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${exitPrice.toLocaleString()} (${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}). +$${proceeds.toFixed(2)} credited into available cash reserve.`,
+        text: `[MANUAL TAKE PROFIT] Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${exitPrice.toLocaleString()} (${closed.netPnl >= 0 ? '+' : ''}$${closed.netPnl.toFixed(2)}). +$${netProceeds.toFixed(2)} credited into available cash reserve.`,
         status: 'APPROVED' as const,
         source: 'MANUAL' as const,
       };
@@ -1957,12 +1989,12 @@ app.post('/api/autopilot/manual-trade', (req, res) => {
         state: updated,
         ledgerEntry,
         log,
-        pnl,
-        pnlPct,
+        pnl: closed.netPnl,
+        pnlPct: closed.balanceChangePct,
         trade: {
           quantity: pos.amount,
           exitPrice,
-          totalUsd: proceeds,
+          totalUsd: netProceeds,
         },
       });
     }
@@ -2101,14 +2133,22 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         });
       }
 
-      const proceeds = parseFloat((pos.amount * price).toFixed(2));
-      const cost = parseFloat((pos.amount * pos.entryPrice).toFixed(2));
-      const pnl = parseFloat((proceeds - cost).toFixed(2));
-      const pnlPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
-      const prevCash = state.cashBalance;
-      state.cashBalance = parseFloat((state.cashBalance + proceeds).toFixed(2));
-
       const tickerLabel = pos.ticker || keyToClose;
+      const cost = parseFloat((pos.amount * pos.entryPrice).toFixed(2));
+      const closed = finalizeTradeClose({
+        instrument: `${tickerLabel}/USDT`,
+        direction: 'LONG',
+        entryPrice: pos.entryPrice,
+        exitPrice: price,
+        quantity: cost,
+        leverage: 3,
+        currentBalance: state.cashBalance,
+      });
+
+      const prevCash = state.cashBalance;
+      const netProceeds = parseFloat((cost + closed.netPnl).toFixed(2));
+      state.cashBalance = parseFloat((state.cashBalance + netProceeds).toFixed(2));
+
       delete state.positions[keyToClose];
       for (const k of Object.keys(state.positions)) {
         if (k.toUpperCase().replace('/USDT', '') === String(proposal.asset).toUpperCase().replace('/USDT', '')) {
@@ -2120,23 +2160,21 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         id: generateUniqueLedgerId('council-sell', tickerLabel),
         timestamp: timeStr,
         utcTimestamp: nowUtc,
-        type: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        type: closed.netPnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         ticker: tickerLabel,
         amount: pos.amount,
         price,
-        totalUsd: proceeds,
+        totalUsd: netProceeds,
         balanceBefore: prevCash,
         balanceAfter: state.cashBalance,
-        realizedPnl: pnl,
-        realizedPnlPct: pnlPct,
-        notes: `Council Quorum SELL: Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${price.toLocaleString()} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)`,
+        realizedPnl: closed.netPnl,
+        realizedPnlPct: closed.balanceChangePct,
+        notes: `Council Quorum SELL: Closed ${pos.amount.toFixed(4)} ${tickerLabel} at $${price.toLocaleString()} (${closed.netPnl >= 0 ? '+' : ''}${closed.balanceChangePct.toFixed(2)}%). Net proceeds +$${netProceeds.toFixed(2)} credited (Gross: $${closed.grossPnl.toFixed(2)}, Fee: -$${closed.fee.toFixed(2)}, Slippage: -$${closed.slippage.toFixed(2)}).`,
       };
       state.ledger = [ledgerEntry, ...(state.ledger || []).slice(0, 299)];
 
       const trades = getAuditTrades();
       const newTradeId = generateNextTradeId(trades, nowUtc);
-      const priceDelta = parseFloat((price - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
-      const priceDeltaPct = parseFloat((((price - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
 
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
@@ -2146,15 +2184,21 @@ app.post('/api/autopilot/council-signal', (req, res) => {
         price: pos.entryPrice,
         entryPrice: pos.entryPrice,
         exitPrice: price,
-        priceDelta,
-        priceDeltaPct,
+        priceDelta: closed.priceDelta,
+        priceDeltaPct: closed.priceDeltaPct,
         quantity: cost,
         leverage: 3,
-        balanceChange: pnl,
-        balanceChangePct: pnlPct,
+        fee: closed.fee,
+        feeRate: closed.feeRate,
+        slippage: closed.slippage,
+        slippageBps: closed.slippageBps,
+        grossPnl: closed.grossPnl,
+        netPnl: closed.netPnl,
+        balanceChange: closed.netPnl,
+        balanceChangePct: closed.balanceChangePct,
         accountBalance: 100000,
-        trigger: `Council Quorum Ratified Exit on ${tickerLabel} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%): ${proposal.reasoning}`,
-        status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        trigger: `Council Quorum Ratified Exit on ${tickerLabel} (${closed.netPnl >= 0 ? '+' : ''}${closed.balanceChangePct.toFixed(2)}%): ${proposal.reasoning}`,
+        status: closed.netPnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         sourceHandler: 'AUTOPILOT_DAEMON',
       }, newTradeId);
       trades.push(normalizedTrade);
@@ -2174,7 +2218,7 @@ app.post('/api/autopilot/council-signal', (req, res) => {
           ticker: tickerLabel,
           action: 'SELL',
           sizePct: 100,
-          text: `SELL ${tickerLabel} [100% | ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} | ${pnlPct.toFixed(2)}%] — ${proposal.reasoning}`,
+          text: `SELL ${tickerLabel} [100% | ${closed.netPnl >= 0 ? '+' : ''}$${closed.netPnl.toFixed(2)} | ${closed.balanceChangePct.toFixed(2)}%] — ${proposal.reasoning}`,
           status: 'APPROVED',
           source: 'AUTONOMOUS',
         },

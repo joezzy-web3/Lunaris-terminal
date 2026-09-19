@@ -180,7 +180,9 @@ export async function runIncrementalReconciliation(options: { dryRun?: boolean; 
     try {
       const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
       firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
-      const snap = await getDocs(collection(firestoreDb, 'audit_trades'));
+      const getDocsPromise = getDocs(collection(firestoreDb, 'audit_trades'));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore fetch timeout')), 4000));
+      const snap: any = await Promise.race([getDocsPromise, timeoutPromise]);
       if (!snap.empty) {
         isFirestore = true;
         const cloudTradesMap = new Map<string, any>();
@@ -270,6 +272,26 @@ export async function runIncrementalReconciliation(options: { dryRun?: boolean; 
       }
 
       recordsProcessed++;
+
+      // Support Authoritative ADJUSTMENT Records
+      if (trade.status === 'ADJUSTMENT' || trade.sourceHandler === 'ADJUSTMENT') {
+        recordsValidatedPass++;
+        const netAdjustment = Number(trade.netPnl !== undefined ? trade.netPnl : trade.balanceChange) || 0;
+        confirmedBalance = parseFloat((confirmedBalance + netAdjustment).toFixed(2));
+        cleanReconciledTrades.push({
+          ...trade,
+          id: tradeId,
+          legacyId: trade.legacyId || tradeId,
+          auditSeq: cleanReconciledTrades.length + 1,
+          accountBalance: confirmedBalance,
+          audited: true,
+          auditVersion: 1,
+          auditedAt: startTime,
+        });
+        latestProcessedTimestamp = tradeTime;
+        latestProcessedTradeId = tradeId;
+        continue;
+      }
 
       // 3. TEST-TRADE QUARANTINE HEURISTICS
       const triggerStr = String(trade.trigger || '').toLowerCase();

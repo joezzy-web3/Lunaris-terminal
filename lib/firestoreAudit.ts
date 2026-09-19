@@ -26,6 +26,7 @@ const GLOBAL_STATE_DOC = 'global_v1';
  */
 export function isTestTradeRecord(trade: any): boolean {
   if (!trade) return false;
+  if (trade.status === 'ADJUSTMENT' || trade.sourceHandler === 'ADJUSTMENT') return false;
   if (trade.test === true || trade.isTest === true) return true;
   const id = String(trade.id || '').toUpperCase();
   if (id.includes('TEST') || id.includes('DUMMY') || id.includes('DEBUG') || id.includes('SANITY')) return true;
@@ -326,6 +327,7 @@ export function generateTradeIdempotencyKey(trade: any): string {
  */
 export function isAnomalousTrade(data: any): boolean {
   if (!data) return true;
+  if (data.status === 'ADJUSTMENT' || data.sourceHandler === 'ADJUSTMENT') return false;
   if (isTestTradeRecord(data)) return true;
   const price = Number(data.price) || 0;
   const quantity = Number(data.quantity) || 0;
@@ -358,6 +360,46 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
   const timestamp = resolveRealTradeTimestamp(data, id);
   const instrument = data?.instrument || 'BTC/USDT';
   const instUpper = instrument.toUpperCase();
+
+  // If this is an ADJUSTMENT record, preserve its exact fields without applying standard trading clamps
+  const isAdjustment =
+    data?.status === 'ADJUSTMENT' ||
+    data?.sourceHandler === 'ADJUSTMENT' ||
+    String(data?.id || '').toUpperCase().includes('ADJUST') ||
+    String(data?.instrument || '').toUpperCase().includes('ADJUSTMENT') ||
+    String(data?.trigger || '').includes('Audit Reconciliation Adjustment');
+  if (isAdjustment) {
+    const netDelta = Number(data.netPnl !== undefined ? data.netPnl : data.balanceChange) || 0;
+    return {
+      ...data,
+      id,
+      timestamp,
+      price: Number(data.price) || 1,
+      entryPrice: Number(data.entryPrice) || 1,
+      exitPrice: Number(data.exitPrice) || 1,
+      priceDelta: 0,
+      priceDeltaPct: 0,
+      quantity: Number(data.quantity) || Math.abs(netDelta),
+      leverage: Number(data.leverage) || 1,
+      fee: Number(data.fee) || 0,
+      feeRate: Number(data.feeRate) || 0,
+      slippage: Number(data.slippage) || 0,
+      slippageBps: Number(data.slippageBps) || 0,
+      grossPnl: Number(data.grossPnl) || 0,
+      netPnl: netDelta,
+      balanceChange: netDelta,
+      balanceChangePct: Number(data.balanceChangePct) || 0,
+      accountBalance: Number(data.accountBalance) || 100000,
+      instrument: data.instrument || 'RECONCILIATION/USD',
+      direction: data.direction || 'LONG',
+      trigger: data.trigger || 'Audit Reconciliation Adjustment',
+      status: 'ADJUSTMENT',
+      sourceHandler: 'ADJUSTMENT',
+      legacyId: data.legacyId || id,
+      auditSeq: typeof data.auditSeq === 'number' ? data.auditSeq : undefined,
+      idempotencyKey: data.idempotencyKey || id,
+    };
+  }
 
   let price = Number(data?.price) || 0;
   let quantity = Number(data?.quantity) || 5000;
@@ -428,7 +470,8 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
     trigger: data?.trigger || 'Autonomous Council Execution',
     status: (() => {
       const rawStatus = data?.status;
-      let s: 'CLOSED' | 'OPEN' | 'STOP_LOSS' | 'TAKE_PROFIT' = rawStatus || (balanceChange >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS');
+      if (rawStatus === 'ADJUSTMENT') return 'ADJUSTMENT';
+      let s: 'CLOSED' | 'OPEN' | 'STOP_LOSS' | 'TAKE_PROFIT' | 'ADJUSTMENT' = rawStatus || (balanceChange >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS');
       if (balanceChange < 0 && s === 'TAKE_PROFIT') {
         s = 'STOP_LOSS';
       } else if (balanceChange > 0 && s === 'STOP_LOSS') {
@@ -445,19 +488,33 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
 
   // Ensure trades from Sep 19, 2026 onward carry authoritative Bitget VIP-0 fee & dynamic L2 slippage attributes
   const isAfterSep19 = timestamp.startsWith('2026-09-19') || new Date(timestamp).getTime() >= 1789804800000;
-  if (isAfterSep19 && (normalized.fee === undefined || normalized.slippage === undefined)) {
+  if (isAfterSep19) {
     const notional = quantity * leverage;
     const feeRate = (instUpper.includes('ON') || instUpper.includes('/USD') || instUpper.includes('NVDA') || instUpper.includes('TSLA') || instUpper.includes('PLTR') || instUpper.includes('MARA') || instUpper.includes('MSFT') || instUpper.includes('AVGO') || instUpper.includes('QQQ')) ? 0.0010 : 0.0006;
-    const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
+    const totalFees = normalized.fee !== undefined ? normalized.fee : parseFloat((notional * feeRate * 2).toFixed(2));
     const slippageRate = 0.0002 + Math.min(0.0003, (notional / 50000) * 0.0002);
-    const slippageBps = parseFloat((slippageRate * 10000).toFixed(1));
-    const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
+    const slippageBps = normalized.slippageBps !== undefined ? normalized.slippageBps : parseFloat((slippageRate * 10000).toFixed(1));
+    const slippageCost = normalized.slippage !== undefined ? normalized.slippage : parseFloat((notional * slippageRate).toFixed(2));
     normalized.fee = totalFees;
     normalized.feeRate = feeRate;
     normalized.slippage = slippageCost;
     normalized.slippageBps = slippageBps;
-    normalized.grossPnl = normalized.grossPnl ?? balanceChange;
-    normalized.netPnl = normalized.netPnl ?? balanceChange;
+
+    // Check if this trade is within the immutable historical window (PT-20260919-4438 through PT-20260919-4477)
+    // Per audit requirements: do not backfill/overwrite original immutable rows
+    const isImmutableHistoricalBatch = id >= 'PT-20260919-4438' && id <= 'PT-20260919-4477';
+    if (isImmutableHistoricalBatch && data.netPnl !== undefined && data.grossPnl !== undefined) {
+      normalized.grossPnl = data.grossPnl;
+      normalized.netPnl = data.netPnl;
+      normalized.balanceChange = data.balanceChange;
+    } else {
+      // Invariant for all other and future trades: Net Realized PnL == Gross PnL - Fee - Slippage
+      if (normalized.grossPnl === undefined) {
+        normalized.grossPnl = parseFloat((normalized.balanceChange + totalFees + slippageCost).toFixed(2));
+      }
+      normalized.netPnl = parseFloat((normalized.grossPnl - totalFees - slippageCost).toFixed(2));
+      normalized.balanceChange = normalized.netPnl;
+    }
   }
 
   normalized.idempotencyKey = data?.idempotencyKey || generateTradeIdempotencyKey(normalized);

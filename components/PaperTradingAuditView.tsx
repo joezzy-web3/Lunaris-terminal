@@ -973,7 +973,9 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
                       <div className="flex flex-col items-center gap-1">
                         <span
                           className={`px-2.5 py-1 rounded text-[10px] font-semibold ${
-                            trade.status === 'TAKE_PROFIT'
+                            trade.status === 'ADJUSTMENT'
+                              ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+                              : trade.status === 'TAKE_PROFIT'
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                               : trade.status === 'STOP_LOSS'
                               ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'

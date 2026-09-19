@@ -182,6 +182,26 @@ export async function runClientReconciliation(options: {
 
     recordsProcessed++;
 
+    // Support Authoritative ADJUSTMENT Records
+    if (trade.status === 'ADJUSTMENT' || trade.sourceHandler === 'ADJUSTMENT') {
+      recordsValidatedPass++;
+      const netAdjustment = Number(trade.netPnl !== undefined ? trade.netPnl : trade.balanceChange) || 0;
+      confirmedBalance = parseFloat((confirmedBalance + netAdjustment).toFixed(2));
+      cleanReconciledTrades.push({
+        ...trade,
+        id: tradeId,
+        legacyId: (trade as any).legacyId || tradeId,
+        auditSeq: cleanReconciledTrades.length + 1,
+        accountBalance: confirmedBalance,
+        audited: true,
+        auditVersion: 1,
+        auditedAt: startTime,
+      } as any);
+      latestProcessedTimestamp = tradeTime;
+      latestProcessedTradeId = tradeId;
+      continue;
+    }
+
     // Test Quarantine heuristic
     const triggerStr = String(trade.trigger || '').toLowerCase();
     const instrument = String(trade.instrument || '').toUpperCase();

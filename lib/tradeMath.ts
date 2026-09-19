@@ -55,8 +55,8 @@ export const INSTITUTIONAL_FEE_RATE = 0.0006; // 0.06% Bitget Standard VIP-0 Tak
 export function getBitgetTakerFeeRate(instrument: string): number {
   const inst = (instrument || '').toUpperCase();
   if (
-    inst.includes('ON') ||
-    inst.includes('/USD') ||
+    inst.includes('ON/') ||
+    inst.endsWith('/USD') ||
     inst.includes('NVDA') ||
     inst.includes('TSLA') ||
     inst.includes('PLTR') ||
@@ -351,5 +351,111 @@ export function auditTradeChain(trades: any[], startBalance: number = 100000.0):
     brokenChainRecords,
     flaggedTrades,
     quarantinedTrades,
+  };
+}
+
+export interface FinalizeTradeCloseParams {
+  instrument: string;
+  direction: 'LONG' | 'SHORT';
+  entryPrice: number;
+  exitPrice: number;
+  quantity: number; // Margin collateral in USDT
+  leverage: number;
+  currentBalance?: number;
+  customFeeRate?: number;
+  fee?: number;
+  slippage?: number;
+}
+
+export interface FinalizedTradeCloseResult {
+  instrument: string;
+  direction: 'LONG' | 'SHORT';
+  entryPrice: number;
+  exitPrice: number;
+  priceDelta: number;
+  priceDeltaPct: number;
+  quantity: number;
+  leverage: number;
+  positionNotional: number;
+  feeRate: number;
+  fee: number;
+  slippage: number;
+  slippageBps: number;
+  grossPnl: number;
+  netPnl: number;
+  balanceChange: number;
+  balanceChangePct: number;
+  settledBalance: number;
+  status: 'TAKE_PROFIT' | 'STOP_LOSS' | 'CLOSED';
+}
+
+/**
+ * Authoritative trade finalization function.
+ * Mathematically guarantees that for every trade close:
+ *   Net Realized PnL == Gross PnL - Taker Fee - L2 Slippage
+ * and updates the settled account balance by Net Realized PnL.
+ */
+export function finalizeTradeClose(params: FinalizeTradeCloseParams): FinalizedTradeCloseResult {
+  const {
+    instrument,
+    direction,
+    entryPrice,
+    exitPrice,
+    quantity,
+    leverage,
+    currentBalance = 100000,
+  } = params;
+
+  const notional = quantity * leverage;
+  const decimals = entryPrice < 10 ? 4 : 2;
+  const priceDelta = parseFloat((exitPrice - entryPrice).toFixed(decimals));
+  const priceDeltaPct = parseFloat(((priceDelta / entryPrice) * 100).toFixed(2));
+
+  // Return percentage on notional according to direction
+  const returnPct =
+    direction === 'SHORT'
+      ? (entryPrice - exitPrice) / entryPrice
+      : (exitPrice - entryPrice) / entryPrice;
+
+  const grossPnl = parseFloat((notional * returnPct).toFixed(2));
+
+  // Bitget VIP-0 standard fee
+  const feeRate = params.customFeeRate ?? getBitgetTakerFeeRate(instrument);
+  const fee = params.fee !== undefined ? params.fee : parseFloat((notional * feeRate * 2).toFixed(2));
+
+  // Dynamic L2 orderbook slippage
+  const slippageCalc = estimateL2OrderbookSlippage(notional);
+  const slippage = params.slippage !== undefined ? params.slippage : slippageCalc.slippageCost;
+  const slippageBps = slippageCalc.slippageBps;
+
+  // Strict Invariant: Net Realized PnL == Gross PnL - Fee - Slippage
+  const netPnl = parseFloat((grossPnl - fee - slippage).toFixed(2));
+  const balanceChange = netPnl;
+  const balanceChangePct = parseFloat(((netPnl / quantity) * 100).toFixed(2));
+  const settledBalance = parseFloat((currentBalance + netPnl).toFixed(2));
+
+  const status: 'TAKE_PROFIT' | 'STOP_LOSS' | 'CLOSED' =
+    netPnl > 0 ? 'TAKE_PROFIT' : netPnl < 0 ? 'STOP_LOSS' : 'CLOSED';
+
+  return {
+    instrument,
+    direction,
+    entryPrice,
+    exitPrice,
+    priceDelta,
+    priceDeltaPct,
+    quantity,
+    leverage,
+    positionNotional: notional,
+    feeRate,
+    fee,
+    slippage,
+    slippageBps,
+    grossPnl,
+    netPnl,
+    balanceChange,
+    balanceChangePct,
+    settledBalance,
+    status,
   };
 }
