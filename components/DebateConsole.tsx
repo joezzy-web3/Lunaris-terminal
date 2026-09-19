@@ -555,9 +555,6 @@ export function DebateConsole({
               <span className="text-[10px] uppercase px-2 py-0.5 rounded bg-white/10 text-zinc-200 border border-white/15">
                 AI Agent Quorum
               </span>
-              <span className="text-[10px] text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded bg-emerald-950/40 font-medium">
-                Live Google Search Grounded
-              </span>
             </div>
             <p className="text-[11px] text-zinc-400 mt-0.5">
               Convene multi-agent deliberation on any stock or token with real-time market search
