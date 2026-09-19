@@ -386,7 +386,7 @@ export function PulseRadarPanel({ onSelectTickerForCouncil }: PulseRadarPanelPro
                         });
                       }}
                       className="text-[10px] text-purple-300 hover:text-purple-100 hover:bg-purple-500/30 bg-purple-500/15 border border-purple-500/40 rounded px-1.5 py-0.5 font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                      title={`Convene Tri-Persona Council on ${asset.ticker}`}
+                      title={`Convene 4-Pillar Council on ${asset.ticker}`}
                     >
                       <Scale className="w-2.5 h-2.5" /> Convene &rarr;
                     </button>

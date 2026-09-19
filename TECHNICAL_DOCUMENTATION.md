@@ -56,7 +56,7 @@ Lunaris bridges native cryptocurrency pairs (`BTC/USDT`, `ETH/USDT`, `SOL/USDT`,
 
 | Typical Hackathon Trading Bots | Lunaris Terminal (Bitget Edition) |
 | :--- | :--- |
-| Single prompt LLM makes buy/sell decisions directly. | **Tri-Agent Quorum Consensus**: Quant, Risk, and Macro agents debate in real time before generating an order proposal. |
+| Single prompt LLM makes buy/sell decisions directly. | **4-Pillar Council Consensus**: Quant-Omega, Atlas-Macro, NEXUS-RED, and Guardian-01 debate in real time before generating an order proposal. |
 | AI hallucinations cause catastrophic account blowups. | **Deterministic Non-LLM Risk Veto**: Guardian-01 enforces hard mathematical collars (max drawdown, leverage limits, slippage collars). The LLM cannot override the risk engine. |
 | Disconnected from real exchanges; fake mock static prices. | **Direct Bitget V2 API Pipeline**: Real-time ticker streaming, orderbook depth mapping, and signed HMAC-SHA256 BYOK live trading connectivity. |
 | Confined to standard crypto assets. | **Cross-Asset rToken Bridge**: Real-time statistical arbitrage and correlation trading between crypto and tokenized US equities (NVDA, TSLA). |
@@ -135,10 +135,10 @@ The visual identity of Lunaris Terminal was meticulously engineered to evoke the
 
 ---
 
-## 5. THE THREE ARCHITECTURAL PILLARS
+## 5. THE FOUR ARCHITECTURAL PILLARS
 
 ### 5.1 Pillar I: Multi-Agent Quorum Consensus Engine & NEXUS-RED Adversarial Red Team
-Financial markets are non-stationary and adversarial. No single model archetype can successfully navigate trending, range-bound, and high-volatility regimes simultaneously. Lunaris implements an autonomous **Council of 4 Adversarial AI Personas**:
+Financial markets are non-stationary and adversarial. No single model archetype can successfully navigate trending, range-bound, and high-volatility regimes simultaneously. Lunaris implements an autonomous **4-Pillar Council of Specialized Personas**:
 
 1. **Quant-Omega (Alpha Generator / Momentum Engine)**:
    - Evaluates micro-structure signals, orderbook imbalances (bid/ask ratio > 1.3), short-term momentum (EMA 9/21 cross), and volume surges.
@@ -174,12 +174,34 @@ To prevent disastrous LLM hallucination in financial applications, Lunaris place
 
 ---
 
-### 5.3 Pillar III: 7×24 Autonomous Loop & Verifiable Ledger
+### 5.3 Pillar III: Realistic Fee & Slippage Model (Bitget Published Standard)
+To avoid paper trading unreality and mirror real-world execution drag, Lunaris integrates Bitget's published retail fee schedule and level-2 orderbook liquidity depth impact directly into every trade (`lib/tradeMath.ts`):
+
+1. **Bitget Published Taker Fee Schedule**:
+   - **Crypto / Perpetual Futures (`BTC`, `ETH`, `SOL`, `SUI`, `BGB`)**: **0.06% (6 bps)** flat taker fee tier applied to total order notional.
+   - **Tokenized Equities & rTokens (`NVDAon`, `TSLAon`, `AAPLon`, `GOOGLon`, `MSFT`, `PLTR`)**: **0.10% (10 bps)** spot taker fee accounting for tokenized synthetic equity wrapping and off-market custody costs.
+2. **Dynamic L2 Orderbook Slippage Model**:
+   - Quantifies execution price degradation derived from trade notional relative to available Level-2 depth.
+   - Base liquidity slippage: **2.0 bps (0.02%)** for liquid core pairs, scaling dynamically with position size up to **18.0 bps** during wide spreads or high-volatility spikes.
+3. **Net Realized PnL Calculation Formula**:
+   $$\text{Gross PnL} = \text{Position Size} \times (\text{Exit Price} - \text{Entry Price}) \times \text{Direction Multiplier}$$
+   $$\text{Taker Fee} = \text{Notional Size} \times \text{Fee Rate (0.06\% or 0.10\%)}$$
+   $$\text{L2 Slippage} = \text{Notional Size} \times \text{Dynamic Slippage Rate (2–18 bps)}$$
+   $$\mathbf{\text{Net Realized PnL}} = \mathbf{\text{Gross PnL} - \text{Taker Fee} - \text{L2 Slippage}}$$
+4. **Activation Date & Historical Record Transition (Effective: September 19, 2026)**:
+   - **Pre-September 19, 2026 (Genesis Calibration Period)**: Early bootstrap trades reflect the baseline gross execution model, which was used during initial protocol development to isolate raw alpha signals and verify cross-asset data feeds without synthetic assumptions.
+   - **Post-September 19, 2026 (Institutional Standard Upgrade)**: On **September 19, 2026**, the execution engine was upgraded to enforce Bitget's published VIP-0 taker fee schedule (0.06% crypto / 0.10% rTokens) plus dynamic Level-2 orderbook slippage modeling across all live and autonomous trades. This upgrade ensures that our performance metrics strictly reflect real-world market friction, bid-ask spread crossing, and exchange liquidity drag rather than theoretical paper returns.
+   - **Ledger Immutability**: In strict accordance with our append-only accounting policy, historical records remain intact and are never retroactively altered or sanitized. All active trades from September 19, 2026 forward carry full cryptographic fee and slippage breakdown receipts in the Audit Log and CSV exports.
+
+---
+
+### 5.4 Pillar IV: 7×24 Autonomous Loop & Strictly Append-Only Immutable Ledger
 Hedge funds do not trade manually; systems run continuously. Lunaris features a background autonomous trading loop:
 
 - **Background Heartbeat**: Executes every 8–15 seconds, scanning asset tickers for momentum, orderbook absorption, and sentiment triggers.
 - **Price-Collar Stability**: All simulated price updates are anchored strictly to real Bitget spot quotes, preventing synthetic drift.
-- **Cryptographic Trade Verification**: Every trade logs an indelible record with entry, exit, balance change, timestamp, and a SHA-256 hash verifying that transaction records have not been altered.
+- **Strictly Append-Only Immutability**: All admin reset and history purge controls have been permanently removed. Every trade is strictly appended, preventing rewriting of historical data.
+- **Cryptographic Trade Verification**: Every trade logs an indelible record with entry, exit, fee breakdown, slippage impact, balance change, timestamp, and a SHA-256 hash verifying that transaction records have not been altered.
 - **Dual Persistence Architecture**: Real-time writing to Google Firebase Firestore, mirrored directly to the server's local file store (`data/audit_trades.json`) to guarantee 100% data availability even under external network partitions.
 
 ---
@@ -190,7 +212,7 @@ Hedge funds do not trade manually; systems run continuously. Lunaris features a 
 The **Command Deck** is the flagship executive overview of Lunaris Terminal:
 - **Hero Display**: Live animated status displaying active autonomous trading telemetry, real-time portfolio equity, win rate metrics, and the active Bitget Gateway status.
 - **Live Ticker Marquee**: Horizontally scrolling ticker strip tracking real-time prices, 24h delta percentages, and volume for BTC, ETH, SOL, SUI, BGB, NVDAon, TSLAon, and AAPLon.
-- **Three-Pillar Bento Grid**: Interactive cards detailing Multi-Agent Quorum, Deterministic Risk Guardrails, and Institutional rToken Arbitrage.
+- **Four-Pillar Bento Grid**: Interactive cards detailing Multi-Agent Quorum, Deterministic Risk Guardrails, Institutional Fee & Slippage Execution, and Institutional rToken Arbitrage.
 - **What Lunaris Does Explainer**: High-level visual architectural breakdown for judges and institutional allocators.
 - **6×6 Cross-Asset Correlation & StatArb Matrix (`CrossAssetMatrix`)**:
   - **Crypto ↔ 24/7 rTokens Bridge**: Quantifies rolling 24-hour Pearson correlation coefficients between Bitget spot crypto (`BTC`, `ETH`, `SOL`, `SUI`) and 24/7 tokenized US equities (`NVDAon`, `TSLAon`).
@@ -262,10 +284,10 @@ The **Paper Trading Audit View** provides mathematical proof of all trade execut
 - **Monthly Summary Performance Ribbon**: Real-time breakdown of Month Net PnL, Trading Win Rate, Best Day, and Worst Day dynamically aggregated from the verifiable paper trade ledger.
 - **Cryptographic Ledger Table**: Comprehensive table with Trade ID, Timestamp, Instrument, Direction, Executed Price, Position Size, Leverage, Net PnL, Cumulative Balance, and Algorithmic Trigger Rationale.
 - **Export & Verification Tools**:
-  - **Download CSV**: Instant download of the full ledger for external audit in Excel / Python.
+  - **Download CSV**: Instant download of the full ledger for external audit in Excel / Python with complete Gross PnL, Taker Fee, L2 Slippage, and Net Realized PnL columns.
   - **Copy JSON**: Copy the entire ledger payload directly to the clipboard.
-  - **Verify Proof Modal (`TradeProofModal`)**: Inspect SHA-256 hash verification for any individual trade, review the 4-agent voting breakdown (including NEXUS-RED's dissent/stress-test verdict), and examine the **NEXUS-RED Post-Mortem Forensics Suite** (Root Cause Analysis, Adversarial Flag, Pre-Execution Mitigation, and Dynamic Policy Adjustment).
-  - **Cloud Sanitizer**: Reconcile price corridors and sequential balances across Firestore and disk storage.
+  - **Verify Proof Modal (`TradeProofModal`)**: Inspect SHA-256 hash verification for any individual trade, review the 4-agent voting breakdown (including NEXUS-RED's dissent/stress-test verdict), examine the exact **Bitget Fee & Slippage Receipt**, and inspect the **NEXUS-RED Post-Mortem Forensics Suite** (Root Cause Analysis, Adversarial Flag, Pre-Execution Mitigation, and Dynamic Policy Adjustment).
+  - **Strictly Append-Only Immutability**: All administrative reset and history-altering controls are permanently deactivated to ensure uncompromising audit transparency. Historical pre-freeze records reflect baseline gross calculations, while all active live executions enforce the full Bitget taker fee and dynamic L2 slippage model.
 
 ---
 
@@ -334,7 +356,7 @@ interface PaperTradeRecord {
 
 | Judging Criteria | Weight | How Lunaris Terminal Excels |
 | :--- | :---: | :--- |
-| **Technical Innovation & Architecture** | 30% | Tri-Agent Quorum Consensus with Google Gemini Flash AI, coupled with a non-LLM Deterministic Risk Veto Engine that mathematically prevents financial hallucinations. |
+| **Technical Innovation & Architecture** | 30% | 4-Pillar Council Consensus (Quant-Omega, Atlas-Macro, NEXUS-RED, Guardian-01) with Google Gemini Flash AI, coupled with a non-LLM Deterministic Risk Veto Engine and Bitget published fee/slippage modeling that prevents financial hallucinations and unrealistic paper alpha. |
 | **Bitget Ecosystem Integration** | 25% | Direct integration with Bitget V2 Market & Trading APIs (Level-2 orderbooks, live spot tickers, HMAC-SHA256 signed BYOK trading) and tokenized rToken support. |
 | **Execution Quality & Usability** | 20% | Institutional cybernetic UI/UX, responsive sub-millisecond tab switching, Web Audio soundscape, Command Palette (`Cmd+K`), and Daily PnL Calendar heatmap. |
 | **Auditability & Risk Safety** | 15% | Transparent ledger tracking, SHA-256 trade state proofs, Daily PnL distribution analytics, and live Black Swan disaster drills. |

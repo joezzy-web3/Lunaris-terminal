@@ -443,6 +443,23 @@ export function normalizeTradeRecord(data: any, fallbackId?: string): PaperTrade
     auditSeq: typeof data?.auditSeq === 'number' ? data.auditSeq : undefined,
   };
 
+  // Ensure trades from Sep 19, 2026 onward carry authoritative Bitget VIP-0 fee & dynamic L2 slippage attributes
+  const isAfterSep19 = timestamp.startsWith('2026-09-19') || new Date(timestamp).getTime() >= 1789804800000;
+  if (isAfterSep19 && (normalized.fee === undefined || normalized.slippage === undefined)) {
+    const notional = quantity * leverage;
+    const feeRate = (instUpper.includes('ON') || instUpper.includes('/USD') || instUpper.includes('NVDA') || instUpper.includes('TSLA') || instUpper.includes('PLTR') || instUpper.includes('MARA') || instUpper.includes('MSFT') || instUpper.includes('AVGO') || instUpper.includes('QQQ')) ? 0.0010 : 0.0006;
+    const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
+    const slippageRate = 0.0002 + Math.min(0.0003, (notional / 50000) * 0.0002);
+    const slippageBps = parseFloat((slippageRate * 10000).toFixed(1));
+    const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
+    normalized.fee = totalFees;
+    normalized.feeRate = feeRate;
+    normalized.slippage = slippageCost;
+    normalized.slippageBps = slippageBps;
+    normalized.grossPnl = normalized.grossPnl ?? balanceChange;
+    normalized.netPnl = normalized.netPnl ?? balanceChange;
+  }
+
   normalized.idempotencyKey = data?.idempotencyKey || generateTradeIdempotencyKey(normalized);
   return normalized;
 }

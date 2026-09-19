@@ -351,7 +351,7 @@ export default function App() {
   const COCKPIT_DOCK_ITEMS = [
     { id: 'CHART', name: 'Real-Time Chart', icon: LineChart, desc: 'Live Green Spike & Red Dip' },
     { id: 'AUTOPILOT', name: 'Autopilot Loop', icon: Bot, desc: 'Autonomous Execution' },
-    { id: 'COUNCIL', name: 'Council Debate', icon: Scale, desc: 'Tri-Persona Quorum' },
+    { id: 'COUNCIL', name: 'Council Debate', icon: Scale, desc: '4-Pillar Council Quorum' },
     { id: 'PULSE', name: 'Pulse Radar', icon: Radio, desc: 'Sentiment & Whales' },
     { id: 'DEPTH', name: 'Liquidity Depth', icon: Layers, desc: 'Order Book Heatmap' },
     { id: 'STATARB', name: 'StatArb Matrix', icon: ArrowRightLeft, desc: 'Cross-Asset Pairs' },

@@ -171,7 +171,7 @@ export const CanonicalSequenceExplainerModal: React.FC<CanonicalSequenceExplaine
               <Code2 className="w-3.5 h-3.5 text-yellow-400" />
               Why this Proves Anti-Cheating & Audit Rigor
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-zinc-400">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-zinc-400">
               <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
                 <span className="font-bold text-zinc-200">1. Real-World Parallel</span>
                 <p>
@@ -181,7 +181,13 @@ export const CanonicalSequenceExplainerModal: React.FC<CanonicalSequenceExplaine
               <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
                 <span className="font-bold text-zinc-200">2. Active Ledger Defense</span>
                 <p>
-                  If an attacker or corrupted tick injects a simulated BTC price at $160,000 or duplicate ID, the reconciler purges it from the canonical sequence while logging the rejection in audit logs.
+                  If an anomalous tick injects a price spike outside corridor bounds or duplicates a submission, the reconciler rejects it before it can pollute portfolio equity.
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-yellow-500/20 bg-yellow-500/[0.03] space-y-1">
+                <span className="font-bold text-yellow-300">3. Fee Model (Sep 19, 2026)</span>
+                <p className="text-zinc-300">
+                  Historical trades prior to Sep 19 reflect baseline gross engine calibration. From Sep 19 onward, Bitget VIP-0 fees and dynamic L2 slippage are enforced to mirror institutional trading friction.
                 </p>
               </div>
             </div>

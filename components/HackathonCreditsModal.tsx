@@ -84,7 +84,7 @@ export function HackathonCreditsModal({ isOpen, onClose }: { isOpen: boolean; on
                   <Zap className="w-3 h-3" /> COUNCIL (Multi-Agent Debate)
                 </div>
                 <p className="text-gray-400 text-[10px]">
-                  Tri-persona consensus engine (Risk-Averse, Degen Quant, Macro) with direct signal handoff into the Autopilot pipeline.
+                  4-Pillar Council consensus engine (Quant-Omega, Guardian-01, NEXUS-RED, Atlas-Macro) with direct signal handoff into the Autopilot pipeline.
                 </p>
               </div>
 

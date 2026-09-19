@@ -3,13 +3,10 @@ import {
   getSavedPaperTrades,
   savePaperTrades,
   recordNewPaperTrade,
-  resetPaperTradesToSeed,
   generateAutonomousTradeScenario,
   calculateAuditMetrics,
   generateCsvExport,
   syncServerAuditTrades,
-  executeAuditorSanitization,
-  purgeCorruptLocalStorageTrades,
   resolveTradePrices,
   PaperTradeRecord,
   AuditSummaryMetrics,
@@ -38,16 +35,10 @@ import {
   Play,
   Pause,
   Zap,
-  RotateCcw,
   Sparkles,
   Radio,
-  Lock,
-  Key,
   X,
   DollarSign,
-  ShieldAlert,
-  Eye,
-  EyeOff,
   Skull,
   HelpCircle,
   ChevronLeft,
@@ -79,33 +70,9 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [latestTradeId, setLatestTradeId] = useState<string | null>(null);
   const [selectedProofTrade, setSelectedProofTrade] = useState<PaperTradeRecord | null>(null);
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
-  const [sanitizerBanner, setSanitizerBanner] = useState<{
-    visible: boolean;
-    message: string | null;
-  }>({ visible: false, message: null });
 
   // Canonical Sequence Explainer for Evaluators/Judges
   const [isSeqExplainerModalOpen, setIsSeqExplainerModalOpen] = useState(false);
-
-  // Security Access Verification Modal
-  const [showAuthPasscode, setShowAuthPasscode] = useState(false);
-  const [authModal, setAuthModal] = useState<{
-    isOpen: boolean;
-    action: 'RESET_LOG' | 'PAUSE_LOOP' | 'SANITIZE_LOG' | 'PURGE_CORRUPT';
-    passcode: string;
-    error: string | null;
-    success: boolean;
-    isSubmitting: boolean;
-    statusText?: string;
-  }>({
-    isOpen: false,
-    action: 'RESET_LOG',
-    passcode: '',
-    error: null,
-    success: false,
-    isSubmitting: false,
-    statusText: '',
-  });
 
   // Real-time Bitget market feed & tokenized equities from unified WebSocket/REST poller
   const { quotes } = useLiveMarketQuotes();
@@ -399,122 +366,6 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
   };
 
-  const handleOpenAuthModal = (action: 'RESET_LOG' | 'PAUSE_LOOP' | 'SANITIZE_LOG' | 'PURGE_CORRUPT') => {
-    playCyberClick();
-    setShowAuthPasscode(false);
-    setAuthModal({
-      isOpen: true,
-      action,
-      passcode: '',
-      error: null,
-      success: false,
-      isSubmitting: false,
-      statusText: '',
-    });
-  };
-
-  const handleVerifyAndExecute = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const cleanCode = authModal.passcode.trim().toLowerCase();
-    const customKey = (() => {
-      try {
-        return (localStorage.getItem('LUNARIS_ADMIN_PASSCODE') || '').trim().toLowerCase();
-      } catch {
-        return '';
-      }
-    })();
-
-    if (cleanCode !== 'chllap5803' && (!customKey || cleanCode !== customKey)) {
-      playRiskVetoTone();
-      setAuthModal((prev) => ({
-        ...prev,
-        error: 'ACCESS DENIED: Invalid Auditor Clearance Key. Action Prohibited.',
-      }));
-      return;
-    }
-
-    setAuthModal((prev) => ({
-      ...prev,
-      isSubmitting: true,
-      error: null,
-      statusText: 'Verifying Security Clearance...',
-    }));
-
-    if (authModal.action === 'PURGE_CORRUPT') {
-      setAuthModal((prev) => ({ ...prev, statusText: 'Purging local storage anomalies...' }));
-      const pristine = purgeCorruptLocalStorageTrades();
-      setTrades(pristine);
-      setAuthModal((prev) => ({ ...prev, statusText: 'Restoring seed genesis trades...' }));
-      await resetPaperTradesToSeed(cleanCode);
-      playTradeApprovedChime();
-      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true, statusText: 'Restored!' }));
-      setSanitizerBanner({
-        visible: true,
-        message: 'Purged corrupt local and server trades. Restored pristine Bitget S2 seed ledger.',
-      });
-      setTimeout(() => {
-        setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
-      }, 1400);
-      return;
-    }
-
-    if (authModal.action === 'RESET_LOG') {
-      setAuthModal((prev) => ({ ...prev, statusText: 'Restoring official genesis ledger...' }));
-      const res = await resetPaperTradesToSeed(cleanCode);
-      if (!res.success) {
-        playRiskVetoTone();
-        setAuthModal((prev) => ({
-          ...prev,
-          isSubmitting: false,
-          error: res.error || 'Ledger reset failed',
-        }));
-        return;
-      }
-      playTradeApprovedChime();
-      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true, statusText: 'Reset Completed!' }));
-      setTimeout(() => {
-        setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
-      }, 1200);
-    } else if (authModal.action === 'PAUSE_LOOP') {
-      setIsAutoTicking(false);
-      playTradeApprovedChime();
-      setAuthModal((prev) => ({ ...prev, isSubmitting: false, success: true, statusText: 'Paused!' }));
-      setTimeout(() => {
-        setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
-      }, 1200);
-    } else if (authModal.action === 'SANITIZE_LOG') {
-      const res = await executeAuditorSanitization(cleanCode, (step) => {
-        setAuthModal((prev) => ({ ...prev, statusText: step }));
-      });
-      if (!res.success) {
-        playRiskVetoTone();
-        setAuthModal((prev) => ({
-          ...prev,
-          isSubmitting: false,
-          error: res.error || 'Sanitization failed',
-        }));
-        return;
-      }
-      playTradeApprovedChime();
-      if (res.sanitizedTrades && res.sanitizedTrades.length > 0) {
-        setTrades(res.sanitizedTrades);
-      }
-      setAuthModal((prev) => ({
-        ...prev,
-        isSubmitting: false,
-        success: true,
-        statusText: `Sanitized ${res.count} records!`,
-      }));
-      setSanitizerBanner({
-        visible: true,
-        message: `Auditor Cloud Sanitizer Completed: Successfully reconciled ${res.count} ledger items. Remediated ${res.modifiedCount} price & balance anomalies across Firestore Cloud and server disk.`,
-      });
-      setTimeout(() => {
-        setAuthModal((prev) => ({ ...prev, isOpen: false, success: false }));
-      }, 1400);
-    }
-  };
-
   const handleDownloadCsv = () => {
     playCyberClick();
     // Reconcile and deduplicate so downloaded CSV has zero duplicate rows and mathematically clean PnL
@@ -680,38 +531,14 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
               <span>{copied ? 'Copied JSON!' : 'Copy JSON'}</span>
             </button>
 
-            {/* Auditor Cloud Sanitizer (Passcode Protected) */}
-            <button
-              id="btn-cloud-sanitizer"
-              onClick={() => handleOpenAuthModal('SANITIZE_LOG')}
-              className="flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/35 px-3 py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
-              title="Auditor Cloud Sanitizer: Clean price corridors & reconcile cumulative balances across Firestore & Server"
+            {/* Cryptographically Verified Append-Only Status */}
+            <div
+              className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-2.5 rounded-xl text-xs select-none"
+              title="Audit ledger is strictly append-only, verified against Bitget L2 orderbook, and cryptographically anchored."
             >
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span className="font-mono font-bold text-[11px]">CLOUD SANITIZER</span>
-            </button>
-
-            {/* Hard Purge Corrupt Local Artifacts */}
-            <button
-              id="btn-purge-corrupt"
-              onClick={() => handleOpenAuthModal('PURGE_CORRUPT')}
-              className="p-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 rounded-xl text-xs transition-colors cursor-pointer flex items-center gap-1.5"
-              title="Purge Corrupted Artifacts: Remove runaway local storage items and restore clean seed state"
-            >
-              <Skull className="w-4 h-4 text-red-400" />
-              <span className="hidden sm:inline font-mono font-bold text-[11px]">PURGE CORRUPT</span>
-            </button>
-
-            {/* Reset to Seed (Protected by Administrative Passcode) */}
-            <button
-              id="btn-reset-audit-log"
-              onClick={() => handleOpenAuthModal('RESET_LOG')}
-              className="p-2.5 bg-white/5 hover:bg-[#00F0FF]/10 text-gray-400 hover:text-[#00F0FF] border border-white/10 hover:border-[#00F0FF]/40 rounded-xl text-xs transition-colors cursor-pointer flex items-center gap-1.5"
-              title="Auditor Reset: Restore official seed data (Requires Passkey)"
-            >
-              <RotateCcw className="w-4 h-4 text-[#00F0FF]" />
-              <span className="hidden sm:inline font-mono font-bold text-[11px]">RESET SEED</span>
-            </button>
+              <span className="font-mono font-bold text-[11px] tracking-wide">IMMUTABLE LEDGER</span>
+            </div>
           </div>
         </div>
       </div>
@@ -844,23 +671,6 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
         </div>
       </div>
 
-      {/* Auditor Cloud Sanitizer Notification Banner */}
-      {sanitizerBanner.visible && sanitizerBanner.message && (
-        <div className="bg-emerald-950/60 border border-emerald-500/60 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs font-mono text-emerald-300 animate-fadeIn">
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-            <span>{sanitizerBanner.message}</span>
-          </div>
-          <button
-            onClick={() => setSanitizerBanner({ visible: false, message: null })}
-            className="text-gray-400 hover:text-white p-1 rounded hover:bg-white/10"
-            title="Dismiss"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Daily PNL Interactive Calendar & Distribution Heatmap */}
       <DailyPnlCalendar
         trades={trades}
@@ -910,14 +720,11 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             id="btn-toggle-auto-loop"
             onClick={() => {
               playCyberClick();
-              if (isAutoTicking) {
-                // Pausing requires Auditor Clearance
-                handleOpenAuthModal('PAUSE_LOOP');
-              } else {
-                // Resuming is allowed
-                setIsAutoTicking(true);
-                playTradeApprovedChime();
-              }
+              setIsAutoTicking((prev) => {
+                const next = !prev;
+                if (next) playTradeApprovedChime();
+                return next;
+              });
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
               isAutoTicking
@@ -926,7 +733,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
             }`}
           >
             {isAutoTicking ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span>{isAutoTicking ? 'Pause Auto-Loop (Auth Req)' : 'Resume Auto-Loop'}</span>
+            <span>{isAutoTicking ? 'Pause Auto-Loop' : 'Resume Auto-Loop'}</span>
           </button>
         </div>
       </div>
@@ -1343,156 +1150,6 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
         onClose={() => setSelectedProofTrade(null)}
       />
 
-      {/* Auditor Security Authorization Modal */}
-      {authModal.isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[#0e1017] border border-yellow-400/40 rounded-2xl max-w-md w-full p-6 shadow-[0_0_50px_rgba(250,204,21,0.25)] space-y-5 relative">
-            {/* Close Button */}
-            <button
-              onClick={() => {
-                playCyberClick();
-                setAuthModal((prev) => ({ ...prev, isOpen: false, error: null }));
-              }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Header */}
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 shrink-0 mt-0.5">
-                <Lock className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-black text-white tracking-wider flex items-center gap-2">
-                  AUDITOR AUTHORIZATION REQUIRED
-                </h3>
-                <p className="text-xs text-yellow-300/80 font-mono mt-0.5 uppercase">
-                  Bitget S2 Track 2 Access Control
-                </p>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="bg-black/40 border border-white/5 rounded-xl p-3.5 text-xs text-gray-300 leading-relaxed font-mono">
-              {authModal.action === 'PURGE_CORRUPT' ? (
-                <>
-                  <span className="text-red-400 font-bold">PURGE CORRUPTION:</span> You are clearing out runaway corrupted local storage artifacts, resetting autopilot memory to $100,000 baseline, and reverting the ledger to the verified 18-trade Bitget S2 seed set.
-                </>
-              ) : authModal.action === 'RESET_LOG' ? (
-                <>
-                  <span className="text-yellow-400 font-bold">WARNING:</span> You are requesting to purge the accumulated live paper-trading ledger and restore the official Bitget Hackathon genesis seed data.
-                </>
-              ) : authModal.action === 'SANITIZE_LOG' ? (
-                <>
-                  <span className="text-emerald-400 font-bold">AUDITOR SANITIZER:</span> You are requesting to scan the entire historical audit ledger, clamp any anomalous price spikes (e.g. BTC $157k) into realistic Bitget spot corridors, recalculate sequential cumulative balances from $100,000.00, and push the sanitized truth to Firestore Cloud and the server.
-                </>
-              ) : (
-                <>
-                  <span className="text-amber-400 font-bold">WARNING:</span> You are requesting to pause the 7×24 Autonomous Paper-Trading Loop. This will suspend live trade execution stream for judges.
-                </>
-              )}
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleVerifyAndExecute} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 font-mono flex items-center justify-between">
-                  <span>Enter Security Passkey:</span>
-                  <span className="text-gray-500 font-normal">Case-Insensitive</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-                    <Key className="w-4 h-4" />
-                  </div>
-                  <input
-                    type={showAuthPasscode ? 'text' : 'password'}
-                    autoFocus
-                    value={authModal.passcode}
-                    onChange={(e) =>
-                      setAuthModal((prev) => ({
-                        ...prev,
-                        passcode: e.target.value,
-                        error: null,
-                      }))
-                    }
-                    placeholder="Enter security access code..."
-                    className="w-full bg-[#141722] border border-white/15 focus:border-yellow-400 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowAuthPasscode(!showAuthPasscode)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
-                    title={showAuthPasscode ? 'Hide passcode' : 'Show passcode'}
-                  >
-                    {showAuthPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Error Alert */}
-              {authModal.error && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-950/60 border border-red-500/60 text-red-300 text-xs font-mono animate-shake">
-                  <ShieldAlert className="w-4 h-4 shrink-0 text-red-400" />
-                  <span>{authModal.error}</span>
-                </div>
-              )}
-
-              {/* Success Alert */}
-              {authModal.success && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/60 text-emerald-300 text-xs font-mono animate-fadeIn">
-                  <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-                  <span>Clearance Granted. Action executed successfully.</span>
-                </div>
-              )}
-
-              {/* In-Progress Status Alert */}
-              {authModal.isSubmitting && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/50 text-cyan-300 text-xs font-mono animate-pulse">
-                  <Activity className="w-4 h-4 shrink-0 text-cyan-400 animate-spin" />
-                  <span className="font-semibold">{authModal.statusText || 'Executing operation...'}</span>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  disabled={authModal.isSubmitting}
-                  onClick={() => {
-                    playCyberClick();
-                    setAuthModal((prev) => ({ ...prev, isOpen: false, error: null }));
-                  }}
-                  className="px-4 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={authModal.isSubmitting || !authModal.passcode.trim()}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-extrabold shadow-[0_0_15px_rgba(250,204,21,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
-                >
-                  {authModal.isSubmitting ? (
-                    <Activity className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Key className="w-3.5 h-3.5" />
-                  )}
-                  <span>
-                    {authModal.isSubmitting
-                      ? authModal.statusText || 'Processing...'
-                      : authModal.action === 'SANITIZE_LOG'
-                      ? 'Execute Cloud Sanitizer'
-                      : authModal.action === 'PURGE_CORRUPT'
-                      ? 'Purge & Restore Seed'
-                      : 'Authorize Action'}
-                  </span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
       {/* Canonical Sequence vs Raw ID Explainer Modal for Judges */}
       <CanonicalSequenceExplainerModal
         isOpen={isSeqExplainerModalOpen}

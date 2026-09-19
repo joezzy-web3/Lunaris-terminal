@@ -170,7 +170,7 @@ export function DebateConsole({
   };
 
   /**
-   * Convenes the Tri-Persona Council via real-time Gemini Search Grounding API
+   * Convenes the 4-Pillar Council via real-time Gemini Search Grounding API
    * or high-precision deterministic matrix fallback for ANY typed stock/token.
    */
   const startCouncilDeliberation = async (

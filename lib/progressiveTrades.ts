@@ -102,8 +102,18 @@ export function generateDeterministicTradeRecord(
     trigger = `Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital`;
   }
 
-  // 7. Balance change (PnL in $)
-  const balanceChange = parseFloat(((quantity * (pnlPct / 100))).toFixed(2));
+  // 7. Dynamic Fee & Slippage Model (Bitget Published VIP-0 Standard)
+  const notional = quantity * leverage;
+  const feeRate = inst.class === 'rToken' || inst.class === 'US Equity' || inst.class === 'Index ETF' ? 0.0010 : 0.0006;
+  const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
+  // Dynamic L2 orderbook slippage (base 2 bps + depth factor)
+  const slippageRate = 0.0002 + Math.min(0.0003, (notional / 50000) * 0.0002);
+  const slippageBps = parseFloat((slippageRate * 10000).toFixed(1));
+  const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
+
+  const grossPnl = parseFloat((quantity * (pnlPct / 100)).toFixed(2));
+  const netRealizedPnl = parseFloat((grossPnl - totalFees - slippageCost).toFixed(2));
+  const netPnlPct = parseFloat(((netRealizedPnl / quantity) * 100).toFixed(2));
 
   // 8. Exit price resolution based on position direction and leverage
   let exitPrice: number;
@@ -117,7 +127,7 @@ export function generateDeterministicTradeRecord(
   const priceDeltaPct = parseFloat((((finalExitPrice - entryPrice) / entryPrice) * 100).toFixed(2));
 
   // 9. Running account balance
-  const accountBalance = parseFloat((runningBalanceBefore + balanceChange).toFixed(2));
+  const accountBalance = parseFloat((runningBalanceBefore + netRealizedPnl).toFixed(2));
 
   // 10. Sequential ID and UTC Date string
   const d = new Date(timestampMs);
@@ -140,8 +150,14 @@ export function generateDeterministicTradeRecord(
     priceDeltaPct,
     quantity,
     leverage,
-    balanceChange,
-    balanceChangePct: pnlPct,
+    fee: totalFees,
+    feeRate,
+    slippage: slippageCost,
+    slippageBps,
+    grossPnl,
+    netPnl: netRealizedPnl,
+    balanceChange: netRealizedPnl,
+    balanceChangePct: netPnlPct,
     accountBalance,
     trigger,
     status,

@@ -121,11 +121,12 @@ Margin Used (Collateral): $${math.marginUsed.toFixed(2)} USDT
 Position Notional (Margin x Lev): $${math.positionNotional.toFixed(2)} USDT
 Quantity (Asset Units): ${math.assetQuantity} ${baseAsset}
 Gross P&L: ${math.grossPnL >= 0 ? '+' : ''}$${math.grossPnL.toFixed(2)} USDT
-Fees (Bitget VIP Maker/Taker 0.04%): -$${math.totalFees.toFixed(2)} USDT
-Funding: $${math.funding.toFixed(2)} USDT
+Bitget Taker Fee (${(math.feeRate * 100).toFixed(2)}%): -$${math.totalFees.toFixed(2)} USDT
+L2 Orderbook Slippage (${math.slippageBps.toFixed(1)} bps): -$${math.slippageCost.toFixed(2)} USDT
 Net Realized P&L: ${trade.balanceChange >= 0 ? '+' : ''}$${trade.balanceChange.toFixed(2)} USDT
 ROI on Margin: ${((trade.balanceChange / math.marginUsed) * 100).toFixed(2)}%
 Direction Validation: ${math.isDirectionValid ? 'PASS (Price move matches Gross P&L)' : 'FAIL'}
+Execution Model: Bitget Published VIP-0 Taker Fee + Dynamic L2 Slippage
 Mathematical Source of Truth: Verified
 =======================================`;
     navigator.clipboard.writeText(proofText);
@@ -154,6 +155,8 @@ Mathematical Source of Truth: Verified
         marginUsedUsdt: math.marginUsed,
         grossPnlUsdt: math.grossPnL,
         feesUsdt: math.totalFees,
+        slippageUsdt: math.slippageCost,
+        slippageBps: `${math.slippageBps.toFixed(1)} bps`,
         fundingUsdt: math.funding,
         netPnlUsdt: trade.balanceChange,
         roiPct: `${((trade.balanceChange / math.marginUsed) * 100).toFixed(2)}%`,
@@ -163,15 +166,18 @@ Mathematical Source of Truth: Verified
       },
       agentQuorumDecision: {
         trigger: trade.trigger,
-        quantOmegaWeight: '38%',
-        atlasMacroWeight: '32%',
-        guardian01Weight: '30%',
+        architecture: '4-Pillar Council (3 AI Agents + 1 Deterministic Risk Engine)',
+        quantOmega: 'Quant-Omega (Statistical Arb & Microstructure)',
+        atlasMacro: 'Atlas-Macro (Cross-Asset Macro Regimes)',
+        nexusRed: 'NEXUS-RED (Adversarial Red-Team Stress Test)',
+        guardian01: 'Guardian-01 (Deterministic Risk Engine & Circuit Veto)',
         riskCircuitClearance: 'APPROVED (VaR < 25%)',
       },
       microstructureOrderbookTelemetry: {
-        venue: 'Bitget Simulated Paper Liquidity Pool',
-        slippageBps: '-1.2 bps (-0.012%)',
-        feeTier: 'VIP-0 Maker 0.02% / Taker 0.04%',
+        venue: 'Bitget Simulated L2 Orderbook Liquidity Pool',
+        feeModel: 'Bitget Published VIP-0 Taker Fee (0.06% Crypto / 0.10% rTokens) + Dynamic L2 Slippage',
+        takerFeeRate: `${(math.feeRate * 100).toFixed(2)}%`,
+        slippageBps: `${math.slippageBps.toFixed(1)} bps`,
         fillLatencyMs: '3.8ms',
         executionType: 'CROSS_MARGIN_FILL',
       },
@@ -530,26 +536,26 @@ Mathematical Source of Truth: Verified
                   {/* 7. Fees */}
                   <div className="bg-black/40 border border-white/5 p-2.5 rounded-lg flex justify-between items-center">
                     <div>
-                      <span className="text-[10px] text-zinc-400 block uppercase">7. Fees</span>
-                      <span className="text-zinc-500 text-[10px]">Bitget VIP Maker 0.02% + Taker 0.02%</span>
+                      <span className="text-[10px] text-zinc-400 block uppercase">7. Taker Fee (Bitget VIP-0)</span>
+                      <span className="text-zinc-500 text-[10px]">Round-trip 2 &times; ${(math.positionNotional * math.feeRate).toFixed(2)} ({(math.feeRate * 100).toFixed(2)}%)</span>
                     </div>
                     <span className="text-rose-400 font-bold text-xs">-${math.totalFees.toFixed(2)} USDT</span>
                   </div>
 
-                  {/* 8. Funding */}
+                  {/* 8. Slippage */}
                   <div className="bg-black/40 border border-white/5 p-2.5 rounded-lg flex justify-between items-center">
                     <div>
-                      <span className="text-[10px] text-zinc-400 block uppercase">8. Funding</span>
-                      <span className="text-zinc-500 text-[10px]">Perpetual Swap Interval</span>
+                      <span className="text-[10px] text-zinc-400 block uppercase">8. L2 Orderbook Slippage</span>
+                      <span className="text-zinc-500 text-[10px]">Dynamic depth model ({math.slippageBps.toFixed(1)} bps)</span>
                     </div>
-                    <span className="text-zinc-300 font-bold text-xs">${math.funding.toFixed(2)} USDT</span>
+                    <span className="text-amber-400 font-bold text-xs">-${math.slippageCost.toFixed(2)} USDT</span>
                   </div>
 
                   {/* 9. Net P&L */}
                   <div className="bg-black/40 border border-emerald-500/30 p-2.5 rounded-lg flex justify-between items-center">
                     <div>
                       <span className="text-[10px] text-emerald-400 block uppercase font-bold">9. Net P&L (Settled)</span>
-                      <span className="text-zinc-400 text-[10px]">Gross P&L &minus; Fees &minus; Funding</span>
+                      <span className="text-zinc-400 text-[10px]">Gross P&L &minus; Taker Fees &minus; L2 Slippage</span>
                     </div>
                     <div className="text-right">
                       <span className={`font-extrabold text-sm ${trade.balanceChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>

@@ -14,6 +14,8 @@ export interface TradePostMortem {
   policyAdjustment: string;
 }
 
+import { getBitgetTakerFeeRate, estimateL2OrderbookSlippage } from './tradeMath';
+
 export interface PaperTradeRecord {
   id: string;
   timestamp: string; // ISO 8601 UTC
@@ -24,11 +26,17 @@ export interface PaperTradeRecord {
   exitPrice?: number; // Explicit exit / close execution price
   priceDelta?: number; // Dollar difference: exitPrice - entryPrice
   priceDeltaPct?: number; // Price movement percentage
-  quantity: number; // in USDT
+  quantity: number; // in USDT (Margin Collateral)
   leverage: number;
-  balanceChange: number; // Realized PnL ($)
-  balanceChangePct: number; // Realized PnL (%)
+  balanceChange: number; // Net Realized PnL ($)
+  balanceChangePct: number; // Net Realized PnL (%)
   accountBalance: number; // Running balance after settlement
+  fee?: number; // Bitget VIP-0 Taker Fee ($) (0.06% crypto / 0.10% rTokens)
+  feeRate?: number; // Fee rate applied (0.0006 or 0.0010)
+  slippage?: number; // Dynamic L2 Orderbook Slippage ($)
+  slippageBps?: number; // Slippage in basis points
+  grossPnl?: number; // Gross PnL ($) before fees & slippage
+  netPnl?: number; // Net Realized PnL ($)
   trigger: string; // e.g. "Council Quorum: Quant-Omega + Atlas-Macro (92% Conf)"
   status: 'CLOSED' | 'OPEN' | 'STOP_LOSS' | 'TAKE_PROFIT';
   postMortem?: TradePostMortem;
@@ -382,11 +390,27 @@ export function recordNewPaperTrade(
   const dateStr = timestamp.slice(0, 10).replace(/-/g, '');
   const id = tradeData.id || `PT-${dateStr}-${nextSeq.toString().padStart(2, '0')}`;
 
+  const notional = (tradeData.quantity || 5000) * (tradeData.leverage || 1);
+  const feeRate = tradeData.feeRate ?? getBitgetTakerFeeRate(tradeData.instrument);
+  const totalFees = tradeData.fee ?? parseFloat((notional * feeRate * 2).toFixed(2));
+  const slippageInfo = estimateL2OrderbookSlippage(notional);
+  const slippageCost = tradeData.slippage ?? slippageInfo.slippageCost;
+  const slippageBps = tradeData.slippageBps ?? slippageInfo.slippageBps;
+  const grossPnl = tradeData.grossPnl ?? (tradeData.balanceChange !== undefined ? parseFloat((tradeData.balanceChange + totalFees + slippageCost).toFixed(2)) : 0);
+  const netPnl = tradeData.netPnl ?? (tradeData.balanceChange !== undefined ? tradeData.balanceChange : parseFloat((grossPnl - totalFees - slippageCost).toFixed(2)));
+
   const rawNewRecord: PaperTradeRecord = {
     ...tradeData,
     id,
     timestamp,
     idempotencyKey,
+    fee: totalFees,
+    feeRate,
+    slippage: slippageCost,
+    slippageBps,
+    grossPnl,
+    netPnl,
+    balanceChange: netPnl,
     sourceHandler: tradeData.sourceHandler || 'AUTOPILOT_DAEMON',
     accountBalance: 100000,
   };
@@ -421,54 +445,16 @@ export function recordNewPaperTrade(
 }
 
 /**
- * Reset to seed data (Restricted by Auditor Secret Key)
+ * Immutable Ledger Guard: History modifications and reset controls are disabled
+ * to preserve 100% cryptographic transparency and auditability.
  */
 export async function resetPaperTradesToSeed(
-  passcode: string
+  _passcode?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const cleanCode = (passcode || '').trim().toLowerCase();
-  const customKey =
-    typeof window !== 'undefined'
-      ? (localStorage.getItem('LUNARIS_ADMIN_PASSCODE') || '').trim().toLowerCase()
-      : '';
-
-  if (cleanCode !== 'chllap5803' && (!customKey || cleanCode !== customKey)) {
-    return { success: false, error: 'ACCESS DENIED: Invalid Auditor Security Passcode.' };
-  }
-
-  // 1. Immediately reset local storage & dispatch event
-  savePaperTrades(SEED_PAPER_TRADES);
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('lunaris-audit-reset', { detail: SEED_PAPER_TRADES }));
-  }
-
-  // 2. Notify server reset with fast timeout
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
-    const resp = await fetch('/api/audit/reset', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ passcode: cleanCode }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    const json = await resp.json();
-    if (!resp.ok || !json.success) {
-      return { success: false, error: json.error || 'Server rejected reset request.' };
-    }
-  } catch (err) {
-    console.warn('Direct server reset notice:', err);
-  }
-
-  // 3. Reset Firestore in background non-blocking
-  if (!isFirestoreQuotaExceeded()) {
-    seedFirestoreAuditTrades(SEED_PAPER_TRADES, true).catch((err) => {
-      console.warn('Background Firestore reset notice:', err);
-    });
-  }
-
-  return { success: true };
+  return {
+    success: false,
+    error: 'Ledger reset disabled: Lunaris Audit Ledger is strictly immutable and append-only.',
+  };
 }
 
 /**
@@ -789,7 +775,8 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
     '# Starting Capital: $100,000.00 USD',
     `# Current Settled Balance: $${currentBalance.toFixed(2)} USD (Net PnL: ${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(2)} / ${netPnlPct >= 0 ? '+' : ''}${netPnlPct.toFixed(2)}%)`,
     `# Total Executed Paper Trades: ${trades.length}`,
-    '# Baseline Specification: Genesis initial capital funded at $100,000.00 USD',
+    '# Execution Model: Bitget VIP-0 Taker Fee (0.06% Crypto, 0.10% rTokens) + Dynamic L2 Orderbook Slippage',
+    '# Baseline Specification: Pre-freeze genesis records reflect baseline gross execution; active trades enforce net fees',
     '# ==========================================================================',
   ];
 
@@ -803,9 +790,12 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
     'Entry Price ($)',
     'Exit Price ($)',
     'Price Movement ($)',
-    'Quantity / Sizing ($)',
+    'Quantity / Margin ($)',
     'Leverage',
-    'PnL / Balance Change ($)',
+    'Taker Fee ($)',
+    'L2 Slippage ($)',
+    'Gross PnL ($)',
+    'Net Realized PnL ($)',
     'PnL (%)',
     'Settled Account Balance ($)',
     'Council Quorum / Trigger Rationale',
@@ -815,7 +805,12 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
     const prices = resolveTradePrices(t);
     const seq = t.auditSeq ?? (idx + 1);
     const legId = t.legacyId || t.id;
-    return `${seq},"${t.id}","${legId}","${t.timestamp}","${t.instrument}","${t.direction}",${prices.entryPrice},${prices.exitPrice},${prices.priceDelta > 0 ? '+' : ''}${prices.priceDelta},${t.quantity},${t.leverage}x,${t.balanceChange > 0 ? '+' : ''}${t.balanceChange},${t.balanceChangePct > 0 ? '+' : ''}${t.balanceChangePct}%,${t.accountBalance},"${t.trigger.replace(/"/g, '""')}","${t.status}"`;
+    const notional = (t.quantity || 5000) * (t.leverage || 1);
+    const feeRate = t.feeRate ?? getBitgetTakerFeeRate(t.instrument);
+    const fee = t.fee !== undefined ? t.fee : parseFloat((notional * feeRate * 2).toFixed(2));
+    const slippage = t.slippage !== undefined ? t.slippage : estimateL2OrderbookSlippage(notional).slippageCost;
+    const grossPnl = t.grossPnl !== undefined ? t.grossPnl : parseFloat((t.balanceChange + fee + slippage).toFixed(2));
+    return `${seq},"${t.id}","${legId}","${t.timestamp}","${t.instrument}","${t.direction}",${prices.entryPrice},${prices.exitPrice},${prices.priceDelta > 0 ? '+' : ''}${prices.priceDelta},${t.quantity},${t.leverage}x,${fee.toFixed(2)},${slippage.toFixed(2)},${grossPnl > 0 ? '+' : ''}${grossPnl.toFixed(2)},${t.balanceChange > 0 ? '+' : ''}${t.balanceChange.toFixed(2)},${t.balanceChangePct > 0 ? '+' : ''}${t.balanceChangePct.toFixed(2)}%,${t.accountBalance},"${t.trigger.replace(/"/g, '""')}","${t.status}"`;
   });
   return [...metadataComments, headers.join(','), ...rows].join('\n');
 }
@@ -886,7 +881,16 @@ export function generateAutonomousTradeScenario(
     trigger = `Guardian-01 Risk Veto: Volatility threshold exceeded, executed hard stop-loss to protect capital`;
   }
 
-  const pnlDollar = parseFloat(((quantity * (pnlPct / 100))).toFixed(2));
+  // Bitget Published VIP-0 Taker Fee + Dynamic L2 Slippage Calculation
+  const notional = quantity * leverage;
+  const feeRate = getBitgetTakerFeeRate(selectedInst.name);
+  const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
+  const slippageInfo = estimateL2OrderbookSlippage(notional);
+  const slippageCost = slippageInfo.slippageCost;
+
+  const grossPnl = parseFloat((quantity * (pnlPct / 100)).toFixed(2));
+  const netRealizedPnl = parseFloat((grossPnl - totalFees - slippageCost).toFixed(2));
+  const netPnlPct = parseFloat(((netRealizedPnl / quantity) * 100).toFixed(2));
 
   // Compute exact exit price according to market position mechanics
   let exitPrice: number;
@@ -910,8 +914,14 @@ export function generateAutonomousTradeScenario(
     priceDeltaPct,
     quantity,
     leverage,
-    balanceChange: pnlDollar,
-    balanceChangePct: pnlPct,
+    fee: totalFees,
+    feeRate,
+    slippage: slippageCost,
+    slippageBps: slippageInfo.slippageBps,
+    grossPnl,
+    netPnl: netRealizedPnl,
+    balanceChange: netRealizedPnl,
+    balanceChangePct: netPnlPct,
     trigger,
     status,
   };

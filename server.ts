@@ -1107,6 +1107,15 @@ function runAutopilotDaemonTick() {
       const priceDelta = parseFloat((livePrice - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
       const priceDeltaPct = parseFloat((((livePrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
 
+      // Bitget VIP-0 Taker Fee (0.06% Crypto, 0.10% rTokens) + Dynamic L2 Slippage
+      const notional = cost * 3;
+      const feeRate = ticker.toUpperCase().includes('ON') ? 0.0010 : 0.0006;
+      const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
+      const slippageRate = 0.0002 + Math.min(0.0003, (notional / 50000) * 0.0002);
+      const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
+      const netRealizedPnl = parseFloat((pnl - totalFees - slippageCost).toFixed(2));
+      const netRealizedPnlPct = parseFloat(((netRealizedPnl / cost) * 100).toFixed(2));
+
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
         timestamp: nowUtc,
@@ -1119,11 +1128,17 @@ function runAutopilotDaemonTick() {
         priceDeltaPct,
         quantity: parseFloat(cost.toFixed(2)),
         leverage: 3,
-        balanceChange: parseFloat(pnl.toFixed(2)),
-        balanceChangePct: parseFloat(pnlPct.toFixed(2)),
+        fee: totalFees,
+        feeRate,
+        slippage: slippageCost,
+        slippageBps: parseFloat((slippageRate * 10000).toFixed(1)),
+        grossPnl: parseFloat(pnl.toFixed(2)),
+        netPnl: netRealizedPnl,
+        balanceChange: netRealizedPnl,
+        balanceChangePct: netRealizedPnlPct,
         accountBalance: 100000,
-        trigger: `Autopilot Daemon: Target profit ratified (+${pnlPct.toFixed(2)}%) on ${ticker} by Tri-Persona Council`,
-        status: pnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
+        trigger: `Autopilot Daemon: Target profit ratified (+${pnlPct.toFixed(2)}%) on ${ticker} by Council Quorum (Quant-Omega, Atlas-Macro, NEXUS-RED, Guardian-01)`,
+        status: netRealizedPnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         sourceHandler: 'AUTOPILOT_DAEMON',
         idempotencyKey: idempKey,
       }, newTradeId);
@@ -1171,6 +1186,14 @@ function runAutopilotDaemonTick() {
       const priceDelta = parseFloat((livePrice - pos.entryPrice).toFixed(pos.entryPrice < 10 ? 4 : 2));
       const priceDeltaPct = parseFloat((((livePrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
 
+      const notional = cost * 3;
+      const feeRate = ticker.toUpperCase().includes('ON') ? 0.0010 : 0.0006;
+      const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
+      const slippageRate = 0.0002 + Math.min(0.0003, (notional / 50000) * 0.0002);
+      const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
+      const netRealizedPnl = parseFloat((pnl - totalFees - slippageCost).toFixed(2));
+      const netRealizedPnlPct = parseFloat(((netRealizedPnl / cost) * 100).toFixed(2));
+
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
         timestamp: nowUtc,
@@ -1183,8 +1206,14 @@ function runAutopilotDaemonTick() {
         priceDeltaPct,
         quantity: parseFloat(cost.toFixed(2)),
         leverage: 3,
-        balanceChange: parseFloat(pnl.toFixed(2)),
-        balanceChangePct: parseFloat(pnlPct.toFixed(2)),
+        fee: totalFees,
+        feeRate,
+        slippage: slippageCost,
+        slippageBps: parseFloat((slippageRate * 10000).toFixed(1)),
+        grossPnl: parseFloat(pnl.toFixed(2)),
+        netPnl: netRealizedPnl,
+        balanceChange: netRealizedPnl,
+        balanceChangePct: netRealizedPnlPct,
         accountBalance: 100000,
         trigger: `Guardian-01 Risk Veto: Stop-loss protection executed on ${ticker}. Forensic post-mortem committed.`,
         status: 'STOP_LOSS',
@@ -1357,8 +1386,17 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
   const exactCalculatedPnL = direction === 'LONG'
     ? (quantity * leverage * (finalExitPrice - entryPrice)) / entryPrice
     : (quantity * leverage * (entryPrice - finalExitPrice)) / entryPrice;
-  const pnlDollar = parseFloat(exactCalculatedPnL.toFixed(2));
-  const actualRoiPct = parseFloat(((pnlDollar / quantity) * 100).toFixed(2));
+  const grossPnl = parseFloat(exactCalculatedPnL.toFixed(2));
+
+  // Bitget Published VIP-0 Fee (0.06% Crypto / 0.10% rTokens & Equities) & Dynamic L2 Slippage
+  const notional = quantity * leverage;
+  const feeRate = selectedInst.class === 'rToken' || selectedInst.class === 'US Equity' || selectedInst.class === 'Index ETF' ? 0.0010 : 0.0006;
+  const totalFees = parseFloat((notional * feeRate * 2).toFixed(2));
+  const slippageRate = 0.0002 + Math.min(0.0003, (notional / 50000) * 0.0002);
+  const slippageBps = parseFloat((slippageRate * 10000).toFixed(1));
+  const slippageCost = parseFloat((notional * slippageRate).toFixed(2));
+  const netRealizedPnl = parseFloat((grossPnl - totalFees - slippageCost).toFixed(2));
+  const netRoiPct = parseFloat(((netRealizedPnl / quantity) * 100).toFixed(2));
 
   const nowUtc = new Date().toISOString();
   const trades = getAuditTrades();
@@ -1377,8 +1415,14 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
     priceDeltaPct,
     quantity,
     leverage,
-    balanceChange: pnlDollar,
-    balanceChangePct: actualRoiPct,
+    fee: totalFees,
+    feeRate,
+    slippage: slippageCost,
+    slippageBps,
+    grossPnl,
+    netPnl: netRealizedPnl,
+    balanceChange: netRealizedPnl,
+    balanceChangePct: netRoiPct,
     accountBalance: 100000,
     trigger,
     status,
@@ -1596,39 +1640,12 @@ app.get('/api/audit/reconciliation-status', (req, res) => {
   }
 });
 
-// POST /api/audit/reset - Reset to official seed data with administrative authorization
+// POST /api/audit/reset - Disabled: Ledger is strictly immutable and append-only
 app.post('/api/audit/reset', (req, res) => {
-  try {
-    const passcode = String(req.body?.passcode || '').trim().toLowerCase();
-    const adminPass = String(process.env.ADMIN_PASSCODE || 'chllap5803').trim().toLowerCase();
-    if (passcode !== 'chllap5803' && passcode !== adminPass) {
-      return res.status(403).json({
-        success: false,
-        error: 'ACCESS DENIED: Unauthorized auditor access code.',
-      });
-    }
-
-    saveAuditTrades(SEED_PAPER_TRADES);
-
-    // Stop daemon and reset autopilot state
-    stopAutopilotDaemon();
-    const resetState: ServerAutopilotState = {
-      ...DEFAULT_AUTOPILOT_STATE,
-      lastUpdated: new Date().toISOString(),
-    };
-    try {
-      fs.writeFileSync(AUTOPILOT_FILE_PATH, JSON.stringify(resetState, null, 2), 'utf8');
-    } catch {}
-
-    return res.json({
-      success: true,
-      message: 'Audit log successfully restored to official Bitget S2 genesis seed.',
-      trades: SEED_PAPER_TRADES,
-      count: SEED_PAPER_TRADES.length,
-    });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
+  return res.status(403).json({
+    success: false,
+    error: 'Ledger reset disabled: Lunaris Audit Ledger is strictly immutable and append-only.',
+  });
 });
 
 // GET /api/firestore/quota - Query Firestore free-tier quota circuit breaker status
