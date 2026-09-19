@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   writeBatch,
@@ -14,6 +15,8 @@ import { PaperTradeRecord, SEED_PAPER_TRADES, resolveTradePrices } from './paper
 
 const TRADES_COLLECTION = 'audit_trades';
 export const TEST_TRADES_COLLECTION = 'test_audit_trades';
+export const AUDIT_STATE_COLLECTION = 'audit_state';
+export const GLOBAL_LEDGER_DOC_ID = 'global_live_ledger';
 const STATE_COLLECTION = 'autopilot_state';
 const GLOBAL_STATE_DOC = 'global_v1';
 
@@ -147,14 +150,17 @@ export function flagFirestoreQuotaExceeded(err?: any) {
 
 function checkIsQuotaError(err: any): boolean {
   if (!err) return false;
-  const msg = err.message || String(err);
+  const msg = err.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
   const code = err.code || '';
   return (
     code === 'resource-exhausted' ||
+    msg.includes('resource-exhausted') ||
     msg.includes('RESOURCE_EXHAUSTED') ||
     msg.includes('Quota exceeded') ||
     msg.includes('Quota limit exceeded') ||
-    msg.includes('quota has been exhausted')
+    msg.includes('quota has been exhausted') ||
+    msg.includes('Free daily read units') ||
+    msg.includes('Free daily write units')
   );
 }
 
@@ -594,21 +600,49 @@ export function cleanFirestoreData<T extends Record<string, any>>(obj: T): T {
 
 /**
  * Fetch all audit trades from Firestore cloud database.
+ * First queries the low-bandwidth single document audit_state/global_live_ledger (1 read).
  * If empty in Firestore, automatically seeds with baseline Hackathon genesis trades.
  * Guarantees every trade retains its true execution timestamp.
  */
 export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
+  if (isFirestoreQuotaExceeded()) {
+    return [];
+  }
+
+  // 1. Preferred low-cost single-document read (1 read instead of 50)
+  try {
+    const singleDocRef = doc(db, AUDIT_STATE_COLLECTION, GLOBAL_LEDGER_DOC_ID);
+    const snap = await withTimeout(getDoc(singleDocRef), 3500, 'Firestore single doc timeout');
+    if (snap.exists()) {
+      const data = snap.data();
+      if (Array.isArray(data?.latestTrades) && data.latestTrades.length > 0) {
+        const parsed: PaperTradeRecord[] = [];
+        for (const raw of data.latestTrades) {
+          if (raw && (raw.id || raw._id)) {
+            if (isTestTradeRecord(raw) || isAnomalousTrade(raw)) continue;
+            parsed.push(normalizeTradeRecord(raw, raw.id));
+          }
+        }
+        if (parsed.length > 0) {
+          return reconcileTradeCollection(parsed);
+        }
+      }
+    }
+  } catch (err: any) {
+    if (checkIsQuotaError(err)) {
+      flagFirestoreQuotaExceeded(err);
+      return [];
+    }
+  }
+
+  // 2. Fallback to collection query if single doc not initialized yet
   try {
     const colRef = collection(db, TRADES_COLLECTION);
-    const q = query(colRef, limit(2000));
-    const snapshot = await withTimeout(getDocs(q), 8000, 'Firestore query timeout');
+    const q = query(colRef, orderBy('timestamp', 'desc'), limit(50));
+    const snapshot = await withTimeout(getDocs(q), 5000, 'Firestore query timeout');
 
     if (snapshot.empty) {
-      if (!isFirestoreQuotaExceeded()) {
-        console.log('⚡ [Firestore] audit_trades collection is empty. Seeding baseline trades to cloud in background...');
-        seedFirestoreAuditTrades(SEED_PAPER_TRADES).catch(() => {});
-      }
-      return SEED_PAPER_TRADES;
+      return [];
     }
 
     const trades: PaperTradeRecord[] = [];
@@ -624,16 +658,16 @@ export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
     });
 
     if (trades.length === 0) {
-      return SEED_PAPER_TRADES;
+      return [];
     }
 
     return reconcileTradeCollection(trades);
   } catch (err: any) {
     if (checkIsQuotaError(err)) {
       flagFirestoreQuotaExceeded(err);
-      console.warn('⚠️ [Firestore] Free-tier daily write units or timeout reached on Firebase Spark plan. Falling back to persistent server ledger.');
+      console.warn('⚠️ [Firestore] Free-tier daily quota reached on Firebase Spark plan. Falling back to persistent progressive ledger.');
     } else {
-      console.warn('⚠️ [Firestore] Failed to fetch trades, falling back to local/seed:', err);
+      console.warn('⚠️ [Firestore] Notice fetching cloud trades:', err);
     }
     return [];
   }
@@ -727,10 +761,24 @@ export async function saveTradeToFirestore(trade: PaperTradeRecord): Promise<voi
     return;
   }
 
-  // Add to batch queue
+  // 1. Synchronize to single consolidated document audit_state/global_live_ledger (1 write)
+  try {
+    const singleDocRef = doc(db, AUDIT_STATE_COLLECTION, GLOBAL_LEDGER_DOC_ID);
+    const cleaned = cleanFirestoreData(trade);
+    const payload = {
+      latestTrade: cleaned,
+      currentBalance: trade.accountBalance,
+      lastUpdated: new Date().toISOString(),
+    };
+    setDoc(singleDocRef, payload, { merge: true }).catch((err: any) => {
+      if (checkIsQuotaError(err)) flagFirestoreQuotaExceeded(err);
+    });
+  } catch {}
+
+  // 2. Add to batch queue
   pendingTradesQueue.set(trade.id, trade);
 
-  // If queue has reached 10 trades, flush immediately. Otherwise debounce by 1.2s.
+  // If queue has reached 10 trades, flush immediately. Otherwise debounce by 1.5s.
   if (pendingTradesQueue.size >= 10) {
     if (batchFlushTimer) clearTimeout(batchFlushTimer);
     batchFlushTimer = null;
@@ -739,7 +787,7 @@ export async function saveTradeToFirestore(trade: PaperTradeRecord): Promise<voi
     batchFlushTimer = setTimeout(() => {
       batchFlushTimer = null;
       flushPendingFirestoreTrades().catch(() => {});
-    }, 150);
+    }, 1500);
   }
 }
 
@@ -810,38 +858,48 @@ export async function seedFirestoreAuditTrades(
 
 /**
  * Real-time cloud listener for audit trades.
- * Subscribes to the latest 50 trades in real-time.
+ * Subscribes to the low-bandwidth single document audit_state/global_live_ledger (1 read).
  * Invokes callback whenever any user, browser, or server executes a trade.
  */
 export function subscribeToFirestoreAuditTrades(
   onTradesUpdate: (trades: PaperTradeRecord[]) => void,
   onError?: (error: Error) => void
 ): () => void {
+  if (isFirestoreQuotaExceeded()) {
+    return () => {};
+  }
   let activeUnsubscribe: (() => void) | null = null;
 
   try {
-    const colRef = collection(db, TRADES_COLLECTION);
-    const q = query(colRef, orderBy('timestamp', 'desc'), limit(50));
+    const singleDocRef = doc(db, AUDIT_STATE_COLLECTION, GLOBAL_LEDGER_DOC_ID);
 
     activeUnsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        if (snapshot.empty) {
+      singleDocRef,
+      (docSnap) => {
+        if (!docSnap.exists()) {
           return;
         }
-        const recentTrades: PaperTradeRecord[] = [];
-        snapshot.forEach((docSnap) => {
-          const raw = docSnap.data();
-          if (raw && (raw.id || docSnap.id)) {
-            const normalized = normalizeTradeRecord(raw, docSnap.id);
-            if (normalized.id.startsWith('PT-') && !isTestTradeRecord(normalized) && !isAnomalousTrade(normalized)) {
-              recentTrades.push(normalized);
+        const data = docSnap.data();
+        const incomingTrades: PaperTradeRecord[] = [];
+
+        if (Array.isArray(data?.latestTrades) && data.latestTrades.length > 0) {
+          for (const raw of data.latestTrades) {
+            if (raw && (raw.id || raw._id)) {
+              if (isTestTradeRecord(raw) || isAnomalousTrade(raw)) continue;
+              incomingTrades.push(normalizeTradeRecord(raw, raw.id));
             }
           }
-        });
+        } else if (data?.latestTrade) {
+          const raw = data.latestTrade;
+          if (raw && (raw.id || raw._id)) {
+            if (!isTestTradeRecord(raw) && !isAnomalousTrade(raw)) {
+              incomingTrades.push(normalizeTradeRecord(raw, raw.id));
+            }
+          }
+        }
 
-        if (recentTrades.length > 0) {
-          onTradesUpdate(recentTrades);
+        if (incomingTrades.length > 0) {
+          onTradesUpdate(incomingTrades);
         }
       },
       (error: any) => {
@@ -855,7 +913,7 @@ export function subscribeToFirestoreAuditTrades(
             activeUnsubscribe = null;
           }
         } else {
-          console.warn('⚠️ [Firestore] Subscription error:', error);
+          console.warn('⚠️ [Firestore] Single-doc subscription notice:', error);
         }
         if (onError) onError(error);
       }

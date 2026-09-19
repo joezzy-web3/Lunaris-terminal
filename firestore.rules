@@ -11,6 +11,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Consolidated audit checkpoint state - low bandwidth single-document sync
+    match /audit_state/{docId} {
+      allow read, write: if true;
+    }
+
     // Default catch-all
     match /{document=**} {
       allow read, write: if false;

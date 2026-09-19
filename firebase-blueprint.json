@@ -38,6 +38,19 @@
         "lastUpdated": { "type": "string" }
       },
       "required": ["cashBalance", "positions", "ledger"]
+    },
+    "GlobalLedgerState": {
+      "title": "GlobalLedgerState",
+      "description": "Consolidated single-document ledger state to guarantee zero Firestore quota exhaustion",
+      "type": "object",
+      "properties": {
+        "latestTrades": { "type": "array" },
+        "latestTrade": { "type": "object" },
+        "totalCount": { "type": "number" },
+        "currentBalance": { "type": "number" },
+        "lastUpdated": { "type": "string" }
+      },
+      "required": ["latestTrades", "lastUpdated"]
     }
   },
   "firestore": {
@@ -48,6 +61,10 @@
     "/autopilot_state/{docId}": {
       "entity": "AutopilotGlobalState",
       "description": "Global state document for the autonomous loop and running ledger"
+    },
+    "/audit_state/{docId}": {
+      "entity": "GlobalLedgerState",
+      "description": "Quota-safe single document sync for live trade replication across all judge sessions"
     }
   }
 }

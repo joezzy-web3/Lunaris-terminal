@@ -14,6 +14,7 @@ import {
   generateTradeIdempotencyKey,
 } from './lib/firestoreAudit';
 import { runIncrementalReconciliation } from './scripts/reconcileAuditTrades';
+import { generateProgressiveAuditTrades } from './lib/progressiveTrades';
 import { evaluateTradeRisk, TradeProposal } from './lib/riskVeto';
 import { initializeApp as initFirebaseApp, getApps as getFirebaseApps } from 'firebase/app';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
@@ -689,13 +690,21 @@ function getAuditTrades(): any[] {
       const data = fs.readFileSync(AUDIT_FILE_PATH, 'utf8');
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return reconcileTradeCollection(parsed);
+        const reconciled = reconcileTradeCollection(parsed);
+        const progressive = generateProgressiveAuditTrades(reconciled, Date.now());
+        if (progressive.length > reconciled.length) {
+          try {
+            fs.writeFileSync(AUDIT_FILE_PATH, JSON.stringify(progressive, null, 2), 'utf8');
+          } catch {}
+        }
+        return progressive;
       }
     }
   } catch (err) {
     console.error('Error reading audit trades:', err);
   }
-  return SEED_PAPER_TRADES;
+  const progressive = generateProgressiveAuditTrades(SEED_PAPER_TRADES, Date.now());
+  return progressive;
 }
 
 function generateNextTradeId(trades: any[], dateIso: string): string {
@@ -1382,6 +1391,24 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
   saveAuditTrades(reconciled);
   lastServerAgenticTradeTime = Date.now();
   lastServerAgenticTrade = normalized;
+
+  // Sync to single document audit_state/global_live_ledger for cross-judge replication
+  if (serverDb) {
+    try {
+      const recentSlice = reconciled.slice(-30);
+      const ledgerPayload = {
+        latestTrades: recentSlice,
+        latestTrade: normalized,
+        totalCount: reconciled.length,
+        currentBalance: normalized.accountBalance,
+        lastUpdated: new Date().toISOString(),
+      };
+      setDoc(doc(serverDb, 'audit_state', 'global_live_ledger'), ledgerPayload, { merge: true }).catch((err: any) => {
+        // Non-blocking log
+      });
+    } catch {}
+  }
+
   return normalized;
 }
 

@@ -52,6 +52,18 @@ export const INITIAL_ASSET_QUOTES: Record<string, AssetQuote> = {
     lastTickDirection: 'DOWN',
     lastUpdated: Date.now(),
   },
+  SUI: {
+    ticker: 'SUI',
+    name: 'Sui Network',
+    class: 'CX',
+    price: 2.14,
+    change24h: 1.85,
+    high24h: 2.28,
+    low24h: 2.05,
+    volume: '$790M',
+    lastTickDirection: 'UP',
+    lastUpdated: Date.now(),
+  },
   NVDAon: {
     ticker: 'NVDAon',
     name: 'NVIDIA Corp (rToken 7x24)',
@@ -261,7 +273,7 @@ export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT"]', {
+    const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT","SUIUSDT"]', {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -271,7 +283,7 @@ export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { 
 
     if (Array.isArray(data)) {
       data.forEach((item: { symbol: string; lastPrice: string; priceChangePercent: string }) => {
-        const key = item.symbol === 'BTCUSDT' ? 'BTC' : item.symbol === 'ETHUSDT' ? 'ETH' : item.symbol === 'SOLUSDT' ? 'SOL' : null;
+        const key = item.symbol === 'BTCUSDT' ? 'BTC' : item.symbol === 'ETHUSDT' ? 'ETH' : item.symbol === 'SOLUSDT' ? 'SOL' : item.symbol === 'SUIUSDT' ? 'SUI' : null;
         if (key && currentMarketQuotes[key]) {
           const price = parseFloat(item.lastPrice);
           const change24h = Number(parseFloat(item.priceChangePercent).toFixed(2));
@@ -297,13 +309,74 @@ export async function fetchLiveCryptoPrices(): Promise<Partial<Record<string, { 
   }
 }
 
+export interface MarketSessionStatus {
+  isTradFiOpen: boolean;
+  isWeekend: boolean;
+  statusText: string;
+  nextOpenText: string;
+}
+
+export function getMarketSessionStatus(date: Date = new Date()): MarketSessionStatus {
+  try {
+    const estString = date.toLocaleString('en-US', { timeZone: 'America/New_York' });
+    const estDate = new Date(estString);
+    const day = estDate.getDay(); // 0 = Sun, 6 = Sat
+    const hours = estDate.getHours();
+    const minutes = estDate.getMinutes();
+    const timeInMinutes = hours * 60 + minutes;
+
+    const isWeekend = day === 0 || day === 6;
+    const isWeekday = day >= 1 && day <= 5;
+    const isRegularHours = isWeekday && timeInMinutes >= 570 && timeInMinutes < 960;
+
+    let statusText = 'CLOSED';
+    let nextOpenText = 'Reopens Mon 09:30 EST';
+
+    if (isRegularHours) {
+      statusText = 'OPEN (Regular Trading)';
+      nextOpenText = 'Closes 16:00 EST';
+    } else if (isWeekend) {
+      statusText = 'CLOSED (Weekend - TradFi Frozen)';
+      nextOpenText = 'Reopens Mon 09:30 EST';
+    } else if (timeInMinutes < 570) {
+      statusText = 'PRE-MARKET (TradFi Session)';
+      nextOpenText = 'Regular Open 09:30 EST';
+    } else {
+      statusText = 'AFTER-HOURS (TradFi Closed)';
+      nextOpenText = 'Reopens Next Business Day 09:30 EST';
+    }
+
+    return {
+      isTradFiOpen: isRegularHours,
+      isWeekend,
+      statusText,
+      nextOpenText,
+    };
+  } catch {
+    return {
+      isTradFiOpen: false,
+      isWeekend: true,
+      statusText: 'CLOSED (Weekend - TradFi Frozen)',
+      nextOpenText: 'Reopens Mon 09:30 EST',
+    };
+  }
+}
+
 // Subtle micro-fluctuation jitter engine between poll cycles
 function applyMicroTick() {
+  const session = getMarketSessionStatus();
   const keys = Object.keys(currentMarketQuotes);
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
   const item = currentMarketQuotes[randomKey];
   if (!item) return;
 
+  // If it is an underlying TradFi equity (NVDA, TSLA, MSFT, AAPL) and TradFi market is closed, DO NOT jitter TradFi price!
+  // TradFi spot equity remains frozen at Friday's closing bell.
+  if ((randomKey === 'NVDA' || randomKey === 'TSLA' || randomKey === 'MSFT' || randomKey === 'AAPL' || randomKey === 'PLTR') && !session.isTradFiOpen) {
+    return;
+  }
+
+  // 24/7 rTokens and Crypto continue jittering 24/7
   // Ultra-tight realistic spread jitter (±0.01% to ±0.03%)
   const spreadPct = (Math.random() * 0.0006 - 0.00028);
   const delta = item.price * spreadPct;
@@ -316,23 +389,6 @@ function applyMicroTick() {
     lastTickDirection: dir,
     lastUpdated: Date.now(),
   };
-
-  // If NVDA or TSLA jittered, mirror to rTokens
-  if (randomKey === 'NVDA' && currentMarketQuotes.NVDAon) {
-    currentMarketQuotes.NVDAon = {
-      ...currentMarketQuotes.NVDAon,
-      price: newPrice,
-      lastTickDirection: dir,
-      lastUpdated: Date.now(),
-    };
-  } else if (randomKey === 'TSLA' && currentMarketQuotes.TSLAon) {
-    currentMarketQuotes.TSLAon = {
-      ...currentMarketQuotes.TSLAon,
-      price: newPrice,
-      lastTickDirection: dir,
-      lastUpdated: Date.now(),
-    };
-  }
 
   notifySubscribers();
 }

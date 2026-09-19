@@ -20,6 +20,7 @@ import {
   reconcileTradeCollection,
 } from '@/lib/firestoreAudit';
 import { useLiveMarketQuotes } from '@/lib/livePrices';
+import { getSecondsUntilNextTick } from '@/lib/progressiveTrades';
 import { DailyPnlCalendar } from '@/components/DailyPnlCalendar';
 import {
   Download,
@@ -74,7 +75,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [copied, setCopied] = useState(false);
   const [isAutoTicking, setIsAutoTicking] = useState(true);
-  const [secondsUntilNextTick, setSecondsUntilNextTick] = useState(14);
+  const [secondsUntilNextTick, setSecondsUntilNextTick] = useState<number>(() => getSecondsUntilNextTick());
   const [latestTradeId, setLatestTradeId] = useState<string | null>(null);
   const [selectedProofTrade, setSelectedProofTrade] = useState<PaperTradeRecord | null>(null);
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
@@ -246,25 +247,17 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
 
   // Fallback client-side trade execution (for Vercel static hosting or offline environments)
   const executeLocalFallbackTrade = useCallback(() => {
-    const liveQuotes = quotesRef.current;
-    const scenario = generateAutonomousTradeScenario(liveQuotes);
-    const baseTicker = scenario.instrument.split('/')[0];
-    if (liveQuotes[baseTicker]?.price) {
-      scenario.price = liveQuotes[baseTicker].price;
-    }
-
-    const record = recordNewPaperTrade({
-      ...scenario,
-      sourceHandler: 'MANUAL',
-    });
     const updated = getSavedPaperTrades();
-    setTrades(updated);
-    setLatestTradeId(record.id);
+    if (updated && updated.length > 0) {
+      const latest = updated[updated.length - 1];
+      setTrades(updated);
+      setLatestTradeId(latest.id);
 
-    if (record.balanceChange >= 0) {
-      playTradeApprovedChime();
-    } else {
-      playRiskVetoTone();
+      if (latest.balanceChange >= 0) {
+        playTradeApprovedChime();
+      } else {
+        playRiskVetoTone();
+      }
     }
   }, []);
 
@@ -291,18 +284,19 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
   }, [executeLocalFallbackTrade]);
 
-  // 1-second countdown timer for auto-ticking UI - synchronized with server daemon
+  // 1-second countdown timer locked to universal UTC clock for zero multi-device drift
   useEffect(() => {
     if (!isAutoTicking) return;
 
+    setSecondsUntilNextTick(getSecondsUntilNextTick());
+
     const timer = setInterval(() => {
-      setSecondsUntilNextTick((prev) => {
-        if (prev <= 1) {
-          triggerDaemonTick();
-          return 14; // Reset interval: 14s
-        }
-        return prev - 1;
-      });
+      const remaining = getSecondsUntilNextTick();
+      setSecondsUntilNextTick(remaining);
+      if (remaining === 14) {
+        // Universal 14-second boundary reached across all devices
+        triggerDaemonTick();
+      }
     }, 1000);
 
     return () => clearInterval(timer);
@@ -707,11 +701,12 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 font-mono">
           {[
             { ticker: 'BTC', label: 'BTC/USDT', class: 'CX' },
             { ticker: 'ETH', label: 'ETH/USDT', class: 'CX' },
             { ticker: 'SOL', label: 'SOL/USDT', class: 'CX' },
+            { ticker: 'SUI', label: 'SUI/USDT', class: 'CX' },
             { ticker: 'NVDAon', label: 'NVDAon/USDT', class: 'rToken' },
             { ticker: 'TSLAon', label: 'TSLAon/USDT', class: 'rToken' },
           ].map((item) => {

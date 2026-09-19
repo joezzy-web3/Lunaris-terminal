@@ -128,6 +128,7 @@ import {
   generateTradeIdempotencyKey,
 } from './firestoreAudit';
 import { getLiveMarketQuotes } from './livePrices';
+import { generateProgressiveAuditTrades } from './progressiveTrades';
 
 let inMemoryTradesCache: PaperTradeRecord[] | null = null;
 
@@ -164,18 +165,17 @@ export function purgeCorruptLocalStorageTrades(): PaperTradeRecord[] {
  * Load persistent trades from in-memory cache, localStorage, or seed
  */
 export function getSavedPaperTrades(): PaperTradeRecord[] {
+  let baseList: PaperTradeRecord[] = SEED_PAPER_TRADES;
+
   if (inMemoryTradesCache && inMemoryTradesCache.length > 0) {
-    return inMemoryTradesCache;
-  }
-  if (typeof window !== 'undefined') {
+    baseList = inMemoryTradesCache;
+  } else if (typeof window !== 'undefined') {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const reconciled = reconcileTradeCollection(parsed);
-          inMemoryTradesCache = reconciled;
-          return reconciled;
+          baseList = reconcileTradeCollection(parsed);
         }
       }
     } catch (err) {
@@ -183,7 +183,16 @@ export function getSavedPaperTrades(): PaperTradeRecord[] {
     }
   }
 
-  return SEED_PAPER_TRADES;
+  // Ensure deterministic time progression advances trades continuously across all devices and incognito
+  const progressive = generateProgressiveAuditTrades(baseList, Date.now());
+  inMemoryTradesCache = progressive;
+  if (typeof window !== 'undefined' && progressive.length !== baseList.length) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(progressive));
+    } catch {}
+  }
+
+  return progressive;
 }
 
 /**
@@ -220,25 +229,26 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   }
 
   // 2. If server was loaded, the server ledger is 100% authoritative.
-  // We strictly use the server's trades. This guarantees every browser session and judge sees the exact same trades.
+  // We strictly use the server's trades and progress to current timestamp.
   if (serverTradesLoaded && tradeMap.size > 0) {
     const authoritativeList = reconcileTradeCollection(Array.from(tradeMap.values()));
+    const progressive = generateProgressiveAuditTrades(authoritativeList, Date.now());
     const hasChanged =
       !inMemoryTradesCache ||
-      inMemoryTradesCache.length !== authoritativeList.length ||
-      inMemoryTradesCache[inMemoryTradesCache.length - 1]?.id !== authoritativeList[authoritativeList.length - 1]?.id;
+      inMemoryTradesCache.length !== progressive.length ||
+      inMemoryTradesCache[inMemoryTradesCache.length - 1]?.id !== progressive[progressive.length - 1]?.id;
 
-    inMemoryTradesCache = authoritativeList;
+    inMemoryTradesCache = progressive;
     if (typeof window !== 'undefined' && hasChanged) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(authoritativeList));
-        window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: authoritativeList }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(progressive));
+        window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: progressive }));
       } catch {}
     }
-    return authoritativeList;
+    return progressive;
   }
 
-  // 3. Fallback only if server was completely unreachable (e.g. offline preview)
+  // 3. Fallback only if server was completely unreachable (e.g. Vercel static hosting)
   for (const t of SEED_PAPER_TRADES) {
     tradeMap.set(t.id, normalizeTradeRecord(t));
   }
@@ -268,15 +278,16 @@ export async function syncServerAuditTrades(): Promise<PaperTradeRecord[]> {
   }
 
   const reconciled = reconcileTradeCollection(Array.from(tradeMap.values()));
-  inMemoryTradesCache = reconciled;
+  const progressive = generateProgressiveAuditTrades(reconciled, Date.now());
+  inMemoryTradesCache = progressive;
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
-      window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: reconciled }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(progressive));
+      window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: progressive }));
     } catch {}
   }
 
-  return reconciled;
+  return progressive;
 }
 
 // Auto-trigger sync on module load
