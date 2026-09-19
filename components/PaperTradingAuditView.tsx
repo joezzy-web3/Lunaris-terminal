@@ -186,6 +186,32 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     };
     window.addEventListener('lunaris-audit-reset', handleReset);
 
+    // Instant Inter-Tab Trade Broadcast Handler
+    const handleNewTrade = (e: any) => {
+      if (!isMounted || !e.detail) return;
+      const newTrade = e.detail;
+      setLatestTradeId(newTrade.id);
+      if (newTrade.balanceChange >= 0) {
+        playTradeApprovedChime();
+      } else {
+        playRiskVetoTone();
+      }
+    };
+    window.addEventListener('lunaris-audit-new-trade', handleNewTrade);
+
+    // Instant Wake-Up on Tab Switch / Unminimize
+    const handleVisibilityOrFocus = () => {
+      if (!isMounted) return;
+      if (document.visibilityState === 'visible') {
+        syncServerAuditTrades().then((serverTrades) => {
+          if (!isMounted || !serverTrades || serverTrades.length === 0) return;
+          processIncomingAuthoritativeTrades(serverTrades);
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
     // 1. Real-time Firestore listener across all devices/browsers
     // Merges new cloud trades by ID without clobbering or resurrecting stale records
     const unsubscribeFirestore = subscribeToFirestoreAuditTrades((cloudTrades) => {
@@ -222,7 +248,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       processIncomingAuthoritativeTrades(serverTrades);
     });
 
-    // 3. Periodic background sync with server disk ledger (/api/audit/trades) every 4s
+    // 3. Responsive background sync with server disk ledger (/api/audit/trades) every 2.5s
     // Polls authoritative server daemon trades so all judges and browser tabs stay 100% in lockstep
     const serverPollInterval = setInterval(() => {
       if (!isMounted) return;
@@ -230,12 +256,15 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
         if (!isMounted || !serverTrades || serverTrades.length === 0) return;
         processIncomingAuthoritativeTrades(serverTrades);
       });
-    }, 4000);
+    }, 2500);
 
     return () => {
       isMounted = false;
       window.removeEventListener('lunaris-audit-updated', handleUpdate);
+      window.removeEventListener('lunaris-audit-new-trade', handleNewTrade);
       window.removeEventListener('lunaris-audit-reset', handleReset);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
       unsubscribeFirestore();
       clearInterval(serverPollInterval);
     };

@@ -295,6 +295,23 @@ if (typeof window !== 'undefined') {
   syncServerAuditTrades().catch(() => {});
 }
 
+// Native BroadcastChannel for instantaneous (0ms) inter-tab memory synchronization
+let auditBroadcastChannel: BroadcastChannel | null = null;
+if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
+  try {
+    auditBroadcastChannel = new BroadcastChannel('lunaris_audit_sync_channel');
+    auditBroadcastChannel.onmessage = (event) => {
+      if (!event.data) return;
+      if (event.data.type === 'SYNC_TRADES' && Array.isArray(event.data.trades)) {
+        inMemoryTradesCache = event.data.trades;
+        window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: event.data.trades }));
+      } else if (event.data.type === 'NEW_TRADE' && event.data.trade) {
+        window.dispatchEvent(new CustomEvent('lunaris-audit-new-trade', { detail: event.data.trade }));
+      }
+    };
+  } catch {}
+}
+
 /**
  * Persist trades to memory, localStorage, and notify listeners
  */
@@ -305,6 +322,11 @@ export function savePaperTrades(trades: PaperTradeRecord[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
     window.dispatchEvent(new CustomEvent('lunaris-audit-updated', { detail: reconciled }));
+    if (auditBroadcastChannel) {
+      try {
+        auditBroadcastChannel.postMessage({ type: 'SYNC_TRADES', trades: reconciled });
+      } catch {}
+    }
   } catch (err) {
     console.error('Failed to save paper trades:', err);
   }
@@ -374,6 +396,12 @@ export function recordNewPaperTrade(
   savePaperTrades(reconciled);
 
   const finalRecord = reconciled.find((t) => t.id === id) || reconciled[reconciled.length - 1];
+
+  if (auditBroadcastChannel && finalRecord) {
+    try {
+      auditBroadcastChannel.postMessage({ type: 'NEW_TRADE', trade: finalRecord });
+    } catch {}
+  }
 
   // Synchronize with Firestore Cloud DB (buffered batch write)
   saveTradeToFirestore(finalRecord).catch((err) =>

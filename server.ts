@@ -1461,6 +1461,9 @@ app.post('/api/audit/trigger-daemon', (req, res) => {
 
 // GET /api/audit/trades - Global read for all judges and clients
 app.get('/api/audit/trades', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   const trades = getAuditTrades();
   const reconciled = reconcileTradeCollection(trades);
   res.json({
