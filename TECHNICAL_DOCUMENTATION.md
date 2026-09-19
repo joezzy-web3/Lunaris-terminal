@@ -56,8 +56,8 @@ Lunaris bridges native cryptocurrency pairs (`BTC/USDT`, `ETH/USDT`, `SOL/USDT`,
 
 | Typical Hackathon Trading Bots | Lunaris Terminal (Bitget Edition) |
 | :--- | :--- |
-| Single prompt LLM makes buy/sell decisions directly. | **4-Pillar Council Consensus**: Quant-Omega, Atlas-Macro, NEXUS-RED, and Guardian-01 debate in real time before generating an order proposal. |
-| AI hallucinations cause catastrophic account blowups. | **Deterministic Non-LLM Risk Veto**: Guardian-01 enforces hard mathematical collars (max drawdown, leverage limits, slippage collars). The LLM cannot override the risk engine. |
+| Single prompt LLM makes buy/sell decisions directly. | **Multi-Agent Quorum Consensus**: 3 specialized AI agents (Quant-Omega, NEXUS-RED, Atlas-Macro) debate in real time, synthesized by Gemini 2.5 Flash before generating an order proposal. |
+| AI hallucinations cause catastrophic account blowups. | **Deterministic Non-LLM Risk Veto (Guardian-01)**: **Guardian-01 is explicitly NOT an AI or LLM agent.** It is an independent, deterministic mathematical risk engine enforcing hard collars (max drawdown, leverage limits, slippage collars). The LLMs cannot override or negotiate with the risk engine. |
 | Disconnected from real exchanges; fake mock static prices. | **Direct Bitget V2 API Pipeline**: Real-time ticker streaming, orderbook depth mapping, and signed HMAC-SHA256 BYOK live trading connectivity. |
 | Confined to standard crypto assets. | **Cross-Asset rToken Bridge**: Real-time statistical arbitrage and correlation trading between crypto and tokenized US equities (NVDA, TSLA). |
 | Ephemeral local state lost on refresh. | **Enterprise Hybrid Storage**: Cloud synchronization via Firebase Firestore, local disk ledger backup, and client localStorage resilience. |
@@ -138,31 +138,28 @@ The visual identity of Lunaris Terminal was meticulously engineered to evoke the
 ## 5. THE FOUR ARCHITECTURAL PILLARS
 
 ### 5.1 Pillar I: Multi-Agent Quorum Consensus Engine & NEXUS-RED Adversarial Red Team
-Financial markets are non-stationary and adversarial. No single model archetype can successfully navigate trending, range-bound, and high-volatility regimes simultaneously. Lunaris implements an autonomous **4-Pillar Council of Specialized Personas**:
+Financial markets are non-stationary and adversarial. No single model archetype can successfully navigate trending, range-bound, and high-volatility regimes simultaneously. Lunaris implements an autonomous **Council of Three Specialized AI Agents**:
 
 1. **Quant-Omega (Alpha Generator / Momentum Engine)**:
    - Evaluates micro-structure signals, orderbook imbalances (bid/ask ratio > 1.3), short-term momentum (EMA 9/21 cross), and volume surges.
    - Aggressive persona focused on capturing breakout volatility.
-2. **Guardian-01 (Risk Officer / Chief Compliance)**:
-   - Evaluates volatility regimes, Average True Range (ATR) expansion, portfolio drawdown thresholds, and tail-risk exposure.
-   - Defensive persona with non-negotiable veto jurisdiction and Value-at-Risk (VaR) hard limits.
-3. **NEXUS-RED (Adversarial Red Team & Chaos Arbiter)**:
+2. **NEXUS-RED (Adversarial Red Team & Chaos Arbiter)**:
    - **Crucial Counter-Intelligence Persona**: Assumes the role of an adversarial market maker, MEV searcher, or predator liquidity pool.
    - **Orderbook Trap & Manipulation Detection**: Interrogates signals for spoofing, artificial bid walls, bull/bear traps, and low-volume fakeouts.
    - **Stress-Testing Execution Feasibility**: Challenges Quant-Omega’s aggressive alpha assumptions, mandating strict slippage collars, limit order enforcement (Bitget IOC/FOK), and dynamic risk mitigation clauses before permitting order commitment.
    - **Post-Mortem Forensics**: Analyzes any stop-loss or drawdown event through an automated retrospective breakdown, identifying root causes, adversarial market dynamics, and writing adaptive policy amendments.
-4. **Atlas-Macro (Cross-Asset Strategist)**:
+3. **Atlas-Macro (Cross-Asset Strategist)**:
    - Evaluates funding rates, Bitcoin dominance, macroeconomic catalysts, and crypto-to-equities correlations (e.g. S&P 500 correlation with BTC/NVDA).
    - Medium-term regime identifier.
-5. **Gemini 2.5 Flash Synthesis**:
+4. **Gemini 2.5 Flash Synthesis**:
    - Acts as the Council Scribe and High Arbiter, synthesizing individual agent rationales into a unified decision output, assigning confidence scores (0–100%), and drafting the formal execution prospectus.
 
-**Consensus Rule**: A trade proposal requires **unanimous or supermajority approval (≥66%)**, must pass **NEXUS-RED Trap & Manipulation Audit**, AND must NOT be vetoed by Guardian-01.
+**Consensus Rule**: A trade proposal requires **unanimous or supermajority approval (≥66%)** among the AI agents, must pass the **NEXUS-RED Trap & Manipulation Audit**, AND must pass downstream mathematical validation by **Guardian-01**.
 
 ---
 
-### 5.2 Pillar II: Deterministic Risk Veto Engine & Hard Kill Switch
-To prevent disastrous LLM hallucination in financial applications, Lunaris places a **Deterministic Risk Engine (`lib/riskVeto.ts`)** downstream of the AI council. The risk engine is pure, non-probabilistic code:
+### 5.2 Pillar II: Deterministic Risk Veto Engine (Guardian-01) & Hard Kill Switch
+**Guardian-01 is explicitly NOT an AI or LLM agent.** To prevent disastrous LLM hallucinations in financial execution, Lunaris places **Guardian-01 (`lib/riskVeto.ts`)** downstream of the AI council as a strictly deterministic, non-probabilistic mathematical risk engine. Because Guardian-01 is pure algorithmic code, its rules cannot be hallucinated, negotiated away, or bypassed by any LLM:
 
 - **Absolute Maximum Leverage**: Hard cap at 5x (configurable down to 2x for equities).
 - **Single Trade Allocation Limit**: Maximum 15% of current equity allocated to any single instrument.
@@ -245,11 +242,11 @@ The **Autopilot View** provides real-time oversight of the autonomous trading da
 ### 6.4 AI Multi-Agent Council (`COUNCIL`)
 The **Council Debate Console** reveals the transparent inner reasoning of the autonomous AI team:
 - **Ticker Selector**: Choose any asset (BTC, ETH, SOL, NVDAon, TSLAon, etc.) to trigger an on-demand council deliberation.
-- **Adversarial Debates**: Read real-time, interactive debate arguments across 4 distinct agent personas:
-  - **Quant-Omega**: Argues aggressive alpha momentum, orderbook absorption, and breakout catalysts.
-  - **Guardian-01**: Challenges with volatility collars, stop-loss barriers, and strict Value-at-Risk limits.
-  - **NEXUS-RED (Adversarial Red Team & Chaos Arbiter)**: Interrogates orderbook spoofing, flags predatory liquidity traps (e.g. artificial bid walls), and injects risk-mitigation clauses (mandatory IOC execution, tight slippage bounds).
-  - **Atlas-Macro**: Correlates institutional OTC flows, macro basis, and cross-asset equities context.
+- **Adversarial Debates**: Read real-time, interactive debate arguments across 3 specialized AI agents alongside the deterministic risk engine voice:
+  - **Quant-Omega (AI Agent)**: Argues aggressive alpha momentum, orderbook absorption, and breakout catalysts.
+  - **NEXUS-RED (AI Agent / Adversarial Red Team & Chaos Arbiter)**: Interrogates orderbook spoofing, flags predatory liquidity traps (e.g. artificial bid walls), and injects risk-mitigation clauses (mandatory IOC execution, tight slippage bounds).
+  - **Atlas-Macro (AI Agent)**: Correlates institutional OTC flows, macro basis, and cross-asset equities context.
+  - **Guardian-01 (Deterministic Risk Engine Voice)**: Enforces non-negotiable mathematical collars, volatility corridors, and strict Value-at-Risk limits (non-LLM code).
 - **NEXUS-RED Adversarial Risk Mitigation Clause**: When consensus is reached, NEXUS-RED appends an explicit counter-trap clause (e.g., *"Orderbook depth verified. Limit order execution enforced to prevent predatory slippage. Max VaR bounded at -10% NAV"*).
 - **Gemini Flash Synthesis Card**: Displays the consensus verdict (e.g. `BUY / LONG`, `HOLD`, `VETO`), the collective confidence score (e.g. `87%`), and the synthesized execution rationale.
 - **Force Simulation Button**: Allows judges to test how the council reacts to simulated sudden orderbook imbalances or volatility shocks.
