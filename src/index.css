@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+:root {
+  /* LUNARIS Brand Palette - Ultra-Monochrome Taste-Skill Principles */
+  --lunaris-bg: #07080c;
+  --lunaris-panel-bg: #0c0e14;
+  --lunaris-panel-border: rgba(255, 255, 255, 0.08);
+  
+  /* Action & Focus Accents - Clean Monochrome & High-Contrast White */
+  --lunaris-accent-cyan: #f1f5f9;    /* Clean White/Slate */
+  --lunaris-accent-purple: #ffffff;  /* Pure White Primary Action */
+  --lunaris-accent-gold: #e2e8f0;    /* Silver/White */
+  
+  /* Status & Financial Indicators - High-legibility AA contrast */
+  --lunaris-profit: #10b981;         /* Emerald */
+  --lunaris-loss: #f43f5e;           /* Rose */
+  --lunaris-warn: #fbbf24;           /* Warning amber */
+  --lunaris-sim: #71717a;            /* Muted zinc */
+
+  /* Asset Class Tokens */
+  --lunaris-class-crypto: #94a3b8;   /* Clean Slate (CX) */
+  --lunaris-class-equity: #cbd5e1;   /* Light Slate (EQ) */
+}
+
+body {
+  background-color: var(--lunaris-bg);
+  color: #f1f5f9;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+  background-image: 
+    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(9, 10, 15, 0.96), rgba(9, 10, 15, 1));
+  background-size: 24px 24px, 100% 100%;
+}
+
+.font-sans-taste {
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-mono-taste {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom terminal scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 240, 255, 0.5);
+}
+
+/* Taste-Skill Hairline Reticle & Card Styles */
+.card-monochrome {
+  background-color: var(--lunaris-panel-bg);
+  border: 1px solid var(--lunaris-panel-border);
+}
+.card-monochrome:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Tactical Corner reticle styles */
+.reticle-box {
+  position: relative;
+}
+.reticle-box::before {
+  content: '[+]';
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 9px;
+  color: rgba(0, 240, 255, 0.35);
+  font-family: monospace;
+}
+.reticle-box::after {
+  content: '[+]';
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 9px;
+  color: rgba(0, 240, 255, 0.35);
+  font-family: monospace;
+}
+
+/* Infinite Sliding Marquee */
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker {
+  /* Relaxed 75s duration provides smooth, legible institutional velocity (~30px/s) for expanded cross-asset lists */
+  animation: ticker 75s linear infinite;
+}
+
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* =========================================
+   CYBER COURTROOM TRIBUNAL KEYFRAME FX
+   ========================================= */
+
+@keyframes courtScreenShake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-5px, -3px) rotate(-0.5deg); }
+  20% { transform: translate(4px, 4px) rotate(0.4deg); }
+  30% { transform: translate(-4px, 3px) rotate(-0.3deg); }
+  40% { transform: translate(3px, -2px) rotate(0.2deg); }
+  50% { transform: translate(-2px, 2px) rotate(-0.1deg); }
+  70% { transform: translate(1px, -1px) rotate(0deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.animate-court-shake {
+  animation: courtScreenShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes objectionSlamIn {
+  0% {
+    opacity: 0;
+    transform: scale(2.4) rotate(-6deg);
+    filter: blur(8px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(0.95) rotate(1deg);
+    filter: blur(0px);
+  }
+  75% {
+    transform: scale(1.05) rotate(-0.5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.animate-objection-slam {
+  animation: objectionSlamIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes gavelStrikeDown {
+  0% {
+    transform: rotate(-45deg) translateY(-20px);
+  }
+  50% {
+    transform: rotate(15deg) translateY(6px);
+  }
+  70% {
+    transform: rotate(0deg) translateY(0);
+  }
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+}
+
+.animate-gavel-strike {
+  transform-origin: 85% 15%;
+  animation: gavelStrikeDown 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes courtShockwaveRing {
+  0% {
+    transform: scale(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(3.5);
+    opacity: 0;
+  }
+}
+
+.animate-shockwave-ring {
+  animation: courtShockwaveRing 0.8s cubic-bezier(0, 0.5, 0.5, 1) forwards;
+}
+
+@keyframes stampImpact {
+  0% {
+    opacity: 0;
+    transform: scale(3) rotate(-12deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.92) rotate(-4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-6deg);
+  }
+}
+
+.animate-stamp-impact {
+  animation: stampImpact 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+

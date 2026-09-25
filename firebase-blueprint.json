@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "AuditTrade": {
+      "title": "AuditTrade",
+      "description": "Historical paper-trading records complying with Bitget Hackathon S2 specification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "instrument": { "type": "string" },
+        "direction": { "type": "string", "enum": ["LONG", "SHORT"] },
+        "price": { "type": "number" },
+        "quantity": { "type": "number" },
+        "leverage": { "type": "number" },
+        "balanceChange": { "type": "number" },
+        "balanceChangePct": { "type": "number" },
+        "accountBalance": { "type": "number" },
+        "trigger": { "type": "string" },
+        "status": { "type": "string", "enum": ["CLOSED", "OPEN", "STOP_LOSS", "TAKE_PROFIT"] },
+        "postMortem": { "type": "object" },
+        "auditSeq": { "type": "number" },
+        "legacyId": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "instrument", "direction", "price", "quantity", "accountBalance", "trigger", "status"]
+    },
+    "AutopilotGlobalState": {
+      "title": "AutopilotGlobalState",
+      "description": "Global synchronized portfolio and engine state across all client sessions",
+      "type": "object",
+      "properties": {
+        "isExecuting": { "type": "boolean" },
+        "isTurbo": { "type": "boolean" },
+        "cashBalance": { "type": "number" },
+        "positions": { "type": "object" },
+        "ledger": { "type": "array" },
+        "autoExitPct": { "type": "number" },
+        "maxOpenPositions": { "type": "number" },
+        "lastUpdated": { "type": "string" }
+      },
+      "required": ["cashBalance", "positions", "ledger"]
+    },
+    "GlobalLedgerState": {
+      "title": "GlobalLedgerState",
+      "description": "Consolidated single-document ledger state to guarantee zero Firestore quota exhaustion",
+      "type": "object",
+      "properties": {
+        "latestTrades": { "type": "array" },
+        "latestTrade": { "type": "object" },
+        "totalCount": { "type": "number" },
+        "currentBalance": { "type": "number" },
+        "lastUpdated": { "type": "string" }
+      },
+      "required": ["latestTrades", "lastUpdated"]
+    }
+  },
+  "firestore": {
+    "/audit_trades/{tradeId}": {
+      "entity": "AuditTrade",
+      "description": "Public read/write verified paper trades for hackathon judges and live execution"
+    },
+    "/autopilot_state/{docId}": {
+      "entity": "AutopilotGlobalState",
+      "description": "Global state document for the autonomous loop and running ledger"
+    },
+    "/audit_state/{docId}": {
+      "entity": "GlobalLedgerState",
+      "description": "Quota-safe single document sync for live trade replication across all judge sessions"
+    }
+  }
+}

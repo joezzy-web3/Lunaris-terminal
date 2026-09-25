@@ -1,0 +1,7 @@
+{
+  "name": "LUNARIS Terminal (Bitget Edition)",
+  "description": "Cross-asset AI agentic trading terminal bridging crypto and equities with autonomous execution, multi-agent debate council, social pulse radar, and deterministic risk veto engine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
