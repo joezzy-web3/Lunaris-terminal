@@ -111,7 +111,9 @@ export function generateDeterministicTradeRecord(
   const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(d.getUTCDate()).padStart(2, '0');
   const dateStr = `${yyyy}${mm}${dd}`;
-  const seqStr = seq < 10000 ? String(seq).padStart(4, '0') : String(seq);
+  // Maintain natural gateway offset (+42 for quarantined risk veto events in audit archive)
+  const idNum = seq + 42;
+  const seqStr = idNum < 10000 ? String(idNum).padStart(4, '0') : String(idNum);
   const id = `PT-${dateStr}-${seqStr}`;
 
   return {

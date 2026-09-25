@@ -50,8 +50,14 @@ export const DailyPnlCalendar: React.FC<DailyPnlCalendarProps> = ({
         losses: number;
       }
     >();
+    const seenIds = new Set<string>();
 
     trades.forEach((trade) => {
+      if (!trade || !trade.id || seenIds.has(trade.id)) {
+        return;
+      }
+      seenIds.add(trade.id);
+
       // Resolve execution date string
       let dateKey = '';
       if (trade.timestamp) {

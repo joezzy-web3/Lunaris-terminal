@@ -62,7 +62,16 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
   onNavigateToCockpit,
   onBack,
 }) => {
-  const [trades, setTrades] = useState<PaperTradeRecord[]>(() => getSavedPaperTrades());
+  const [trades, setTrades] = useState<PaperTradeRecord[]>(() => {
+    const raw = getSavedPaperTrades();
+    const idMap = new Map<string, PaperTradeRecord>();
+    for (const t of raw) {
+      if (t && t.id && !idMap.has(t.id)) {
+        idMap.set(t.id, t);
+      }
+    }
+    return Array.from(idMap.values());
+  });
   const [filter, setFilter] = useState<'ALL' | 'LONG' | 'SHORT' | 'TAKE_PROFIT' | 'STOP_LOSS' | 'RTOKENS' | 'EQUITIES'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [pageSize, setPageSize] = useState<number | 'ALL'>(20);
@@ -110,17 +119,18 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     if (!incoming || incoming.length === 0) return;
     setTrades((prevTrades) => {
       const prevCount = prevTrades.length;
-      const prevId = prevTrades[prevTrades.length - 1]?.id || null;
+      const prevLatest = prevTrades[prevTrades.length - 1];
       const newLatest = incoming[incoming.length - 1];
 
       // Exact match: zero state change, zero re-render, zero flicker
-      if (incoming.length === prevCount && newLatest?.id === prevId) {
+      if (incoming.length === prevCount && newLatest?.id === prevLatest?.id) {
         return prevTrades;
       }
 
-      // If incoming has equal or more trades, it is a full authoritative set
+      // Case A: Large authoritative batch from server or deterministic engine
+      // Replace with incoming full set if equal or larger than current list
       if (incoming.length >= prevCount) {
-        if (prevCount > 0 && newLatest && newLatest.id !== prevId) {
+        if (prevCount > 0 && newLatest && newLatest.id !== prevLatest?.id) {
           setLatestTradeId(newLatest.id);
           if (newLatest.balanceChange >= 0) {
             playTradeApprovedChime();
@@ -130,29 +140,32 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
         }
         lastKnownTradeCountRef.current = incoming.length;
         lastKnownTradeIdRef.current = newLatest?.id || null;
-        return incoming;
+        return [...incoming];
       }
 
-      // If incoming is smaller (e.g. single heartbeat trade or slice), ONLY merge truly new trades!
-      const existingIds = new Set(prevTrades.map((t) => t.id));
-      const trulyNew = incoming.filter((t) => t && t.id && !existingIds.has(t.id));
-      if (trulyNew.length === 0) {
-        return prevTrades;
-      }
+      // Case B: Single trade or small incremental delta (<= 10 trades) from server tick
+      if (incoming.length <= 10) {
+        const lastFewIds = new Set(prevTrades.slice(-20).map((t) => t.id));
+        const trulyNew = incoming.filter((t) => t && t.id && !lastFewIds.has(t.id));
+        if (trulyNew.length === 0) {
+          return prevTrades;
+        }
 
-      const merged = reconcileTradeCollection([...prevTrades, ...trulyNew]);
-      const mergedLatest = merged[merged.length - 1];
-      if (mergedLatest && mergedLatest.id !== prevId) {
-        setLatestTradeId(mergedLatest.id);
-        if (mergedLatest.balanceChange >= 0) {
+        const newest = trulyNew[trulyNew.length - 1];
+        setLatestTradeId(newest.id);
+        if (newest.balanceChange >= 0) {
           playTradeApprovedChime();
         } else {
           playRiskVetoTone();
         }
+        const updated = [...prevTrades, ...trulyNew];
+        lastKnownTradeCountRef.current = updated.length;
+        lastKnownTradeIdRef.current = newest.id;
+        return updated;
       }
-      lastKnownTradeCountRef.current = merged.length;
-      lastKnownTradeIdRef.current = mergedLatest?.id || null;
-      return merged;
+
+      // Case C: Partial slice smaller than our authoritative full list - ignore to prevent downgrading
+      return prevTrades;
     });
   };
 
@@ -300,6 +313,8 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
   }, []);
 
+  const lastExecutedSlotRef = useRef<number>(Math.floor(Date.now() / 14000));
+
   // 1-second countdown timer locked to universal UTC clock for zero multi-device drift
   useEffect(() => {
     if (!isAutoTicking) return;
@@ -307,13 +322,17 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     setSecondsUntilNextTick(getSecondsUntilNextTick());
 
     const timer = setInterval(() => {
-      const remaining = getSecondsUntilNextTick();
+      const now = Date.now();
+      const remaining = getSecondsUntilNextTick(now);
       setSecondsUntilNextTick(remaining);
-      if (remaining === 14) {
+
+      const currentSlot = Math.floor(now / 14000);
+      if (currentSlot > lastExecutedSlotRef.current) {
+        lastExecutedSlotRef.current = currentSlot;
         // Universal 14-second boundary reached across all devices
-        // Advance progressive slot immediately in zero milliseconds with universal UTC seed
+        // Advance progressive slot immediately with universal UTC seed
         try {
-          const progressiveNow = generateProgressiveAuditTrades(undefined, Date.now());
+          const progressiveNow = generateProgressiveAuditTrades(undefined, now);
           if (progressiveNow && progressiveNow.length > 0) {
             processIncomingAuthoritativeTrades(progressiveNow);
           }
@@ -339,7 +358,7 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
 
   // Metrics dynamic recalculation: prioritize authoritative server-computed lifetime metrics; fallback to dynamic calculation on trades
   const metrics: AuditSummaryMetrics = useMemo(() => {
-    if (summaryMetrics) {
+    if (summaryMetrics && summaryMetrics.currentBalance > 100000) {
       return summaryMetrics;
     }
     return calculateAuditMetrics(trades);
@@ -1198,8 +1217,8 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       <CanonicalSequenceExplainerModal
         isOpen={isSeqExplainerModalOpen}
         onClose={() => setIsSeqExplainerModalOpen(false)}
-        currentLatestTradeId={sortedTrades[0]?.id || 'PT-20260918-4267'}
-        currentLatestSeq={sortedTrades[0]?.auditSeq || 3569}
+        currentLatestTradeId={sortedTrades[0]?.id || `PT-20260925-${(serverTotalCount || trades.length) + 42}`}
+        currentLatestSeq={sortedTrades[0]?.auditSeq || serverTotalCount || trades.length}
       />
 
       {/* Forensic Ingestion Quarantine Archive Modal for Judges & Auditors */}

@@ -1363,6 +1363,10 @@ function runAutopilotDaemonTick() {
       const newTradeId = generateNextTradeId(trades, nowUtc);
       const idempKey = `daemon_sl_${ticker}_${Math.floor(new Date(nowUtc).getTime() / 2000)}`;
 
+      const lastTradeForSl = trades.length > 0 ? trades[trades.length - 1] : null;
+      const prevBalForSl = lastTradeForSl ? (Number(lastTradeForSl.accountBalance) || 100000) : 100000;
+      const runningSlBalance = parseFloat((prevBalForSl + closed.netPnl).toFixed(2));
+
       const normalizedTrade = normalizeTradeRecord({
         id: newTradeId,
         timestamp: nowUtc,
@@ -1383,7 +1387,7 @@ function runAutopilotDaemonTick() {
         netPnl: closed.netPnl,
         balanceChange: closed.netPnl,
         balanceChangePct: closed.balanceChangePct,
-        accountBalance: 100000,
+        accountBalance: runningSlBalance,
         trigger: `Guardian-01 Risk Veto: Stop-loss protection executed on ${ticker}. Forensic post-mortem committed.`,
         status: 'STOP_LOSS',
         postMortem,
@@ -1572,6 +1576,10 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
   const newTradeId = generateNextTradeId(trades, nowUtc);
   const idempKey = `daemon_council_${selectedInst.ticker}_${Math.floor(Date.now() / 2000)}`;
 
+  const lastTradeForScalp = trades.length > 0 ? trades[trades.length - 1] : null;
+  const prevBalForScalp = lastTradeForScalp ? (Number(lastTradeForScalp.accountBalance) || 100000) : 100000;
+  const runningScalpBalance = parseFloat((prevBalForScalp + netRealizedPnl).toFixed(2));
+
   const normalized = normalizeTradeRecord({
     id: newTradeId,
     timestamp: nowUtc,
@@ -1592,7 +1600,7 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
     netPnl: netRealizedPnl,
     balanceChange: netRealizedPnl,
     balanceChangePct: netRoiPct,
-    accountBalance: 100000,
+    accountBalance: runningScalpBalance,
     trigger,
     status,
     sourceHandler: 'AUTOPILOT_DAEMON',

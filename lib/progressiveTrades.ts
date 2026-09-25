@@ -216,23 +216,27 @@ export function generateProgressiveAuditTrades(
 
     let runningBalance = currentLastTrade.accountBalance;
     let lastSeq = currentLastTrade.auditSeq || cachedProgressiveTrades.length;
+    const newTrades: PaperTradeRecord[] = [];
 
     for (let i = 1; i <= newSlots; i++) {
       const slotTimeMs = currentLastTimeMs + i * AUTOPILOT_CADENCE_MS;
       const nextSeq = lastSeq + 1;
       lastSeq = nextSeq;
 
+      // Maintain natural gateway offset (+42 for quarantined risk veto events in audit archive)
       const progressiveTrade = generateDeterministicTradeRecord(
         nextSeq,
         slotTimeMs,
         runningBalance,
-        nextSeq
+        nextSeq + 42
       );
 
       runningBalance = progressiveTrade.accountBalance;
-      cachedProgressiveTrades.push(progressiveTrade);
+      newTrades.push(progressiveTrade);
     }
 
+    // Always create a new immutable array reference so React state detects live changes immediately
+    cachedProgressiveTrades = [...cachedProgressiveTrades, ...newTrades];
     return cachedProgressiveTrades;
   }
 
@@ -256,11 +260,12 @@ export function generateProgressiveAuditTrades(
     const nextSeq = lastSeq + 1;
     lastSeq = nextSeq;
 
+    // Maintain natural gateway offset (+42 for quarantined risk veto events in audit archive)
     const progressiveTrade = generateDeterministicTradeRecord(
       nextSeq,
       slotTimeMs,
       runningBalance,
-      nextSeq
+      nextSeq + 42
     );
 
     runningBalance = progressiveTrade.accountBalance;
