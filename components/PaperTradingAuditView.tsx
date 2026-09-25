@@ -15,7 +15,7 @@ import {
   reconcileTradeCollection,
 } from '@/lib/firestoreAudit';
 import { useLiveMarketQuotes } from '@/lib/livePrices';
-import { getSecondsUntilNextTick } from '@/lib/progressiveTrades';
+import { getSecondsUntilNextTick, generateProgressiveAuditTrades } from '@/lib/progressiveTrades';
 import { DailyPnlCalendar } from '@/components/DailyPnlCalendar';
 import {
   Download,
@@ -310,7 +310,15 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
       const remaining = getSecondsUntilNextTick();
       setSecondsUntilNextTick(remaining);
       if (remaining === 14) {
-        // Universal 14-second boundary reached across all devices - check for server daemon execution
+        // Universal 14-second boundary reached across all devices
+        // Advance progressive slot immediately in zero milliseconds with universal UTC seed
+        try {
+          const progressiveNow = generateProgressiveAuditTrades(undefined, Date.now());
+          if (progressiveNow && progressiveNow.length > 0) {
+            processIncomingAuthoritativeTrades(progressiveNow);
+          }
+        } catch {}
+        // Synchronize in background with authoritative server daemon
         checkDaemonUpdate();
       }
     }, 1000);
@@ -552,15 +560,6 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
               <ShieldAlert className="w-4 h-4 text-rose-400" />
               <span>Rejected Trades</span>
             </button>
-
-            {/* Cloudflare D1 Edge SQL Live Badge */}
-            <div
-              className="flex items-center gap-1.5 bg-amber-500/10 text-amber-300 border border-amber-500/30 px-3 py-2.5 rounded-xl text-xs select-none shadow-[0_0_10px_rgba(245,158,11,0.1)]"
-              title="Audit ledger is backed by Cloudflare D1 distributed edge SQL database across 300+ data centers."
-            >
-              <Database className="w-4 h-4 text-amber-400" />
-              <span className="font-mono font-bold text-[11px] tracking-wide">CLOUDFLARE D1 SQL</span>
-            </div>
 
             {/* Cryptographically Verified Append-Only Status */}
             <div

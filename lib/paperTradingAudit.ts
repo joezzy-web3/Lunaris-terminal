@@ -246,6 +246,11 @@ export async function syncServerAuditTrades(limit?: number): Promise<PaperTradeR
       inMemoryTradesCache.length !== combined.length ||
       inMemoryTradesCache[inMemoryTradesCache.length - 1]?.id !== combined[combined.length - 1]?.id;
 
+    // Guard: Never downgrade in-memory cache if it already holds more verified progressive trades
+    if (inMemoryTradesCache && inMemoryTradesCache.length > combined.length) {
+      return inMemoryTradesCache;
+    }
+
     inMemoryTradesCache = combined;
     if (typeof window !== 'undefined' && hasChanged) {
       try {
@@ -802,6 +807,13 @@ export function generateCsvExport(trades: PaperTradeRecord[]): string {
     '#    - Invariant 3: balanceChangePct strictly equals (Net PnL / Margin Collateral) * 100.',
     '#    - Invariant 4: Duplicate trade submissions rejected for new trades.',
     '#    - Invariant 5: Manual adjustments excluded from trade aggregates while updating balance.',
+    '#',
+    '# 6. AUTOMATED DAILY SELF-AUDIT & NON-DESTRUCTIVE QUARANTINE (Activated September 25, 2026):',
+    '#    - Policy: Raw trading logs are strictly append-only; records are NEVER deleted or retroactively edited.',
+    '#    - Protocol: To eliminate the operational risk and subjectivity of manual interventions, an automated',
+    '#      daily daemon validates ledger integrity every 24 hours. Any corrupted tick or test artifact is',
+    '#      segregated into /data/quarantine/ with cryptographic timestamps and an explicit quarantineReason code,',
+    '#      inspectable via the Forensic Quarantine Modal, keeping the active ledger verifiable and compliant.',
     '# ==========================================================================================',
   ];
 

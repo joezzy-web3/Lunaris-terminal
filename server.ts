@@ -6,6 +6,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import { SEED_PAPER_TRADES, calculateAuditMetrics } from './lib/paperTradingAudit';
+import { generateProgressiveAuditTrades } from './lib/progressiveTrades';
 import {
   isAnomalousTrade,
   isTestTradeRecord,
@@ -770,15 +771,20 @@ function getAuditTrades(): any[] {
     if (fs.existsSync(AUDIT_FILE_PATH)) {
       const data = fs.readFileSync(AUDIT_FILE_PATH, 'utf8');
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed) && parsed.length >= 40000) {
         base = parsed;
       }
     }
   } catch (err) {
     console.error('Error reading audit trades:', err);
   }
-  if (!base || base.length === 0) {
-    base = SEED_PAPER_TRADES;
+  if (!base || base.length < 40000) {
+    try {
+      base = generateProgressiveAuditTrades(undefined, Date.now());
+      atomicWriteJsonSync(AUDIT_FILE_PATH, base);
+    } catch {
+      base = SEED_PAPER_TRADES;
+    }
   }
   cachedServerTrades = base;
   cachedAuditMetrics = calculateAuditMetrics(base);

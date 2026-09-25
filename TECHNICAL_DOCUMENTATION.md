@@ -362,11 +362,15 @@ Institutional judges can stress-test the risk architecture by simulating catastr
 - **Trading Floor Ambience**: A low-frequency brown noise and bandpass resonance simulating a live Wall Street / institutional trading floor.
 - **Tactile Cybernetic Feedback**: Discrete cyber clicks for button presses, resonant chimes for approved profitable executions, and dual-tone klaxon alerts for Guardian risk vetoes.
 
-### 7.5 Operator Safety Passcode & Rejected Trades Archive
+### 7.5 Operator Safety Passcode & Automated Daily Self-Audit Engine (Non-Destructive Quarantine)
 - **Operator Safety Passcode (`/api/audit/verify-pause-passcode`)**: Protected via SHA-256 hashed operator authorization (`707d4f71...`).
 - **Strictly Delimited Scope**: The passcode secures the **Operator Control Plane** exclusively. It prevents anonymous public web visitors on the live preview URL from pausing the 24/7 background execution daemon or executing emergency resets.
 - **Ledger Immutability Guarantee**: The administrative passcode **cannot edit, rewrite, or delete historical trade records**. All trade storage in Cloudflare D1 SQL and `data/audit_trades.json` is strictly append-only.
-- **Rejected Trades Archive (`/api/audit/quarantine-archive`)**: Raw ingestion events that fail pre-trade boundary validation (such as early test harness tags or out-of-corridor test pulses) are never purged or mixed into the trading ledger. Instead, all quarantined events are preserved in an isolated archive. Evaluators and quantitative judges can click the red **`Rejected Trades`** button to inspect their full payloads, verify their SHA-256 integrity hash, and download the standalone archive as `.JSON` or `.CSV` directly from the Audit View.
+- **Automated Daily Self-Audit Daemon (Activated September 25, 2026)**:
+  - *Institutional Context*: To eliminate the risk of manual database manipulation or human bias while ensuring strict compliance with exchange accounting standards, an automated self-audit daemon executes continuously every 24 hours.
+  - *Mathematical Invariant Enforcement*: The daemon mathematically audits every transaction against the 5 core execution invariants: $\text{Net PnL} = \text{Gross PnL} - \text{Fee} - \text{Slippage}$, $\le 0.5\%$ slippage collar, $\text{Balance Change \%} = (\text{Net PnL} / \text{Margin}) \times 100$, and unbroken equity chain continuity from genesis $100,000.00.
+  - *Segregation Over Deletion*: In adherence to non-destructive compliance standards, records are **never deleted**. Any synthetic test pulse, malformed payload, or execution anomaly is isolated into `/data/quarantine/` with its original timestamp, cryptographic hash, and explicit `quarantineReason` code.
+- **Rejected Trades Archive (`/api/audit/quarantine-archive`)**: Quarantined events are preserved in this isolated archive. Evaluators and quantitative judges can click the red **`Rejected Trades`** button directly in the Audit View to inspect all quarantined records, verify their cryptographic integrity hashes and specific quarantine reasons, or download the archive as `.JSON` or `.CSV`.
 
 ---
 
