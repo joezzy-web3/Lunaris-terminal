@@ -328,9 +328,47 @@ export const PaperTradingAuditView: React.FC<PaperTradingAuditViewProps> = ({
     }
   }, [latestTradeId]);
 
-  // Metrics dynamic recalculation: prioritize authoritative server-computed lifetime metrics; fallback to dynamic calculation on trades
+  // Metrics dynamic recalculation: merges authoritative lifetime metrics with live realtime settled trades in strict lockstep
   const metrics: AuditSummaryMetrics = useMemo(() => {
+    const liveCount = trades.length;
+    const currentTrade = liveCount > 0 ? trades[liveCount - 1] : null;
+    const liveBalance = currentTrade?.accountBalance || summaryMetrics?.currentBalance || 100000;
+
     if (summaryMetrics && summaryMetrics.currentBalance > 100000) {
+      // If live trades count has progressed past or matches summaryMetrics, merge them in lockstep!
+      if (liveCount >= summaryMetrics.totalTrades) {
+        const extraTrades = liveCount - summaryMetrics.totalTrades;
+        let extraWins = 0;
+        let extraLosses = 0;
+        if (extraTrades > 0) {
+          const deltaTrades = trades.slice(-extraTrades);
+          for (const dt of deltaTrades) {
+            if (dt && dt.status !== 'ADJUSTMENT') {
+              if ((dt.balanceChange || 0) >= 0) extraWins++;
+              else extraLosses++;
+            }
+          }
+        }
+        const updatedTotal = liveCount;
+        const updatedWins = summaryMetrics.winningTrades + extraWins;
+        const updatedLosses = summaryMetrics.losingTrades + extraLosses;
+        const initBal = summaryMetrics.initialBalance || 100000;
+        const updatedTotalPnl = parseFloat((liveBalance - initBal).toFixed(2));
+        const updatedTotalPnlPct = parseFloat(((updatedTotalPnl / initBal) * 100).toFixed(2));
+        const updatedWinRate = updatedTotal > 0 ? parseFloat(((updatedWins / updatedTotal) * 100).toFixed(1)) : summaryMetrics.winRatePct;
+
+        return {
+          ...summaryMetrics,
+          totalTrades: updatedTotal,
+          currentBalance: liveBalance,
+          totalPnl: updatedTotalPnl,
+          totalPnlPct: updatedTotalPnlPct,
+          winningTrades: updatedWins,
+          losingTrades: updatedLosses,
+          winRatePct: updatedWinRate,
+          lastTradeTimestamp: currentTrade?.timestamp || summaryMetrics.lastTradeTimestamp,
+        };
+      }
       return summaryMetrics;
     }
     return calculateAuditMetrics(trades);

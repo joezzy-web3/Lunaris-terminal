@@ -206,12 +206,12 @@ export function generateProgressiveAuditTrades(
   if (cachedProgressiveTrades && cachedProgressiveTrades.length > 0) {
     const currentLastTrade = cachedProgressiveTrades[cachedProgressiveTrades.length - 1];
     const currentLastTimeMs = new Date(currentLastTrade.timestamp).getTime();
-    if (targetTimeMs <= currentLastTimeMs + AUTOPILOT_CADENCE_MS) {
+    if (targetTimeMs <= currentLastTimeMs + AUTOPILOT_CADENCE_MS - 2000) {
       return cachedProgressiveTrades;
     }
 
-    // Append newly elapsed slots
-    const newSlots = Math.floor((targetTimeMs - currentLastTimeMs) / AUTOPILOT_CADENCE_MS);
+    // Append newly elapsed slots with 2s rounding buffer so 14s timer tick never misses
+    const newSlots = Math.floor((targetTimeMs - currentLastTimeMs + 2000) / AUTOPILOT_CADENCE_MS);
     if (newSlots <= 0) return cachedProgressiveTrades;
 
     let runningBalance = currentLastTrade.accountBalance;

@@ -136,10 +136,10 @@ let cachedCurrentBalance: number = 0;
  * Returns instantaneous cached summary metrics so UI tab transitions never flash or reset to default seeds.
  */
 export function getCachedSummaryMetrics(): AuditSummaryMetrics {
-  if (cachedSummaryMetrics && cachedSummaryMetrics.currentBalance > 100000 && (cachedSummaryMetrics.totalTrades || 0) >= 40000) {
+  const trades = getSavedPaperTrades();
+  if (cachedSummaryMetrics && cachedSummaryMetrics.totalTrades === trades.length && cachedSummaryMetrics.currentBalance > 100000) {
     return cachedSummaryMetrics;
   }
-  const trades = getSavedPaperTrades();
   cachedSummaryMetrics = calculateAuditMetrics(trades);
   cachedTotalTradesCount = trades.length;
   cachedCurrentBalance = trades[trades.length - 1]?.accountBalance || 100000;
@@ -200,14 +200,10 @@ export function purgeCorruptLocalStorageTrades(): PaperTradeRecord[] {
  * is immediately available without flashing 500 trades or leaving any calendar days blank.
  */
 export function getSavedPaperTrades(): PaperTradeRecord[] {
-  if (inMemoryTradesCache && inMemoryTradesCache.length >= 40000) {
-    return inMemoryTradesCache;
-  }
-  const progressive = generateProgressiveAuditTrades();
+  const progressive = generateProgressiveAuditTrades(inMemoryTradesCache || undefined, Date.now());
   inMemoryTradesCache = progressive;
-  cachedSummaryMetrics = calculateAuditMetrics(progressive);
-  cachedTotalTradesCount = progressive.length;
-  cachedCurrentBalance = progressive[progressive.length - 1]?.accountBalance || 100000;
+  cachedTotalTradesCount = Math.max(cachedTotalTradesCount, progressive.length);
+  cachedCurrentBalance = progressive[progressive.length - 1]?.accountBalance || cachedCurrentBalance || 100000;
   return progressive;
 }
 
@@ -222,7 +218,7 @@ export async function fetchAuditSummary(): Promise<{
 } | null> {
   if (typeof window === 'undefined') return null;
   try {
-    const res = await fetch('/api/audit/summary');
+    const res = await fetch(`/api/audit/summary?_t=${Date.now()}`);
     const isJson = (res.headers.get('content-type') || '').includes('application/json');
     if (res.ok && isJson) {
       const data = await res.json();
