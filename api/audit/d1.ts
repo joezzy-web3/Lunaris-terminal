@@ -2,15 +2,20 @@
 // Direct Cloudflare D1 integration for Vercel serverless functions
 
 export function getD1Config() {
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN || '';
   return {
     accountId: process.env.CLOUDFLARE_ACCOUNT_ID || 'de6f32420d2021b88ca16405c61f4154',
     databaseId: process.env.CLOUDFLARE_D1_DATABASE_ID || 'eb00f7eb-1d17-40cc-99e7-2a1c548853ba',
-    apiToken: process.env.CLOUDFLARE_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN,
+    apiToken,
+    isConfigured: !!(apiToken && apiToken.trim().length > 10),
   };
 }
 
 export async function queryD1<T = any>(sql: string, params: any[] = []): Promise<T[]> {
-  const { accountId, databaseId, apiToken } = getD1Config();
+  const { accountId, databaseId, apiToken, isConfigured } = getD1Config();
+  if (!isConfigured) {
+    return [] as T[];
+  }
   const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`;
 
   const resp = await fetch(endpoint, {

@@ -7,16 +7,6 @@
  * and maintains continuous running balances and audit sequence numbers.
  */
 
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  writeBatch,
-  query,
-  limit,
-} from 'firebase/firestore';
-import { db } from './firebase';
 import { PaperTradeRecord } from './paperTradingAudit';
 import {
   isTestTradeRecord,
@@ -27,7 +17,7 @@ import { calculateTradePnLMath } from './tradeMath';
 
 export interface ClientReconciliationReport {
   timestamp: string;
-  databaseProduct: 'Cloud Firestore';
+  databaseProduct: 'Cloudflare D1';
   collectionName: 'audit_trades';
   startingCheckpoint: {
     lastProcessedTimestamp: string | null;
@@ -309,7 +299,7 @@ export async function runClientReconciliation(options: {
 
   return {
     timestamp: startTime,
-    databaseProduct: 'Cloud Firestore',
+    databaseProduct: 'Cloudflare D1',
     collectionName: 'audit_trades',
     startingCheckpoint: {
       lastProcessedTimestamp: checkpoint.lastProcessedTimestamp,

@@ -6,6 +6,25 @@ export const ANCHOR_TIME_MS = 1789755599055; // 2026-09-18T18:19:59.055Z
 export const ANCHOR_SEQ = 5628;
 export const ANCHOR_BALANCE = 2489613.96;
 
+// Canonical progressive checkpoints calculated strictly from the deterministic PRNG
+export const ANCHOR_CHECKPOINTS = [
+  {
+    timeMs: 1789755599055, // 2026-09-18T18:19:59.055Z
+    seq: 5628,
+    balance: 2489613.96,
+  },
+  {
+    timeMs: 1790639993055, // 2026-09-28T23:59:53.055Z
+    seq: 68799,
+    balance: 3584256.15,
+  },
+  {
+    timeMs: 1790726387055, // 2026-09-29T23:59:47.055Z
+    seq: 74970,
+    balance: 3687373.07,
+  },
+];
+
 export function mulberry32(seed: number): () => number {
   return function () {
     let t = (seed += 0x6d2b79f5);
@@ -191,25 +210,40 @@ export function getProgressiveState(nowMs: number = Date.now()): StateCache {
     return cachedState;
   }
 
-  // Full initial computation
-  let runningBalance = ANCHOR_BALANCE;
-  let seq = ANCHOR_SEQ;
+  // High-performance initial computation starting from nearest canonical checkpoint
+  let startCheckpoint = ANCHOR_CHECKPOINTS[0];
+  for (const cp of ANCHOR_CHECKPOINTS) {
+    if (nowMs >= cp.timeMs) {
+      startCheckpoint = cp;
+    }
+  }
+
+  let runningBalance = startCheckpoint.balance;
+  let seq = startCheckpoint.seq;
   let latest: any = null;
   const recent: any[] = [];
+  const slotsFromCheckpoint = Math.max(0, Math.floor((nowMs - startCheckpoint.timeMs) / AUTOPILOT_CADENCE_MS));
 
-  for (let i = 1; i <= totalSlots; i++) {
+  for (let i = 1; i <= slotsFromCheckpoint; i++) {
     seq += 1;
-    const slotTimeMs = ANCHOR_TIME_MS + i * AUTOPILOT_CADENCE_MS;
+    const slotTimeMs = startCheckpoint.timeMs + i * AUTOPILOT_CADENCE_MS;
     latest = generateDeterministicTradeRecord(seq, slotTimeMs, runningBalance);
     runningBalance = latest.accountBalance;
-    // Keep only last 50 for quick response
-    if (i > totalSlots - 50) {
+    // Keep last 50 for quick response
+    if (i > slotsFromCheckpoint - 50) {
       recent.push(latest);
     }
   }
 
+  // If nowMs is exactly at or before checkpoint with 0 slots
+  if (!latest && startCheckpoint.seq > 0) {
+    const slotTimeMs = startCheckpoint.timeMs;
+    latest = generateDeterministicTradeRecord(startCheckpoint.seq, slotTimeMs, startCheckpoint.balance);
+    recent.push(latest);
+  }
+
   cachedState = {
-    computedUpToMs: ANCHOR_TIME_MS + totalSlots * AUTOPILOT_CADENCE_MS,
+    computedUpToMs: startCheckpoint.timeMs + slotsFromCheckpoint * AUTOPILOT_CADENCE_MS,
     totalTrades: seq,
     currentBalance: runningBalance,
     latestTrade: latest,

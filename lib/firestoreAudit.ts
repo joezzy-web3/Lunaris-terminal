@@ -1,16 +1,3 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  writeBatch,
-  onSnapshot,
-  query,
-  limit,
-  orderBy,
-} from 'firebase/firestore';
-import { db } from './firebase';
 import { PaperTradeRecord, SEED_PAPER_TRADES, resolveTradePrices } from './paperTradingAudit';
 import { MAX_SLIPPAGE_PCT, enforceSlippageCollar } from './riskVeto';
 
@@ -717,78 +704,13 @@ export function cleanFirestoreData<T extends Record<string, any>>(obj: T): T {
 }
 
 /**
- * Fetch all audit trades from Firestore cloud database.
- * First queries the low-bandwidth single document audit_state/global_live_ledger (1 read).
- * If empty in Firestore, automatically seeds with baseline Hackathon genesis trades.
- * Guarantees every trade retains its true execution timestamp.
+ * Fetch all audit trades from cloud database.
+ * [DEPRECATED Firestore]: Direct Firestore reads are cleanly bypassed in favor of the authoritative server/D1 ledger.
+ * Returns empty array so the system never attempts or falls back to stale Firestore test snapshots.
  */
 export async function fetchFirestoreAuditTrades(): Promise<PaperTradeRecord[]> {
-  if (isFirestoreQuotaExceeded()) {
-    return [];
-  }
-
-  // 1. Preferred low-cost single-document read (1 read instead of 50)
-  try {
-    const singleDocRef = doc(db, AUDIT_STATE_COLLECTION, GLOBAL_LEDGER_DOC_ID);
-    const snap = await withTimeout(getDoc(singleDocRef), 3500, 'Firestore single doc timeout');
-    if (snap.exists()) {
-      const data = snap.data();
-      if (Array.isArray(data?.latestTrades) && data.latestTrades.length > 0) {
-        const parsed: PaperTradeRecord[] = [];
-        for (const raw of data.latestTrades) {
-          if (raw && (raw.id || raw._id)) {
-            if (isTestTradeRecord(raw) || isAnomalousTrade(raw)) continue;
-            parsed.push(normalizeTradeRecord(raw, raw.id));
-          }
-        }
-        if (parsed.length > 0) {
-          return reconcileTradeCollection(parsed);
-        }
-      }
-    }
-  } catch (err: any) {
-    if (checkIsQuotaError(err)) {
-      flagFirestoreQuotaExceeded(err);
-      return [];
-    }
-  }
-
-  // 2. Fallback to collection query if single doc not initialized yet
-  try {
-    const colRef = collection(db, TRADES_COLLECTION);
-    const q = query(colRef, orderBy('timestamp', 'desc'), limit(50));
-    const snapshot = await withTimeout(getDocs(q), 5000, 'Firestore query timeout');
-
-    if (snapshot.empty) {
-      return [];
-    }
-
-    const trades: PaperTradeRecord[] = [];
-    snapshot.forEach((docSnap) => {
-      const raw = docSnap.data();
-      if (raw && (raw.id || docSnap.id)) {
-        if (isTestTradeRecord(raw) || isTestTradeRecord({ ...raw, id: docSnap.id })) return;
-        const normalized = normalizeTradeRecord(raw, docSnap.id);
-        if (normalized.id.startsWith('PT-') && !isTestTradeRecord(normalized)) {
-          trades.push(normalized);
-        }
-      }
-    });
-
-    if (trades.length === 0) {
-      return [];
-    }
-
-    return reconcileTradeCollection(trades);
-  } catch (err: any) {
-    if (checkIsQuotaError(err)) {
-      flagFirestoreQuotaExceeded(err);
-      console.warn('⚠️ [Firestore] Free-tier daily quota reached on Firebase Spark plan. Falling back to persistent progressive ledger.');
-    } else {
-      console.warn('⚠️ [Firestore] Notice fetching cloud trades:', err);
-    }
-    return [];
-  }
+  // Permanently bypassed: Server / Cloudflare D1 progressive engine is the sole Source of Truth
+  return [];
 }
 
 // Trade write batch buffer and retry queue
@@ -797,262 +719,47 @@ let batchFlushTimer: any = null;
 let retryCount = 0;
 
 /**
- * Commits pending trades in batches of up to 25 to avoid saturating Firestore connection limits
- * or triggering Spark plan write caps. Includes exponential backoff retry on transient errors.
+ * Commits pending trades.
+ * [DEPRECATED Firestore]: Direct Firestore writes are completely bypassed in favor of Cloudflare D1.
  */
 export async function flushPendingFirestoreTrades(): Promise<void> {
-  if (pendingTradesQueue.size === 0) return;
-  if (isFirestoreQuotaExceeded()) {
-    pendingTradesQueue.clear();
-    if (batchFlushTimer) {
-      clearTimeout(batchFlushTimer);
-      batchFlushTimer = null;
-    }
-    return;
-  }
-
-  const tradesToCommit = Array.from(pendingTradesQueue.values());
-  // Process up to 25 trades per batch
-  const batchSlice = tradesToCommit.slice(0, 25);
-
-  try {
-    const batch = writeBatch(db);
-    for (const trade of batchSlice) {
-      const docRef = doc(db, TRADES_COLLECTION, trade.id);
-      const cleaned = cleanFirestoreData(trade);
-      batch.set(docRef, cleaned, { merge: true });
-    }
-    await withTimeout(batch.commit(), 3000, 'Firestore pending flush timeout');
-
-    // Successfully committed: remove from pending queue
-    for (const trade of batchSlice) {
-      pendingTradesQueue.delete(trade.id);
-    }
-    retryCount = 0;
-
-    // If more items remain in queue, schedule next batch with brief delay
-    if (pendingTradesQueue.size > 0 && !isFirestoreQuotaExceeded()) {
-      setTimeout(flushPendingFirestoreTrades, 300);
-    }
-  } catch (err: any) {
-    if (checkIsQuotaError(err)) {
-      pendingTradesQueue.clear();
-      if (batchFlushTimer) {
-        clearTimeout(batchFlushTimer);
-        batchFlushTimer = null;
-      }
-      flagFirestoreQuotaExceeded(err);
-      console.warn(`🛡️ [Firestore Safe Mode] Free-tier daily write cap reached during batch write (${batchSlice.length} trades). Ledger seamlessly maintained via persistent server storage.`);
-    } else {
-      retryCount++;
-      const backoffMs = Math.min(1000 * Math.pow(2, retryCount), 15000) + Math.random() * 500;
-      console.warn(`⚠️ [Firestore] Batch write error (attempt ${retryCount}), retrying in ${Math.round(backoffMs)}ms:`, err);
-      if (retryCount <= 5) {
-        setTimeout(flushPendingFirestoreTrades, backoffMs);
-      }
-    }
-  }
-}
-
-/**
- * Save or update a paper-trade record in Firestore cloud database using intelligent batch buffering.
- * Buffers rapid trades into writeBatch calls to minimize Firestore network operations and stay safely
- * within quota limits.
- */
-export async function saveTradeToFirestore(trade: PaperTradeRecord): Promise<void> {
-  if (!trade || !trade.id) return;
-
-  // Test or debug sanity trades are routed to isolated test_audit_trades collection, never production
-  if (isTestTradeRecord(trade)) {
-    try {
-      const docRef = doc(db, TEST_TRADES_COLLECTION, trade.id);
-      const cleaned = cleanFirestoreData(trade);
-      await setDoc(docRef, cleaned, { merge: true });
-    } catch (e) {
-      console.warn('Notice saving test trade to isolated test collection:', e);
-    }
-    return;
-  }
-
-  // If daily write quota reached on free tier, skip cloud write immediately without queueing
-  if (isFirestoreQuotaExceeded()) {
-    return;
-  }
-
-  // 1. Synchronize to single consolidated document audit_state/global_live_ledger (1 write)
-  try {
-    const singleDocRef = doc(db, AUDIT_STATE_COLLECTION, GLOBAL_LEDGER_DOC_ID);
-    const cleaned = cleanFirestoreData(trade);
-    const payload = {
-      latestTrade: cleaned,
-      currentBalance: trade.accountBalance,
-      lastUpdated: new Date().toISOString(),
-    };
-    setDoc(singleDocRef, payload, { merge: true }).catch((err: any) => {
-      if (checkIsQuotaError(err)) flagFirestoreQuotaExceeded(err);
-    });
-  } catch {}
-
-  // 2. Add to batch queue
-  pendingTradesQueue.set(trade.id, trade);
-
-  // If queue has reached 10 trades, flush immediately. Otherwise debounce by 1.5s.
-  if (pendingTradesQueue.size >= 10) {
-    if (batchFlushTimer) clearTimeout(batchFlushTimer);
+  pendingTradesQueue.clear();
+  if (batchFlushTimer) {
+    clearTimeout(batchFlushTimer);
     batchFlushTimer = null;
-    flushPendingFirestoreTrades().catch(() => {});
-  } else if (!batchFlushTimer) {
-    batchFlushTimer = setTimeout(() => {
-      batchFlushTimer = null;
-      flushPendingFirestoreTrades().catch(() => {});
-    }, 1500);
   }
 }
 
 /**
- * Seed or reset audit trades in Firestore cloud database.
+ * Save or update a paper-trade record.
+ * [DEPRECATED Firestore]: Direct Firestore writes are cleanly bypassed in favor of the authoritative server/D1 ledger.
+ */
+export async function saveTradeToFirestore(_trade: PaperTradeRecord): Promise<void> {
+  // No-op: All trade persistence is routed through server/Cloudflare D1 (/api/audit/trade & engine)
+  return;
+}
+
+/**
+ * Seed or reset audit trades in cloud database.
+ * [DEPRECATED Firestore]: Direct Firestore seeding is bypassed; Cloudflare D1 and server disk maintain canonical ledger.
  */
 export async function seedFirestoreAuditTrades(
-  trades: PaperTradeRecord[],
-  purgeOthers: boolean = false
+  _trades: PaperTradeRecord[],
+  _purgeOthers: boolean = false
 ): Promise<void> {
-  if (isFirestoreQuotaExceeded()) {
-    console.info('🛡️ [Firestore Safe Mode] Seed skipped: Daily write quota reached. Persistent server ledger remains fully authoritative.');
-    return;
-  }
-
-  try {
-    const cleanTrades = trades.filter((t) => !isTestTradeRecord(t));
-    const validIds = new Set(cleanTrades.map((t) => t.id));
-
-    if (purgeOthers) {
-      try {
-        const colRef = collection(db, TRADES_COLLECTION);
-        const snap = await withTimeout(getDocs(colRef), 5000, 'Firestore purge fetch timeout');
-        const toDelete: string[] = [];
-        snap.forEach((d) => {
-          if (!validIds.has(d.id)) {
-            toDelete.push(d.id);
-          }
-        });
-
-        // Delete in chunks of 400 (well within Firestore 500-op batch limit)
-        const BATCH_SIZE = 400;
-        for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
-          const chunk = toDelete.slice(i, i + BATCH_SIZE);
-          const deleteBatch = writeBatch(db);
-          chunk.forEach((id) => {
-            deleteBatch.delete(doc(db, TRADES_COLLECTION, id));
-          });
-          await withTimeout(deleteBatch.commit(), 4000, 'Firestore purge batch commit timeout');
-        }
-        if (toDelete.length > 0) {
-          console.log(`🧹 [Firestore] Purged ${toDelete.length} anomalous/stale cloud trade records.`);
-        }
-      } catch (delErr) {
-        console.warn('⚠️ [Firestore] Optional purge notice:', delErr);
-      }
-    }
-
-    // Commit clean trades in chunks of 400 (most recent first)
-    const BATCH_SIZE = 400;
-    const tradesSlice = cleanTrades.slice(-400); // commit recent slice to cloud
-    const batch = writeBatch(db);
-    for (const t of tradesSlice) {
-      const docRef = doc(db, TRADES_COLLECTION, t.id);
-      const cleaned = cleanFirestoreData(t);
-      batch.set(docRef, cleaned, { merge: true });
-    }
-    await withTimeout(batch.commit(), 4000, 'Firestore batch commit timeout');
-    console.log(`✅ [Firestore] Successfully committed ${tradesSlice.length} trades to cloud.`);
-  } catch (err: any) {
-    if (checkIsQuotaError(err)) {
-      flagFirestoreQuotaExceeded(err);
-    } else {
-      console.warn('⚠️ [Firestore] Failed to batch seed audit trades:', err);
-    }
-  }
+  return;
 }
 
 /**
  * Real-time cloud listener for audit trades.
- * Subscribes to the low-bandwidth single document audit_state/global_live_ledger (1 read).
- * Invokes callback whenever any user, browser, or server executes a trade.
+ * [DEPRECATED Firestore]: Bypassed in favor of the responsive server/D1 heartbeat (/api/audit/summary)
+ * which synchronizes the entire progressive 77k+ ledger without quota caps.
  */
 export function subscribeToFirestoreAuditTrades(
-  onTradesUpdate: (trades: PaperTradeRecord[]) => void,
-  onError?: (error: Error) => void
+  _onTradesUpdate: (trades: PaperTradeRecord[]) => void,
+  _onError?: (error: Error) => void
 ): () => void {
-  if (isFirestoreQuotaExceeded()) {
-    return () => {};
-  }
-  let activeUnsubscribe: (() => void) | null = null;
-
-  try {
-    const singleDocRef = doc(db, AUDIT_STATE_COLLECTION, GLOBAL_LEDGER_DOC_ID);
-
-    activeUnsubscribe = onSnapshot(
-      singleDocRef,
-      (docSnap) => {
-        if (!docSnap.exists()) {
-          return;
-        }
-        const data = docSnap.data();
-        const incomingTrades: PaperTradeRecord[] = [];
-
-        if (Array.isArray(data?.latestTrades) && data.latestTrades.length > 0) {
-          for (const raw of data.latestTrades) {
-            if (raw && (raw.id || raw._id)) {
-              if (isTestTradeRecord(raw) || isAnomalousTrade(raw)) continue;
-              incomingTrades.push(normalizeTradeRecord(raw, raw.id));
-            }
-          }
-        } else if (data?.latestTrade) {
-          const raw = data.latestTrade;
-          if (raw && (raw.id || raw._id)) {
-            if (!isTestTradeRecord(raw) && !isAnomalousTrade(raw)) {
-              incomingTrades.push(normalizeTradeRecord(raw, raw.id));
-            }
-          }
-        }
-
-        if (incomingTrades.length > 0) {
-          onTradesUpdate(incomingTrades);
-        }
-      },
-      (error: any) => {
-        if (checkIsQuotaError(error)) {
-          flagFirestoreQuotaExceeded(error);
-          console.warn('🛡️ [Firestore Safe Mode] Trade listener paused due to daily quota limit. Operating seamlessly on server ledger.');
-          if (activeUnsubscribe) {
-            try {
-              activeUnsubscribe();
-            } catch {}
-            activeUnsubscribe = null;
-          }
-        } else {
-          console.warn('⚠️ [Firestore] Single-doc subscription notice:', error);
-        }
-        if (onError) onError(error);
-      }
-    );
-
-    return () => {
-      if (activeUnsubscribe) {
-        try {
-          activeUnsubscribe();
-        } catch {}
-        activeUnsubscribe = null;
-      }
-    };
-  } catch (err: any) {
-    if (checkIsQuotaError(err)) {
-      flagFirestoreQuotaExceeded(err);
-    } else {
-      console.warn('⚠️ [Firestore] Failed to initiate subscription:', err);
-    }
-    return () => {};
-  }
+  return () => {};
 }
 
 /**

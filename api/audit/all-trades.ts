@@ -1,6 +1,6 @@
 // api/audit/all-trades.ts
 // Vercel Serverless Function: Export audit trades backup
-import { getProgressiveState } from './engine.ts';
+import { getProgressiveState } from './engine';
 
 export const config = {
   maxDuration: 10,

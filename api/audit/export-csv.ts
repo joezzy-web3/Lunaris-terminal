@@ -1,6 +1,9 @@
 // api/audit/export-csv.ts
 // Vercel Serverless Function: Download full audit trail as CSV
-import AUDIT_TRADES_JSON from '../../data/seed_audit_trades.json';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const AUDIT_TRADES_JSON = require('../../data/seed_audit_trades.json');
 
 export const config = {
   maxDuration: 15,
