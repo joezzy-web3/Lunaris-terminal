@@ -33,6 +33,7 @@ export const PROGRESSIVE_INSTRUMENTS = [
   { name: 'BTC/USDT', ticker: 'BTC', fallbackPrice: 76820.0, class: 'Crypto', leverage: 5 },
   { name: 'ETH/USDT', ticker: 'ETH', fallbackPrice: 2485.0, class: 'Crypto', leverage: 4 },
   { name: 'SOL/USDT', ticker: 'SOL', fallbackPrice: 99.66, class: 'Crypto', leverage: 3 },
+  { name: 'BGB/USDT', ticker: 'BGB', fallbackPrice: 1.98, class: 'Crypto', leverage: 3 },
   { name: 'PLTR/USD', ticker: 'PLTR', fallbackPrice: 68.7, class: 'US Equity', leverage: 2 },
   { name: 'MARA/USD', ticker: 'MARA', fallbackPrice: 19.8, class: 'US Equity', leverage: 2 },
   { name: 'MSFT/USD', ticker: 'MSFT', fallbackPrice: 418.5, class: 'US Equity', leverage: 2 },

@@ -64,6 +64,18 @@ export const INITIAL_ASSET_QUOTES: Record<string, AssetQuote> = {
     lastTickDirection: 'UP',
     lastUpdated: Date.now(),
   },
+  BGB: {
+    ticker: 'BGB',
+    name: 'Bitget Token',
+    class: 'CX',
+    price: 1.98,
+    change24h: 0.50,
+    high24h: 2.01,
+    low24h: 1.96,
+    volume: '$9.3M',
+    lastTickDirection: 'UP',
+    lastUpdated: Date.now(),
+  },
   NVDAon: {
     ticker: 'NVDAon',
     name: 'NVIDIA Corp (rToken 7x24)',

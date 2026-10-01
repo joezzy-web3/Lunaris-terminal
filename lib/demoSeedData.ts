@@ -18,6 +18,7 @@ export const SEEDED_ASSETS: Record<string, AssetSeedConfig> = {
   ETH: { ticker: 'ETH', name: 'Ethereum', basePrice: 2722.0, volatility: 0.004, class: 'CX', unitDecimals: 2 },
   SOL: { ticker: 'SOL', name: 'Solana', basePrice: 116.9, volatility: 0.0055, class: 'CX', unitDecimals: 2 },
   SUI: { ticker: 'SUI', name: 'Sui Network', basePrice: 0.8502, volatility: 0.006, class: 'CX', unitDecimals: 4 },
+  BGB: { ticker: 'BGB', name: 'Bitget Token', basePrice: 1.98, volatility: 0.004, class: 'CX', unitDecimals: 4 },
   DOGE: { ticker: 'DOGE', name: 'Dogecoin', basePrice: 0.081, volatility: 0.006, class: 'CX', unitDecimals: 5 },
   XRP: { ticker: 'XRP', name: 'Ripple', basePrice: 1.29, volatility: 0.005, class: 'CX', unitDecimals: 4 },
   AVAX: { ticker: 'AVAX', name: 'Avalanche', basePrice: 7.52, volatility: 0.005, class: 'CX', unitDecimals: 2 },

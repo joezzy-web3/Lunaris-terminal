@@ -460,6 +460,7 @@ app.get('/api/bitget/orderbook', async (req, res) => {
     SOL: 'SOLUSDT',
     SUI: 'SUIUSDT',
     XRP: 'XRPUSDT',
+    BGB: 'BGBUSDT',
   };
 
   const bitgetSymbol = cryptoMap[cleanTicker] || (rawSymbol.endsWith('USDT') ? rawSymbol : `${rawSymbol}USDT`);
@@ -1133,6 +1134,7 @@ function getServerPrice(ticker: string, clientFallbackPrice?: number): { price: 
     ETH: { price: 2722.0, change24h: 1.20, class: 'CX' },
     SOL: { price: 116.9, change24h: 2.30, class: 'CX' },
     SUI: { price: 0.8502, change24h: 4.15, class: 'CX' },
+    BGB: { price: 1.98, change24h: 0.50, class: 'CX' },
     DOGE: { price: 0.081, change24h: 1.15, class: 'CX' },
     XRP: { price: 1.29, change24h: 0.35, class: 'CX' },
     AVAX: { price: 7.52, change24h: 1.80, class: 'CX' },
@@ -3191,6 +3193,7 @@ app.get('/api/market/pulse', async (req, res) => {
       { ticker: 'ETH', name: 'Ethereum', class: 'CX' as const },
       { ticker: 'SOL', name: 'Solana', class: 'CX' as const },
       { ticker: 'SUI', name: 'Sui Network', class: 'CX' as const },
+      { ticker: 'BGB', name: 'Bitget Token', class: 'CX' as const },
       { ticker: 'DOGE', name: 'Dogecoin', class: 'CX' as const },
       { ticker: 'XRP', name: 'Ripple', class: 'CX' as const },
       { ticker: 'NVDAon', name: 'NVIDIA (rToken 7x24)', class: 'EQ' as const },

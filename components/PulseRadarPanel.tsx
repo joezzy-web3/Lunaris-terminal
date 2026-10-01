@@ -26,6 +26,17 @@ export interface PulseAsset {
 
 const INITIAL_PULSE_DATA: PulseAsset[] = [
   {
+    ticker: 'BGB',
+    name: 'Bitget Token',
+    class: 'CX',
+    sentimentScore: 92,
+    sentimentLabel: 'EXTREME BULL',
+    velocity1h: 275,
+    mentionsPerHour: 5120,
+    catalystSummary: 'Bitget ecosystem token surge with staking rewards and S2 Hackathon activity boosting spot volume.',
+    sources: { twitter: 94, farcaster: 86, reddit: 82, discord: 90 },
+  },
+  {
     ticker: 'SOL',
     name: 'Solana',
     class: 'CX',

@@ -157,6 +157,18 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
     // 2. Council Inquiries
     {
+      id: 'cmd-council-bgb',
+      category: 'COUNCIL_INQUIRY',
+      title: 'Convene Council on BGB (Bitget Token ecosystem catalyst)',
+      description: 'Analyze Bitget platform utility, spot orderflow depth, and fee-reduction economics',
+      badge: 'Bitget Native',
+      action: () => {
+        onNavigateTab('COUNCIL');
+        if (onConveneCouncil) onConveneCouncil('BGB', 'Evaluate Bitget native token orderflow momentum and ecosystem utility.');
+        onClose();
+      },
+    },
+    {
       id: 'cmd-council-nvda',
       category: 'COUNCIL_INQUIRY',
       title: 'What does Atlas-Macro think about NVDAon catalyst?',

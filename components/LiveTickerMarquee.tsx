@@ -52,10 +52,12 @@ export const LiveTickerMarquee: React.FC<LiveTickerMarqueeProps> = ({
                 className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
                   isSelected
                     ? 'bg-black/15 text-black'
+                    : asset.ticker === 'BGB'
+                    ? 'bg-cyan-500/20 text-[#00F0FF] border border-cyan-500/30'
                     : 'bg-white/10 text-zinc-300 border border-white/10'
                 }`}
               >
-                {asset.class === 'CX' ? 'CRYPTO' : 'EQUITY'}
+                {asset.ticker === 'BGB' ? 'BITGET' : asset.class === 'CX' ? 'CRYPTO' : 'EQUITY'}
               </span>
 
               {/* Ticker Name */}

@@ -27,6 +27,7 @@ export const ASSET_REGISTRY: Record<
   ETH: { name: 'Ethereum', class: 'CX', geckoId: 'ethereum' },
   SOL: { name: 'Solana', class: 'CX', geckoId: 'solana' },
   SUI: { name: 'Sui Network', class: 'CX', geckoId: 'sui' },
+  BGB: { name: 'Bitget Token', class: 'CX', geckoId: 'bitget-token' },
   DOGE: { name: 'Dogecoin', class: 'CX', geckoId: 'dogecoin' },
   XRP: { name: 'Ripple', class: 'CX', geckoId: 'ripple' },
   AVAX: { name: 'Avalanche', class: 'CX', geckoId: 'avalanche-2' },

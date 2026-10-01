@@ -96,6 +96,7 @@ const PRESET_ASSETS = [
   { ticker: 'NVDAon', label: 'Nvidia 24/7' },
   { ticker: 'TSLAon', label: 'Tesla 24/7' },
   { ticker: 'SUI', label: 'Sui' },
+  { ticker: 'BGB', label: 'Bitget Token' },
   { ticker: 'DOGE', label: 'Dogecoin' },
   { ticker: 'NVDA', label: 'Nvidia' },
   { ticker: 'PLTR', label: 'Palantir' },
