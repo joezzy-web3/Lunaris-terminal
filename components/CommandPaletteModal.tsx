@@ -246,7 +246,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       id: 'cmd-council-nlp',
       category: 'COUNCIL_INQUIRY',
       title: 'Speak Natural Language Mandate to Council',
-      description: 'Direct the 4-agent Council with plain-English instructions synthesized via Gemini & Bitget MCP',
+      description: 'Direct the 3-agent Council & Guardian-01 with plain-English instructions synthesized via Gemini & Bitget MCP',
       badge: 'Gemini + Bitget',
       action: () => {
         onNavigateTab('COUNCIL');

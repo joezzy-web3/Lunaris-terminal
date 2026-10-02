@@ -1307,7 +1307,7 @@ function runAutopilotDaemonTick() {
         balanceChange: closed.netPnl,
         balanceChangePct: closed.balanceChangePct,
         accountBalance: 100000,
-        trigger: `Autopilot Daemon: Target profit ratified (+${pnlPct.toFixed(2)}%) on ${ticker} by Council Quorum (Quant-Omega, Atlas-Macro, NEXUS-RED, Guardian-01)`,
+        trigger: `Autopilot Daemon: Target profit ratified (+${pnlPct.toFixed(2)}%) on ${ticker} (3/3 Agents Aligned with Guardian-01 Approval)`,
         status: closed.netPnl >= 0 ? 'TAKE_PROFIT' : 'STOP_LOSS',
         sourceHandler: 'AUTOPILOT_DAEMON',
         idempotencyKey: idempKey,
@@ -2978,7 +2978,7 @@ Do not wrap in markdown tags if possible, or return strictly within a json markd
           ],
           synthesizedReasoning: isVetoed
             ? `Veto executed: Position request on ${symbol} exceeds institutional threshold. Zero capital deployed.`
-            : `Council consensus ratified for ${symbol}: Immediate MARKET ENTRY authorized at current market price ($${estPrice.toLocaleString()}). Stop-loss active at $${(estPrice * 0.955).toFixed(2)}.`,
+            : `Council consensus ratified for ${symbol} (3/3 Agents Aligned with Guardian-01 Approval): Immediate MARKET ENTRY authorized at current market price ($${estPrice.toLocaleString()}). Stop-loss active at $${(estPrice * 0.955).toFixed(2)}.`,
         },
       };
 

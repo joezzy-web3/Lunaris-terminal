@@ -705,7 +705,7 @@ Mathematical Source of Truth: Verified
           {activeTab === 'QUORUM' && (
             <div className="space-y-3">
               <div className="text-xs text-zinc-400">
-                Institutional 4-agent Council quorum voting breakdown at timestamp {trade.timestamp}:
+                Institutional 3-Agent Council Quorum with Guardian-01 Risk Ratification at timestamp {trade.timestamp}:
               </div>
 
               {/* Quant-Omega */}

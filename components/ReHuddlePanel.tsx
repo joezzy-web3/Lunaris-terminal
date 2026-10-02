@@ -1,7 +1,7 @@
 // components/ReHuddlePanel.tsx
 // Council Cross-Examination & Re-Huddle Chamber
 // Allows users to ask follow-up questions or introduce new arguments after a verdict is rendered.
-// The 4 agents deliberate whether to AMEND THE DECREE or SUSTAIN THE ORIGINAL RULING.
+// The 3 AI agents deliberate with Guardian-01 risk clearance whether to AMEND THE DECREE or SUSTAIN THE ORIGINAL RULING.
 
 import React, { useState } from 'react';
 import {

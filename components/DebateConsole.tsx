@@ -637,7 +637,7 @@ export function DebateConsole({
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-sm font-bold tracking-wider text-white">LUNARIS COUNCIL</h2>
               <span className="text-[10px] uppercase px-2 py-0.5 rounded bg-white/10 text-zinc-200 border border-white/15">
-                AI Agent Quorum
+                3 AI Agents + Guardian-01 Gate
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 mt-0.5">
@@ -1195,7 +1195,7 @@ export function DebateConsole({
                   <span>•</span>
                   <span>Target Entry: <strong className="text-white font-mono">${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}</strong></span>
                   <span>•</span>
-                  <span>4-Agent Quorum Consensus • Ratified at {verdict.timestamp}</span>
+                  <span>3/3 Agents Aligned with Guardian-01 Approval • Ratified at {verdict.timestamp}</span>
                 </div>
               </div>
             </div>

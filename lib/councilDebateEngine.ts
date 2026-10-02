@@ -333,7 +333,7 @@ export function generateCouncilDebate(
       speakerId: 'MACRO',
       stanceLabel: 'UNANIMOUS CONSENSUS RATIFIED',
       stanceType: 'CONSENSUS',
-      speech: `Quorum fully ratified (4 of 4 agents aligned). All directives reconciled: Alpha momentum, NEXUS-RED adversarial robustness, capital preservation, and macro basis. We recommend immediate execution: BUY ${ticker} at ${optimalSize}% size with ${baseWinRate}% modeled win rate, ${riskReward}:1 R:R, and stop-loss active.`,
+      speech: `Quorum fully ratified (3/3 agents aligned with Guardian-01 approval). All directives reconciled: Alpha momentum, NEXUS-RED adversarial robustness, capital preservation, and macro basis under Guardian-01 risk bounds. We recommend immediate execution: BUY ${ticker} at ${optimalSize}% size with ${baseWinRate}% modeled win rate, ${riskReward}:1 R:R, and stop-loss active.`,
       proposedSizePct: optimalSize,
       winRatePct: baseWinRate,
       timestamp: timeStr(11),
@@ -341,8 +341,8 @@ export function generateCouncilDebate(
   }
 
   const synthesizedReasoning = pulseContext?.catalystSummary
-    ? `Quad-Agent Quorum Ratified (${pulseContext.sentimentLabel || 'BULLISH'}, +${pulseContext.velocity1h || 200}% velocity): Quant-Omega capitalized on catalyst "${pulseContext.catalystSummary}"; NEXUS-RED audited against liquidity traps; Guardian-01 insulated downside with -${stopLossPct}% stop-loss at ${optimalSize}% sizing (VaR -${maxVaR}% NAV); Atlas-Macro certified ${riskReward}:1 Risk/Reward ratio. Modeled win rate: ${baseWinRate}%.`
-    : `Unanimous 4-Agent Council alignment: Quant-Omega verified +${takeProfitPct}% momentum expansion; NEXUS-RED cleared orderbook trap scans; Guardian-01 bounded risk with a -${stopLossPct}% hard stop-loss and ${optimalSize}% allocation (VaR -${maxVaR}% NAV); Atlas-Macro corroborated institutional liquidity and asymmetric ${riskReward}:1 Risk/Reward ratio. Modeled win rate: ${baseWinRate}%.`;
+    ? `Quorum Ratified (3/3 Agents Aligned with Guardian-01 Approval; ${pulseContext.sentimentLabel || 'BULLISH'}, +${pulseContext.velocity1h || 200}% velocity): Quant-Omega capitalized on catalyst "${pulseContext.catalystSummary}"; NEXUS-RED audited against liquidity traps; Atlas-Macro certified ${riskReward}:1 Risk/Reward ratio; all bounded and approved under Guardian-01 risk guard (-${stopLossPct}% stop, ${optimalSize}% sizing, VaR -${maxVaR}% NAV). Modeled win rate: ${baseWinRate}%.`
+    : `3/3 Agents Aligned with Guardian-01 Approval: Quant-Omega verified +${takeProfitPct}% momentum expansion; NEXUS-RED cleared orderbook trap scans; Atlas-Macro corroborated institutional liquidity and asymmetric ${riskReward}:1 Risk/Reward ratio; ratified under Guardian-01 deterministic risk boundaries (-${stopLossPct}% hard stop-loss, ${optimalSize}% allocation, VaR -${maxVaR}% NAV). Modeled win rate: ${baseWinRate}%.`;
 
   const tradeProposal: TradeProposal = {
     asset: ticker,
