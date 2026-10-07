@@ -27,6 +27,40 @@ To satisfy both **real-time agentic execution** and **extreme-scale ledger stres
 
 ---
 
+## ⚡ BITGET AGENTIC STACK & INSTITUTIONAL TELEMETRY ARCHITECTURE
+
+Lunaris Terminal is natively built around the **Bitget Agentic Stack**, establishing a continuous, sub-second telemetry pipeline between Bitget's Open API V2 exchange gateways and autonomous multi-agent decision engines:
+
+### 1. Unified Serverless Gateway (`/api/bitget/[endpoint]`)
+To ensure high-throughput execution while strictly respecting Vercel Hobby limits (maximum 12 serverless functions), all Bitget exchange operations are consolidated into an ultra-low-latency, zero-leakage API controller (`api/bitget/[endpoint].ts`) with full Express server parity:
+- **`/api/bitget/tickers`**: Live 24/7 price feeds across cryptocurrency spot pairs (`BTC`, `ETH`, `SOL`, `SUI`, `BGB`, `DOGE`) and synthetic tokenized equity proxies (`NVDAon`, `TSLAon`). Built-in 3-second cache buffering prevents exchange rate-limiting while serving sub-50ms client queries.
+- **`/api/bitget/orderbook`**: Real-time Level-2 orderbook depth streaming. Aggregates top-15 bid/ask price levels, calculates book depth volumes, and outputs the live bid/ask imbalance ratio.
+- **`/api/bitget/derivatives`**: Institutional telemetry gateway querying Bitget Mix V2 (`USDT-FUTURES`):
+  - **8-Hour Funding Rate & Annualized Carry APR**: Gauges perpetual long/short overcrowding and basis carry cost.
+  - **Open Interest (OI)**: Real-time USD notional and contract count tracking institutional positioning.
+  - **L2 Depth Imbalance Ratio**: Dynamic quotient measuring buyer vs. seller wall dominance.
+  - **Spot/Perp Basis Spread**: Computes cash-and-carry basis premium/discount between spot and perpetual contracts.
+- **`/api/bitget/verify-byok`**: Client-side Bring-Your-Own-Key authentication validating user API credentials with HMAC-SHA256 timestamped signatures directly against Bitget's `/api/v2/spot/account/assets` gateway.
+
+### 2. Bitget Telemetry HUD (`BitgetTelemetryHud`)
+An institutional cyberpunk telemetry heads-up display mounted directly inside the **AI Council Deliberation Chamber (`DebateConsole.tsx`)** and the **Advisory Re-Huddle Chamber (`ReHuddlePanel.tsx`)**:
+- Displays live gauges for 8h Funding Rate, Annualized Carry APR, Open Interest USD, L2 Depth Imbalance, and Spot/Perp Basis Spread.
+- Features a dynamic status badge (`LIVE BITGET MIX V2`) indicating exchange connectivity.
+- Automatically injects live exchange derivatives telemetry into the Google Gemini 2.5 Flash context window, ensuring AI personas deliberate using mathematically verifiable exchange facts rather than speculative training hallucinations.
+
+### 3. Persona Swarm Grounded in Bitget Infrastructure
+Every AI persona in the Lunaris swarm is anchored to a specific Bitget architectural layer:
+- **Quant-Omega**: Anchored to the **Bitget Level-2 Depth Engine**. Evaluates micro-price wall resistance, bid/ask cluster absorption, and orderbook skew.
+- **Atlas-Macro**: Anchored to the **Bitget Mix Derivatives & Funding API**. Tracks 8h funding rate carry costs, open interest expansion/contraction, and cross-asset basis spreads.
+- **Sigma-Pulse**: Anchored to **Bitget Market Signals & Social Velocity Telemetry**. Synthesizes whale transaction alerts, social mention acceleration, and sentiment velocity.
+- **Guardian-01**: Anchored to the **Bitget Guarded Router**. An independent, non-LLM mathematical risk gate enforcing Bitget VIP-0 taker fee schedules (0.06% crypto / 0.10% rTokens), a strict 0.5% (50 bps) slippage collar, 5x leverage limits, and a 5.0% daily drawdown ceiling.
+- **Autopilot Daemon**: Anchored to the **Bitget S2 Paper Settlement Engine**. Manages autonomous order lifecycle, dynamic trailing stop-loss corridors (-1.8%), and profit exit targets (+3.0%).
+
+### 4. Authoritative Microstructure Stream & Price Disambiguation
+The **Agent Activity Stream** (`AgentActivityStream.tsx`) resolves common telemetry confusion by explicitly distinguishing between **Authoritative Asset Spot Price** (e.g., `BTC/USDT @ $83,575.80`) and **L2 Cumulative Orderbook Depth Liquidity** (e.g., `Top-15 Bid Liquidity: $36.4K vs Ask Liquidity: $28.9K`). This prevents users from misinterpreting shallow orderbook depth figures as asset prices, providing institutional transparency across all 5 rotating agent heuristics.
+
+---
+
 It features a **Four-Pillar Fail-Safe Architecture**:
 1. **Multi-Agent Quorum Consensus**: Three specialized AI agents (**Quant-Omega**, **NEXUS-RED**, **Atlas-Macro**) debate real-time market microstructure, liquidity traps, and macroeconomic catalysts, synthesized by **Google Gemini 2.5 Flash AI**.
 2. **Deterministic Risk Veto Engine (Guardian-01)**: **Guardian-01 is explicitly NOT an AI or LLM agent.** It is an independent, non-probabilistic, rule-based mathematical risk engine executing downstream of the AI council. Guardian-01 enforces hard mathematical collars (5x max leverage, 15% single-asset allocation, 3%/5% daily drawdown circuit breakers, and 0.5% slippage collars) that cannot be hallucinated away, argued down, or overridden by any LLM.

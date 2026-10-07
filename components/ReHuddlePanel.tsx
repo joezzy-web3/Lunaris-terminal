@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import {
   MessageSquare,
+  HelpCircle,
   Sparkles,
   RotateCcw,
   CheckCircle2,
@@ -17,10 +18,13 @@ import {
   ChevronDown,
   ChevronUp,
   Scale,
-  AlertTriangle,
+  Send,
 } from 'lucide-react';
-import { ConsensusVerdict } from '@/lib/councilDebateEngine';
+import { ConsensusVerdict, DebateTurn } from '@/lib/councilDebateEngine';
 import { playCyberClick, playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
+import { evaluateClientReHuddle } from '@/lib/rehuddleEngine';
+import { BitgetDerivativesTelemetry, fetchBitgetDerivatives } from '@/lib/bitgetService';
+import { BitgetTelemetryHud } from './BitgetTelemetryHud';
 
 export interface ReHuddleResult {
   huddleOutcome: 'AMEND_DECREE' | 'SUSTAIN_RULING';
@@ -42,17 +46,38 @@ export interface ReHuddleResult {
 interface ReHuddlePanelProps {
   verdict: ConsensusVerdict;
   onApplyAmendedVerdict?: (updatedVerdict: ConsensusVerdict) => void;
+  bitgetTelemetry?: BitgetDerivativesTelemetry | null;
 }
 
 export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
   verdict,
   onApplyAmendedVerdict,
+  bitgetTelemetry: propTelemetry,
 }) => {
   const [question, setQuestion] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rehuddleResult, setRehuddleResult] = useState<ReHuddleResult | null>(null);
+  const [isRealGemini, setIsRealGemini] = useState<boolean | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [localTelemetry, setLocalTelemetry] = useState<BitgetDerivativesTelemetry | null>(null);
+
+  // Synchronize Bitget derivatives telemetry for active verdict ticker
+  React.useEffect(() => {
+    let active = true;
+    if (propTelemetry) {
+      setLocalTelemetry(propTelemetry);
+    } else if (verdict?.ticker) {
+      fetchBitgetDerivatives(verdict.ticker).then((data) => {
+        if (active) setLocalTelemetry(data);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [verdict?.ticker, propTelemetry]);
+
+  const activeTelemetry = propTelemetry || localTelemetry;
 
   const quickPrompts = [
     `Wait for a 2% pullback limit order before buying ${verdict.ticker}`,
@@ -70,41 +95,60 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
     playCyberClick();
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 35000);
+      let result: ReHuddleResult | null = null;
+      let usedRealGemini = false;
 
-      const response = await fetch('/api/gemini/rehuddle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          ticker: verdict.ticker,
-          userQuestion: textToSubmit,
-          previousVerdict: verdict,
-          clientPrice: verdict.currentPrice,
-        }),
-      });
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-      clearTimeout(timeoutId);
+        const response = await fetch('/api/gemini/rehuddle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            ticker: verdict.ticker,
+            userQuestion: textToSubmit,
+            previousVerdict: verdict,
+            clientPrice: verdict.currentPrice,
+            bitgetDerivatives: activeTelemetry,
+          }),
+        });
 
-      const resData = await response.json().catch(() => null);
+        clearTimeout(timeoutId);
 
-      if (!response.ok || !resData || !resData.success || !resData.data) {
-        const errorDetail =
-          resData?.error ||
-          (response.status === 404
-            ? 'Endpoint /api/gemini/rehuddle not found on server (please verify deployment).'
-            : `Deliberation server error (HTTP ${response.status}).`);
-        throw new Error(errorDetail);
+        if (response.ok) {
+          const rawText = await response.text();
+          if (rawText && rawText.trim().length > 0) {
+            try {
+              const resData = JSON.parse(rawText);
+              if (resData && resData.success && resData.data) {
+                result = resData.data;
+                usedRealGemini = Boolean(resData.isRealGemini);
+              }
+            } catch {
+              // Gracefully continue to local client-side deliberator
+            }
+          }
+        }
+      } catch (networkErr) {
+        console.warn('Rehuddle server fetch skipped/errored, falling back to local council:', networkErr);
       }
 
-      const result: ReHuddleResult = resData.data;
+      // If server was unreachable, offline, or timed out, evaluate via robust local multi-persona engine
+      if (!result) {
+        result = evaluateClientReHuddle(textToSubmit, verdict, activeTelemetry);
+        usedRealGemini = false;
+      }
+
+      setIsRealGemini(usedRealGemini);
       setRehuddleResult(result);
       setIsOpen(true);
 
       if (result.huddleOutcome === 'AMEND_DECREE') {
         playTradeApprovedChime();
         if (onApplyAmendedVerdict) {
+          // Construct updated ConsensusVerdict
           const updated: ConsensusVerdict = {
             ...verdict,
             action: result.amendedAction,
@@ -127,12 +171,11 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
         playRiskVetoTone();
       }
     } catch (err: any) {
-      console.error('Rehuddle deliberation error:', err);
-      const msg = err.name === 'AbortError'
-        ? 'Deliberation request timed out after 35 seconds. Please try again.'
-        : err.message || 'Council deliberation failed.';
-      setErrorMessage(msg);
-      setRehuddleResult(null);
+      console.error('Rehuddle error:', err);
+      // Even in the worst failure case, provide a client-side generated outcome
+      const fallbackResult = evaluateClientReHuddle(textToSubmit, verdict);
+      setRehuddleResult(fallbackResult);
+      setIsOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -203,6 +246,9 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
           </button>
         )}
       </div>
+
+      {/* Bitget Derivatives Telemetry HUD */}
+      <BitgetTelemetryHud telemetry={activeTelemetry} ticker={verdict.ticker} compact={true} />
 
       {/* Quick Suggestion Chips */}
       <div className="flex flex-wrap gap-1.5">
@@ -284,10 +330,16 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono">
-              <span className="px-2 py-0.5 rounded border bg-cyan-950/60 text-cyan-300 border-cyan-500/50 flex items-center gap-1 shadow-[0_0_8px_rgba(6,182,212,0.25)]">
-                <Sparkles className="w-3 h-3 text-cyan-400" />
-                <span>LIVE GEMINI 3.8 FLASH</span>
-              </span>
+              {isRealGemini === true ? (
+                <span className="px-2 py-0.5 rounded border bg-cyan-950/60 text-cyan-300 border-cyan-500/50 flex items-center gap-1 shadow-[0_0_8px_rgba(6,182,212,0.25)]">
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
+                  <span>LIVE GEMINI 3.8 FLASH</span>
+                </span>
+              ) : isRealGemini === false ? (
+                <span className="px-2 py-0.5 rounded border bg-zinc-800 text-zinc-400 border-zinc-700">
+                  <span>LOCAL ALGO FALLBACK</span>
+                </span>
+              ) : null}
 
               <span
                 className={`px-2 py-0.5 rounded border ${

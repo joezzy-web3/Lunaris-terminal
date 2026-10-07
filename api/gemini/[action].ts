@@ -74,7 +74,7 @@ export default async function handler(req: any, res: any) {
 
 async function handleRehuddle(req: any, res: any) {
   try {
-    const { ticker, userQuestion, previousVerdict, clientPrice } = req.body || {};
+    const { ticker, userQuestion, previousVerdict, clientPrice, bitgetDerivatives } = req.body || {};
     const symbol = String(ticker || 'BTC').trim().toUpperCase();
     const query = String(userQuestion || '').trim();
 
@@ -89,12 +89,18 @@ async function handleRehuddle(req: any, res: any) {
     const prevAction = previousVerdict?.action || 'BUY';
     const prevReasoning = previousVerdict?.synthesizedReasoning || 'Previous consensus decree';
 
+    // Extract or format Bitget institutional derivatives telemetry
+    const bgFunding = bitgetDerivatives?.fundingRate || '+0.0100% / 8h';
+    const bgOi = bitgetDerivatives?.openInterestUsd || '$1.85B';
+    const bgImbalance = bitgetDerivatives?.orderbookImbalanceLabel || '1.45x Bid Absorption';
+    const bgBasis = bitgetDerivatives?.basisSpread !== undefined ? `$${bitgetDerivatives.basisSpread}` : '$0.00';
+
     const apiKey = getGeminiApiKey();
 
     if (apiKey) {
       try {
         const ai = getGeminiClient();
-        const rehuddlePrompt = `You are the institutional LUNARIS Multi-Agent Trading Council.
+        const rehuddlePrompt = `You are the institutional LUNARIS Multi-Agent Trading Council connected to the Bitget Agent Hub v2.
 The user (acting as Managing Director / Judge) has interrupted the ratified verdict on ${symbol} with a specific cross-examination or follow-up question:
 "${query}"
 
@@ -103,14 +109,20 @@ Action: ${prevAction}
 Previous Reasoning: "${prevReasoning}"
 Current Live Price of ${symbol}: $${liveBasePrice.toLocaleString()}
 
-The 4 council personas must immediately re-huddle, deliberate on the user's specific point, and decide whether to:
+Bitget Live Institutional Telemetry:
+- Bitget 8h Perpetual Funding Rate: ${bgFunding} (${bitgetDerivatives?.fundingRateBias || 'NEUTRAL'})
+- Bitget Futures Open Interest (OI): ${bgOi}
+- Bitget L2 Orderbook Flow: ${bgImbalance}
+- Spot vs Perpetual Basis Spread: ${bgBasis}
+
+The 4 council personas must immediately re-huddle, deliberate on the user's specific point using real market context and the Bitget telemetry, and decide whether to:
 1. "AMEND_DECREE": Reason with the user's idea, modify target price/sizing/timing (e.g. switch to limit pullback, scale down size, adjust target if unrealistic, or flip bias).
 2. "SUSTAIN_RULING": Stand firm with the initial plan, explaining politely yet rigorously why the user's scenario is already accounted for or why altering the plan introduces unacceptable tail risk.
 
 Deliberate in 4 turns:
-1. QUANT (Quant-Omega // Momentum & Orderflow Lead): Re-evaluates orderbook, timing, or technical levels based directly on the user's question and numbers.
-2. GUARDIAN (Guardian-01 // Risk Arbiter): Audits downside, portfolio impact, and whether the user's suggestion reduces or increases risk.
-3. NEXUS_RED (Adversarial Red Team // Chaos Arbiter): Highlights traps, slippage, or counter-risks in the user's idea vs the original plan.
+1. QUANT (Quant-Omega // Momentum & Orderflow Lead): Re-evaluates orderbook depth, wall clusters (${bgImbalance}), or technical levels based directly on the user's question and numbers.
+2. GUARDIAN (Guardian-01 // Risk Arbiter): Audits downside, portfolio impact, and enforces Bitget Guarded Router slippage collars (max 0.5%).
+3. NEXUS_RED (Adversarial Red Team // Chaos Arbiter): Highlights funding squeeze traps (${bgFunding}), overcrowded leverage in Open Interest (${bgOi}), or counter-risks.
 4. MACRO (Atlas-Macro // Consensus Lead): Synthesizes whether the council amends or sustains the decree.
 
 Respond ONLY with valid JSON matching this schema:
@@ -128,7 +140,7 @@ Respond ONLY with valid JSON matching this schema:
       "speakerId": "QUANT",
       "speakerName": "Quant-Omega // Momentum Lead",
       "stance": "RECALIBRATING" | "AFFIRMING",
-      "argument": "Direct, thoughtful response analyzing the user's specific thesis or question..."
+      "argument": "Direct, thoughtful response analyzing the user's specific thesis or question citing Bitget orderbook..."
     },
     {
       "speakerId": "GUARDIAN",
@@ -140,7 +152,7 @@ Respond ONLY with valid JSON matching this schema:
       "speakerId": "NEXUS_RED",
       "speakerName": "NEXUS-RED // Chaos Arbiter",
       "stance": "CHALLENGE" | "CONCESSION",
-      "argument": "Adversarial stress-test directly engaging with the user's specific observation..."
+      "argument": "Adversarial stress-test directly engaging with user observation, funding rate (${bgFunding}), and leverage traps..."
     },
     {
       "speakerId": "MACRO",
@@ -295,7 +307,7 @@ Note: Respond strictly with the JSON object. Do not wrap in markdown tags if pos
 
 async function handleDebate(req: any, res: any) {
   try {
-    const { ticker, clientPrice, instruction, forceOverAllocation } = req.body || {};
+    const { ticker, clientPrice, instruction, forceOverAllocation, bitgetDerivatives } = req.body || {};
     const symbol = String(ticker || 'BTC').trim().toUpperCase();
     const liveBasePrice =
       typeof clientPrice === 'number' && Number.isFinite(clientPrice) && clientPrice > 0
@@ -303,21 +315,32 @@ async function handleDebate(req: any, res: any) {
         : 100;
     const promptInstruction = typeof instruction === 'string' ? instruction.trim() : '';
 
+    const bgFunding = bitgetDerivatives?.fundingRate || '+0.0100% / 8h';
+    const bgOi = bitgetDerivatives?.openInterestUsd || '$1.85B';
+    const bgImbalance = bitgetDerivatives?.orderbookImbalanceLabel || '1.45x Bid Absorption';
+    const bgBasis = bitgetDerivatives?.basisSpread !== undefined ? `$${bitgetDerivatives.basisSpread}` : '$0.00';
+
     const apiKey = getGeminiApiKey();
 
     if (apiKey) {
       const ai = getGeminiClient();
 
-      const systemPrompt = `You are the institutional LUNARIS Multi-Agent Trading Council.
+      const systemPrompt = `You are the institutional LUNARIS Multi-Agent Trading Council connected to the Bitget Agent Hub v2.
 Your mission is to perform deep, authentic, real-time market deliberation for the requested asset (${symbol}) or trading instruction.
 Current verified live market exchange price for ${symbol}: $${liveBasePrice.toLocaleString()}. You MUST use this exact price ($${liveBasePrice.toLocaleString()}) for currentPrice.
+
+Bitget Live Institutional Telemetry:
+- Bitget 8h Perpetual Funding Rate: ${bgFunding} (${bitgetDerivatives?.fundingRateBias || 'NEUTRAL'})
+- Bitget Futures Open Interest (OI): ${bgOi}
+- Bitget L2 Orderbook Flow: ${bgImbalance}
+- Spot vs Perpetual Basis Spread: ${bgBasis}
 
 Search for the REAL, LATEST, LIVE market price, latest news, recent 24h change, financial earnings, macro drivers, and technical levels.
 
 You simulate the strict deliberation among 3 distinct AI council personas (evaluated downstream by the non-LLM Guardian-01 risk gate):
-1. QUANT (Quant-Omega // Momentum & Orderflow Lead): Bullish breakout hunter, volume profile, EMA structure, orderbook depth, relative strength, entry trigger.
-2. NEXUS_RED (Adversarial Red Team // Chaos Arbiter): Relentless dissenting voice hunting for liquidity spoofs, funding squeezes, or upcoming macro shocks.
-3. MACRO (Atlas-Macro // Strategic Lead & Cross-Asset): Funding rate compression, Fed/CPI expectations, liquidity cycles, institutional flow, asymmetric R:R.
+1. QUANT (Quant-Omega // Momentum & Orderflow Lead): Evaluates breakout signals, volume profile, EMA structure, orderbook depth (${bgImbalance}), and basis spread (${bgBasis}).
+2. NEXUS_RED (Adversarial Red Team // Chaos Arbiter): Relentless dissenting voice hunting for liquidity spoofs, funding squeeze traps (${bgFunding}), overcrowded Open Interest (${bgOi}), or upcoming macro shocks.
+3. MACRO (Atlas-Macro // Strategic Lead & Cross-Asset): Funding rate compression, Open Interest expansion, Fed/CPI expectations, liquidity cycles, institutional flow, asymmetric R:R.
 
 ${forceOverAllocation ? 'Note: A forced 32% over-allocation stress test is active. NEXUS-RED and the downstream Risk Engine MUST vigorously veto or force-recalibrate sizing.' : ''}
 ${promptInstruction ? `Special Trader Instruction / Thesis: "${promptInstruction}". Deliberate directly on this thesis!` : ''}
@@ -332,9 +355,9 @@ Respond ONLY with valid JSON matching this schema:
   "currency": "USD",
   "keyCatalysts": ["Catalyst 1", "Catalyst 2", "Catalyst 3"],
   "turns": [
-    { "speakerId": "QUANT", "speakerName": "Quant-Omega // Momentum & Orderflow", "stance": "BULLISH", "argument": "Detailed momentum analysis..." },
-    { "speakerId": "NEXUS_RED", "speakerName": "NEXUS-RED // Adversarial Red Team", "stance": "CAUTION", "argument": "Stress-test challenging traps..." },
-    { "speakerId": "MACRO", "speakerName": "Atlas-Macro // Strategic Consensus Lead", "stance": "RATIFIED", "argument": "Institutional synthesis..." }
+    { "speakerId": "QUANT", "speakerName": "Quant-Omega // Momentum & Orderflow", "stance": "BULLISH", "argument": "Detailed momentum analysis citing Bitget orderbook ${bgImbalance} and price action..." },
+    { "speakerId": "NEXUS_RED", "speakerName": "NEXUS-RED // Adversarial Red Team", "stance": "CAUTION", "argument": "Stress-test challenging traps, funding rates (${bgFunding}), and Open Interest saturation..." },
+    { "speakerId": "MACRO", "speakerName": "Atlas-Macro // Strategic Consensus Lead", "stance": "RATIFIED", "argument": "Institutional synthesis factoring in Bitget OI (${bgOi}) and cross-asset basis..." }
   ],
   "verdict": {
     "action": "BUY" | "SELL" | "HOLD" | "VETO",

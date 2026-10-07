@@ -6,6 +6,10 @@
     { "source": "/api/audit/export-csv", "destination": "/api/audit/export?format=csv" },
     { "source": "/api/audit/export-json", "destination": "/api/audit/export?format=json" },
     { "source": "/api/market/pulse/ai-refresh", "destination": "/api/gemini/pulse-ai" },
+    { "source": "/api/bitget/tickers", "destination": "/api/bitget/[endpoint]?endpoint=tickers" },
+    { "source": "/api/bitget/orderbook", "destination": "/api/bitget/[endpoint]?endpoint=orderbook" },
+    { "source": "/api/bitget/derivatives", "destination": "/api/bitget/[endpoint]?endpoint=derivatives" },
+    { "source": "/api/bitget/verify-byok", "destination": "/api/bitget/[endpoint]?endpoint=verify-byok" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import { CyberCourtroomView } from './CyberCourtroomView';
 import { ReHuddlePanel } from './ReHuddlePanel';
+import { BitgetTelemetryHud } from './BitgetTelemetryHud';
+import { BitgetDerivativesTelemetry, fetchBitgetDerivatives } from '@/lib/bitgetService';
 import { TradeProposal } from '@/lib/riskVeto';
 import { fetchPriceSnapshot, ASSET_REGISTRY } from '@/lib/liveTokenFeed';
 import { getSeededPrice, SEEDED_ASSETS } from '@/lib/demoSeedData';
@@ -159,6 +161,7 @@ export function DebateConsole({
   const [isRealGemini, setIsRealGemini] = useState<boolean>(false);
   const [catalysts, setCatalysts] = useState<string[]>([]);
   const [livePriceData, setLivePriceData] = useState<{ price: number; change24h: number } | null>(null);
+  const [bitgetTelemetry, setBitgetTelemetry] = useState<BitgetDerivativesTelemetry | null>(null);
 
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -224,6 +227,16 @@ export function DebateConsole({
       }
     };
     updateTickerPrice();
+
+    // Synchronize Bitget derivatives telemetry for active ticker
+    fetchBitgetDerivatives(ticker)
+      .then((data) => {
+        if (!isCancelled) {
+          setBitgetTelemetry(data);
+        }
+      })
+      .catch(() => {});
+
     return () => {
       isCancelled = true;
     };
@@ -309,7 +322,16 @@ export function DebateConsole({
       // currentPrice is already safely anchored to realistic asset baseline
     }
 
-    // 2. Query Gemini Real-Time Search Grounding API
+    // 2. Fetch live Bitget institutional derivatives telemetry (Funding, OI, Book Flow, Basis)
+    let activeBitgetTele = bitgetTelemetry;
+    try {
+      activeBitgetTele = await fetchBitgetDerivatives(symbol);
+      setBitgetTelemetry(activeBitgetTele);
+    } catch {
+      // safe fallback
+    }
+
+    // 3. Query Gemini Real-Time Search Grounding API with Bitget telemetry
     let apiData: any = null;
     let geminiSuccess = false;
     let groundingData: GroundingInfo | null = null;
@@ -323,6 +345,7 @@ export function DebateConsole({
           clientPrice: currentPrice > 0 ? currentPrice : undefined,
           instruction: instructionToUse || pulseToUse?.catalystSummary || undefined,
           forceOverAllocation,
+          bitgetDerivatives: activeBitgetTele,
         }),
       });
 
@@ -821,6 +844,9 @@ export function DebateConsole({
           </button>
         )}
       </div>
+
+      {/* Bitget Agentic Derivatives & Order Flow Telemetry HUD */}
+      <BitgetTelemetryHud telemetry={bitgetTelemetry} ticker={ticker} />
 
       {/* Main Search & Instruction Input Deck (Unified & Persistent across both Quorum & Courtroom) */}
       <div className="bg-black/50 border border-white/10 rounded-lg p-3 mb-4 space-y-3">
@@ -1429,6 +1455,7 @@ export function DebateConsole({
           {/* Council Re-Huddle & Cross-Examination Chamber */}
           <ReHuddlePanel
             verdict={verdict}
+            bitgetTelemetry={bitgetTelemetry}
             onApplyAmendedVerdict={(updatedVerdict) => {
               setVerdict(updatedVerdict);
               if (updatedVerdict.targetEntryPrice) {

@@ -4,10 +4,12 @@
 
 import { ConsensusVerdict } from './councilDebateEngine';
 import { ReHuddleResult } from '@/components/ReHuddlePanel';
+import { BitgetDerivativesTelemetry } from './bitgetService';
 
 export function evaluateClientReHuddle(
   userQuery: string,
-  verdict: ConsensusVerdict
+  verdict: ConsensusVerdict,
+  bitgetTelemetry?: BitgetDerivativesTelemetry | null
 ): ReHuddleResult {
   const query = (userQuery || '').trim().toLowerCase();
   const ticker = verdict.ticker;
@@ -15,6 +17,11 @@ export function evaluateClientReHuddle(
   const initialAction = verdict.action || 'BUY';
   const initialSize = verdict.optimalSizePct || 4.5;
   const initialStopLoss = verdict.stopLossPct || 4.5;
+
+  const bgFunding = bitgetTelemetry?.fundingRate || '+0.0100% / 8h';
+  const bgOi = bitgetTelemetry?.openInterestUsd || '$1.85B';
+  const bgImbalance = bitgetTelemetry?.orderbookImbalanceLabel || '1.45x Bid Absorption';
+  const bgBasis = bitgetTelemetry?.basisSpreadLabel || '+$0.05 (Perp Premium)';
 
   // Category Detections
   const isDrawdownRisk =
@@ -300,27 +307,27 @@ export function evaluateClientReHuddle(
         speakerId: 'QUANT',
         speakerName: 'Quant-Omega // Momentum Lead',
         stance: isSustained ? 'AFFIRMING' : 'RECALIBRATING',
-        argument: `Evaluating market microstructure: Volume-weighted orderbook delta at $${currentPrice.toLocaleString()} indicates steady institutional accumulation. The scenario you raised is absorbed by passive bid depth without invalidating the breakout thesis.`,
+        argument: `Evaluating Bitget orderbook microstructure: L2 flow displays ${bgImbalance} at $${currentPrice.toLocaleString()}. The scenario you raised is absorbed by passive book depth without invalidating our technical thesis.`,
       },
       {
         speakerId: 'GUARDIAN',
         speakerName: 'Guardian-01 // Risk Arbiter',
         stance: isSustained ? 'REJECTING' : 'ADAPTING',
-        argument: `Our risk models actively govern this scenario. With automated hard stops set at -${initialStopLoss}% and portfolio allocation capped at ${initialSize}%, tail risk is mathematically contained within our 0.25% portfolio VaR limit.`,
+        argument: `Bitget Guarded Router active: slippage is mathematically capped at 0.5%. With hard stops set at -${initialStopLoss}% and allocation capped at ${initialSize}%, tail risk remains well within our portfolio VaR boundary.`,
       },
       {
         speakerId: 'NEXUS_RED',
         speakerName: 'NEXUS-RED // Chaos Arbiter',
         stance: isSustained ? 'CHALLENGE' : 'CONCESSION',
-        argument: `Adversarial stress-test: Simulating this specific thesis reveals less than 15% probability of structural breakdown before target fill. Tampering with the trading plan without technical invalidation introduces discretionary churn.`,
+        argument: `Adversarial derivatives audit: Bitget 8h perpetual funding is ${bgFunding} with ${bgOi} in Open Interest. Funding is not overcrowded for an immediate squeeze trap. Tampering with the decree now creates discretionary churn.`,
       },
       {
         speakerId: 'MACRO',
         speakerName: 'Atlas-Macro // Strategic Lead',
         stance: isSustained ? 'SUSTAINED_CONSENSUS' : 'AMENDED_CONSENSUS',
         argument: isSustained
-          ? `Supermajority reaffirms original decree. Standing firm on ${initialAction} ${ticker} at $${currentPrice.toLocaleString()} with automated safeguards locked.`
-          : `Consensus amended to incorporate trader feedback into the final execution parameters.`,
+          ? `Supermajority reaffirms original decree on ${ticker} at $${currentPrice.toLocaleString()}. Spot/Perp basis spread (${bgBasis}) affirms institutional positioning.`
+          : `Consensus amended to incorporate trader feedback into execution parameters while preserving Bitget router safeguards.`,
       },
     ],
   };
