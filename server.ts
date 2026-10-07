@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import dotenv from 'dotenv';
 import { SEED_PAPER_TRADES, calculateAuditMetrics } from './lib/paperTradingAudit';
 import { generateProgressiveAuditTrades } from './lib/progressiveTrades';
@@ -3028,51 +3028,59 @@ Deliberate in 4 turns:
 3. NEXUS_RED (Adversarial Red Team // Chaos Arbiter): Highlights traps, slippage, or counter-risks in the user's idea vs the original plan.
 4. MACRO (Atlas-Macro // Consensus Lead): Synthesizes whether the council amends or sustains the decree.
 
-Respond ONLY with valid JSON:
+Respond ONLY with valid JSON matching this schema:
 {
-  "huddleOutcome": "AMEND_DECREE" | "SUSTAIN_RULING",
-  "outcomeTitle": "AMENDED DECREE: [Summary]" | "ORIGINAL RULING SUSTAINED",
-  "amendedAction": "BUY" | "SELL" | "HOLD",
-  "executionType": "MARKET_ORDER" | "LIMIT_PULLBACK" | "BREAKOUT_STOP",
+  "huddleOutcome": "AMEND_DECREE",
+  "outcomeTitle": "AMENDED DECREE: [Summary or RULING SUSTAINED]",
+  "amendedAction": "BUY",
+  "executionType": "LIMIT_PULLBACK",
   "targetEntryPrice": ${liveBasePrice},
   "revisedSizePct": ${previousVerdict?.optimalSizePct || 4.5},
   "revisedStopLossPct": ${previousVerdict?.stopLossPct || 4.5},
-  "reHuddleSummary": "2-sentence institutional ruling directly addressing the user's question",
+  "reHuddleSummary": "2-sentence institutional ruling directly addressing the user question",
   "turns": [
     {
       "speakerId": "QUANT",
       "speakerName": "Quant-Omega // Momentum Lead",
-      "stance": "RECALIBRATING" | "AFFIRMING",
-      "argument": "Direct response to user's point..."
+      "stance": "RECALIBRATING",
+      "argument": "Direct response to user point..."
     },
     {
       "speakerId": "GUARDIAN",
       "speakerName": "Guardian-01 // Risk Arbiter",
-      "stance": "ADAPTING" | "REJECTING",
-      "argument": "Risk impact of the user's idea..."
+      "stance": "ADAPTING",
+      "argument": "Risk impact of the user idea..."
     },
     {
       "speakerId": "NEXUS_RED",
       "speakerName": "NEXUS-RED // Chaos Arbiter",
-      "stance": "CHALLENGE" | "CONCESSION",
-      "argument": "Adversarial stress-test of user's proposal..."
+      "stance": "CHALLENGE",
+      "argument": "Adversarial stress-test of user proposal..."
     },
     {
       "speakerId": "MACRO",
       "speakerName": "Atlas-Macro // Strategic Lead",
-      "stance": "AMENDED_CONSENSUS" | "SUSTAINED_CONSENSUS",
+      "stance": "AMENDED_CONSENSUS",
       "argument": "Final synthesized resolution..."
     }
   ]
-}`;
+}
+Note: huddleOutcome must be either "AMEND_DECREE" or "SUSTAIN_RULING". amendedAction must be "BUY", "SELL", or "HOLD". executionType must be "MARKET_ORDER", "LIMIT_PULLBACK", or "BREAKOUT_STOP".`;
 
       try {
-        const models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-pro-preview'];
+        const models = ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
         for (const model of models) {
           try {
+            const config: any = {
+              responseMimeType: 'application/json',
+            };
+            if (model === 'gemini-3.8-flash') {
+              config.thinkingConfig = { thinkingLevel: ThinkingLevel.LOW };
+            }
             const response = await ai.models.generateContent({
               model,
               contents: rehuddlePrompt,
+              config,
             });
             let rawText = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || '';
             if (rawText) {
@@ -3085,10 +3093,11 @@ Respond ONLY with valid JSON:
                   parsed.targetEntryPrice = liveBasePrice;
                 }
               }
-              return res.json({ success: true, isRealGemini: true, data: parsed });
+              console.log(`✅ [ReHuddle] Successfully generated response with model ${model}`);
+              return res.json({ success: true, isRealGemini: true, data: parsed, modelUsed: model });
             }
-          } catch {
-            // try next model
+          } catch (modelErr: any) {
+            console.warn(`[ReHuddle] Model ${model} failed, trying fallback:`, modelErr?.message || modelErr);
           }
         }
       } catch (geminiErr) {

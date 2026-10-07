@@ -53,6 +53,7 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
   const [question, setQuestion] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rehuddleResult, setRehuddleResult] = useState<ReHuddleResult | null>(null);
+  const [isRealGemini, setIsRealGemini] = useState<boolean | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -73,10 +74,11 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
 
     try {
       let result: ReHuddleResult | null = null;
+      let usedRealGemini = false;
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
         const response = await fetch('/api/gemini/rehuddle', {
           method: 'POST',
@@ -99,6 +101,7 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
               const resData = JSON.parse(rawText);
               if (resData && resData.success && resData.data) {
                 result = resData.data;
+                usedRealGemini = Boolean(resData.isRealGemini);
               }
             } catch {
               // Gracefully continue to local client-side deliberator
@@ -112,8 +115,10 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
       // If server was unreachable, offline, or timed out, evaluate via robust local multi-persona engine
       if (!result) {
         result = evaluateClientReHuddle(textToSubmit, verdict);
+        usedRealGemini = false;
       }
 
+      setIsRealGemini(usedRealGemini);
       setRehuddleResult(result);
       setIsOpen(true);
 
@@ -259,8 +264,8 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
         >
           {isSubmitting ? (
             <>
-              <RotateCcw className="w-3.5 h-3.5 animate-spin" />
-              <span>COUNCIL RE-HUDDLING...</span>
+              <RotateCcw className="w-3.5 h-3.5 animate-spin text-black" />
+              <span>DELIBERATING (GEMINI 3.8)...</span>
             </>
           ) : (
             <>
@@ -298,7 +303,18 @@ export const ReHuddlePanel: React.FC<ReHuddlePanelProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-[10px] font-mono">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono">
+              {isRealGemini === true ? (
+                <span className="px-2 py-0.5 rounded border bg-cyan-950/60 text-cyan-300 border-cyan-500/50 flex items-center gap-1 shadow-[0_0_8px_rgba(6,182,212,0.25)]">
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
+                  <span>LIVE GEMINI 3.8 FLASH</span>
+                </span>
+              ) : isRealGemini === false ? (
+                <span className="px-2 py-0.5 rounded border bg-zinc-800 text-zinc-400 border-zinc-700">
+                  <span>LOCAL ALGO FALLBACK</span>
+                </span>
+              ) : null}
+
               <span
                 className={`px-2 py-0.5 rounded border ${
                   rehuddleResult.huddleOutcome === 'AMEND_DECREE'
