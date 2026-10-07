@@ -1,11 +1,57 @@
 // api/autopilot/state.ts
 // Vercel Serverless Function: Persistent Autopilot state backed by Cloudflare D1
-import { queryD1, getD1Config } from '../_lib/d1';
-import defaultAutopilotState from '../../data/autopilot_state.json';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+let defaultAutopilotState: any = null;
+try {
+  defaultAutopilotState = require('../../data/autopilot_state.json');
+} catch {
+  // Safe fallback
+}
 
 export const config = {
   maxDuration: 10,
 };
+
+function getD1Config() {
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN || '';
+  return {
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID || 'de6f32420d2021b88ca16405c61f4154',
+    databaseId: process.env.CLOUDFLARE_D1_DATABASE_ID || 'eb00f7eb-1d17-40cc-99e7-2a1c548853ba',
+    apiToken,
+    isConfigured: !!(apiToken && apiToken.trim().length > 10),
+  };
+}
+
+async function queryD1<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+  const { accountId, databaseId, apiToken, isConfigured } = getD1Config();
+  if (!isConfigured) {
+    return [] as T[];
+  }
+  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`;
+
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sql, params }),
+    signal: AbortSignal.timeout(3000),
+  });
+
+  if (!resp.ok) {
+    throw new Error(`D1 HTTP ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  if (!data.success) {
+    throw new Error(`D1 Error: ${JSON.stringify(data.errors)}`);
+  }
+
+  return (data.result?.[0]?.results || []) as T[];
+}
 
 function getLocalFallbackState(): any {
   return defaultAutopilotState || {

@@ -1,7 +1,7 @@
 // api/audit/trades.ts
 // Vercel Serverless Function: Authoritative trade reader backed by Cloudflare D1
-import { queryD1 } from '../_lib/d1';
-import { getProgressiveState } from '../_lib/engine';
+import { queryD1 } from '../_lib/d1.ts';
+import { getProgressiveState } from '../_lib/engine.ts';
 
 export const config = {
   maxDuration: 10,
