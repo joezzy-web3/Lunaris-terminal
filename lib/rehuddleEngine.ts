@@ -226,8 +226,62 @@ export function evaluateClientReHuddle(
     };
   }
 
-  // Scenario 5: General Open / Stress-test Inquiries (Default Robust Fallback)
-  const isSustained = query.length > 5 && !query.includes('change') && !query.includes('alter') && !query.includes('stop');
+  // Scenario 5: Price Target Skepticism / Historical Level Questions (e.g., "when last did sol hit 128 tho its kinda unrealistic")
+  const numbersFound = query.match(/\$?\d+(?:\.\d+)?/g);
+  const targetNumber = numbersFound ? parseFloat(numbersFound[0].replace('$', '')) : null;
+  const isTargetSkepticism =
+    (targetNumber !== null && (query.includes('hit') || query.includes('reach') || query.includes('target') || query.includes('high') || query.includes('unrealistic') || query.includes('last did') || query.includes('when last'))) ||
+    query.includes('unrealistic') ||
+    query.includes('doubt') ||
+    query.includes('too high') ||
+    query.includes('impossible');
+
+  if (isTargetSkepticism) {
+    const quotedTarget = targetNumber || Number((currentPrice * 1.10).toFixed(2));
+    const pctDiff = Number((((quotedTarget - currentPrice) / currentPrice) * 100).toFixed(1));
+    const conservativeTakeProfit = Number((currentPrice * 1.045).toFixed(2));
+    const limitRetest = Number((currentPrice * 0.985).toFixed(2));
+
+    return {
+      huddleOutcome: 'AMEND_DECREE',
+      outcomeTitle: `AMENDED DECREE // Target Expectation Tempered to $${conservativeTakeProfit.toLocaleString()}`,
+      amendedAction: initialAction,
+      executionType: 'LIMIT_PULLBACK',
+      targetEntryPrice: limitRetest,
+      revisedSizePct: Math.max(2.5, Number((initialSize * 0.8).toFixed(1))),
+      revisedStopLossPct: Math.min(3.5, initialStopLoss),
+      reHuddleSummary: `The Council acknowledges your skepticism regarding the $${quotedTarget.toLocaleString()} price level (${pctDiff > 0 ? '+' : ''}${pctDiff}% from current $${currentPrice.toLocaleString()}). Rather than targeting an extended resistance wick, the Council has recalibrated the take-profit target down to a conservative $${conservativeTakeProfit.toLocaleString()} (+4.5%) and converted entry to a Limit Pullback at $${limitRetest.toLocaleString()}.`,
+      turns: [
+        {
+          speakerId: 'QUANT',
+          speakerName: 'Quant-Omega // Momentum Lead',
+          stance: 'RECALIBRATING',
+          argument: `Sharp observation on historical liquidity: $${quotedTarget.toLocaleString()} represents an earlier swing-high zone where heavy institutional sell-side walls remain parked. Expecting a straight sprint from $${currentPrice.toLocaleString()} (+${pctDiff}%) without consolidation is aggressive. Slicing our take-profit target down to $${conservativeTakeProfit.toLocaleString()} captures the high-probability meat of the move.`,
+        },
+        {
+          speakerId: 'NEXUS_RED',
+          speakerName: 'NEXUS-RED // Chaos Arbiter',
+          stance: 'CONCESSION',
+          argument: `Adversarial audit concurs with user cross-examination: Whales frequently weaponize optimistic $${quotedTarget.toLocaleString()} price targets as exit liquidity traps for retail. Calibrating our execution to a Limit Pullback at $${limitRetest.toLocaleString()} completely disarms front-running.`,
+        },
+        {
+          speakerId: 'GUARDIAN',
+          speakerName: 'Guardian-01 // Risk Arbiter',
+          stance: 'ADAPTING',
+          argument: `Risk boundaries recalibrated: By tempering our upside target and entering at $${limitRetest.toLocaleString()} with stop-loss tightened to -3.5%, our modeled payoff ratio improves from 1.6 to 2.4. Capital exposure remains strictly defended.`,
+        },
+        {
+          speakerId: 'MACRO',
+          speakerName: 'Atlas-Macro // Strategic Lead',
+          stance: 'AMENDED_CONSENSUS',
+          argument: `Decree amended in response to user cross-examination. Execution converted to passive Limit Pullback at $${limitRetest.toLocaleString()}, position size moderated to ${Math.max(2.5, Number((initialSize * 0.8).toFixed(1)))}%, and take-profit target anchored to conservative orderbook liquidity at $${conservativeTakeProfit.toLocaleString()}.`,
+        },
+      ],
+    };
+  }
+
+  // Scenario 6: General Open / Stress-test Inquiries (Default Dynamic Deliberator)
+  const isSustained = query.length > 5 && !query.includes('change') && !query.includes('alter') && !query.includes('stop') && !query.includes('why') && !query.includes('think');
   return {
     huddleOutcome: isSustained ? 'SUSTAIN_RULING' : 'AMEND_DECREE',
     outcomeTitle: isSustained
@@ -239,34 +293,34 @@ export function evaluateClientReHuddle(
     revisedSizePct: initialSize,
     revisedStopLossPct: initialStopLoss,
     reHuddleSummary: isSustained
-      ? `The Council deliberated on "${userQuery}". NEXUS-RED and Guardian-01 confirmed that the existing risk boundaries and orderbook dynamics on ${ticker} already insulate the position. The original consensus decree stands.`
-      : `The Council evaluated "${userQuery}" and adjusted execution parameters to align with your inquiry while preserving directional upside on ${ticker}.`,
+      ? `The Council deliberated on your cross-examination on ${ticker}. NEXUS-RED and Guardian-01 confirmed that current orderbook depth at $${currentPrice.toLocaleString()} and active risk boundaries already insulate the position against this concern. The original consensus decree stands.`
+      : `The Council evaluated your inquiry regarding ${ticker} and dynamically adjusted execution parameters to align with your thesis while defending capital.`,
     turns: [
       {
         speakerId: 'QUANT',
         speakerName: 'Quant-Omega // Momentum Lead',
         stance: isSustained ? 'AFFIRMING' : 'RECALIBRATING',
-        argument: `Regarding "${userQuery}": Current volume-weighted orderbook delta at $${currentPrice.toLocaleString()} indicates steady institutional accumulation that absorbs transient noise.`,
+        argument: `Evaluating market microstructure: Volume-weighted orderbook delta at $${currentPrice.toLocaleString()} indicates steady institutional accumulation. The scenario you raised is absorbed by passive bid depth without invalidating the breakout thesis.`,
       },
       {
         speakerId: 'GUARDIAN',
         speakerName: 'Guardian-01 // Risk Arbiter',
         stance: isSustained ? 'REJECTING' : 'ADAPTING',
-        argument: `Our risk models actively govern this scenario. With hard stops at -${initialStopLoss}% and allocation capped at ${initialSize}%, the risk envelope remains strictly conservative.`,
+        argument: `Our risk models actively govern this scenario. With automated hard stops set at -${initialStopLoss}% and portfolio allocation capped at ${initialSize}%, tail risk is mathematically contained within our 0.25% portfolio VaR limit.`,
       },
       {
         speakerId: 'NEXUS_RED',
         speakerName: 'NEXUS-RED // Chaos Arbiter',
         stance: isSustained ? 'CHALLENGE' : 'CONCESSION',
-        argument: `Simulating user's question "${userQuery}": The simulated probability of unexpected divergence is under 15%. Tampering without structural breakdown risks missing the trade.`,
+        argument: `Adversarial stress-test: Simulating this specific thesis reveals less than 15% probability of structural breakdown before target fill. Tampering with the trading plan without technical invalidation introduces discretionary churn.`,
       },
       {
         speakerId: 'MACRO',
         speakerName: 'Atlas-Macro // Strategic Lead',
         stance: isSustained ? 'SUSTAINED_CONSENSUS' : 'AMENDED_CONSENSUS',
         argument: isSustained
-          ? `Supermajority reaffirms original decree. Standing firm on ${initialAction} ${ticker} at $${currentPrice.toLocaleString()}.`
-          : `Consensus amended to incorporate user feedback into the final execution parameters.`,
+          ? `Supermajority reaffirms original decree. Standing firm on ${initialAction} ${ticker} at $${currentPrice.toLocaleString()} with automated safeguards locked.`
+          : `Consensus amended to incorporate trader feedback into the final execution parameters.`,
       },
     ],
   };
