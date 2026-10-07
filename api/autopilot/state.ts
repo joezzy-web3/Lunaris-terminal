@@ -1,22 +1,14 @@
 // api/autopilot/state.ts
 // Vercel Serverless Function: Persistent Autopilot state backed by Cloudflare D1
-import { queryD1, getD1Config } from '../audit/d1';
-import fs from 'fs';
-import path from 'path';
+import { queryD1, getD1Config } from '../_lib/d1';
+import defaultAutopilotState from '../../data/autopilot_state.json';
 
 export const config = {
   maxDuration: 10,
 };
 
 function getLocalFallbackState(): any {
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'autopilot_state.json');
-    if (fs.existsSync(filePath)) {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      if (data && typeof data === 'object') return data;
-    }
-  } catch {}
-  return {
+  return defaultAutopilotState || {
     isExecuting: true,
     isTurbo: false,
     cashBalance: 107321.1,

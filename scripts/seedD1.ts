@@ -1,6 +1,6 @@
 // scripts/seedD1.ts
 import { executeD1Query } from '../lib/cloudflareD1.ts';
-import { getProgressiveState } from '../api/audit/engine.ts';
+import { getProgressiveState } from '../api/_lib/engine.ts';
 
 async function main() {
   console.log('Seeding initial trade batch into Cloudflare D1...');

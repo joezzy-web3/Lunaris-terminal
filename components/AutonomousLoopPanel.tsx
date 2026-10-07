@@ -363,8 +363,17 @@ export function AutonomousLoopPanel({
                 </p>
               </div>
             </div>
-            <div className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-400/30 px-2.5 py-1 rounded-lg">
-              Macro Stress-Test Benchmark: <strong>120k+ Trades in Audit Ledger</strong>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSubTab('LEDGER')}
+                className="text-[11px] font-mono font-bold text-purple-300 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-102"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+                <span>OPEN AUTOPILOT LEDGER ({ledger.length} TRADES)</span>
+              </button>
+              <div className="hidden lg:block text-[10px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-400/30 px-2.5 py-1 rounded-lg">
+                Macro Stress-Test Benchmark: <strong>120k+ Trades in Audit Ledger</strong>
+              </div>
             </div>
           </div>
 

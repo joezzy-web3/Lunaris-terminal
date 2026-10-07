@@ -11,6 +11,7 @@ import { TradeProposal } from '@/lib/riskVeto';
 import { recordNewPaperTrade } from '@/lib/paperTradingAudit';
 import { playTradeApprovedChime, playRiskVetoTone } from '@/lib/soundSynth';
 import { AutopilotLedgerEntry } from '@/components/AutopilotLedgerView';
+import initialAutopilotState from '@/data/autopilot_state.json';
 
 export interface AutonomousLog {
   id: string;
@@ -93,7 +94,7 @@ interface AutopilotContextType {
   monitoredTickers: string[];
 }
 
-const AUTOPILOT_STORAGE_KEY = 'LUNARIS_AUTOPILOT_SANDBOX_STATE_V3';
+const AUTOPILOT_STORAGE_KEY = 'LUNARIS_AUTOPILOT_SANDBOX_STATE_V5';
 
 function persistAutopilotTrade(trade: AutopilotLedgerEntry) {
   if (typeof window === 'undefined' || !trade || !trade.id) return;
@@ -118,28 +119,40 @@ function getDeviceSessionId(): string {
   }
 }
 
-// Initial lively positions so each new judge or private browser window starts with active positions
-const INITIAL_POSITIONS: Record<string, Position> = {
-  BTC: {
-    ticker: 'BTC',
-    amount: 0.045,
-    entryPrice: 77350,
-    currentPrice: 79820,
-    unrealizedPnl: 111.15,
-    unrealizedPnlPct: 3.19,
-    class: 'CX',
-  },
-  NVDAon: {
-    ticker: 'NVDAon',
-    amount: 18,
-    entryPrice: 182.5,
-    currentPrice: 186.4,
-    unrealizedPnl: 70.2,
-    unrealizedPnlPct: 2.14,
-    class: 'EQ',
-  },
-};
-const INITIAL_CASH = 93234.25;
+// Canonical ledger containing all 300+ real Autopilot trades from today
+const INITIAL_LEDGER: AutopilotLedgerEntry[] =
+  Array.isArray(initialAutopilotState?.ledger) && initialAutopilotState.ledger.length > 0
+    ? (initialAutopilotState.ledger as AutopilotLedgerEntry[])
+    : [];
+
+const INITIAL_CASH: number =
+  typeof initialAutopilotState?.cashBalance === 'number' && Number.isFinite(initialAutopilotState.cashBalance)
+    ? initialAutopilotState.cashBalance
+    : 108089.79;
+
+const INITIAL_POSITIONS: Record<string, Position> =
+  initialAutopilotState?.positions && typeof initialAutopilotState.positions === 'object' && Object.keys(initialAutopilotState.positions).length > 0
+    ? (initialAutopilotState.positions as Record<string, Position>)
+    : {
+        BTC: {
+          ticker: 'BTC',
+          amount: 0.045,
+          entryPrice: 77350,
+          currentPrice: 79820,
+          unrealizedPnl: 111.15,
+          unrealizedPnlPct: 3.19,
+          class: 'CX',
+        },
+        NVDAon: {
+          ticker: 'NVDAon',
+          amount: 18,
+          entryPrice: 182.5,
+          currentPrice: 186.4,
+          unrealizedPnl: 70.2,
+          unrealizedPnlPct: 2.14,
+          class: 'EQ',
+        },
+      };
 
 function loadPersistedAutopilotState() {
   if (typeof window === 'undefined') return null;
@@ -148,7 +161,10 @@ function loadPersistedAutopilotState() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') {
-        return parsed;
+        // Discard stale cache if it only has dummy seed trades (< 50 items)
+        if (Array.isArray(parsed.ledger) && parsed.ledger.length >= 50) {
+          return parsed;
+        }
       }
     }
   } catch (err) {
@@ -208,41 +224,10 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Device-scoped ledger
   const [ledger, setLedger] = useState<AutopilotLedgerEntry[]>(() => {
     const p = loadPersistedAutopilotState();
-    if (Array.isArray(p?.ledger) && p.ledger.length > 0) {
+    if (Array.isArray(p?.ledger) && p.ledger.length >= 50) {
       return p.ledger;
     }
-    return [
-      {
-        id: 'seed-ledger-1',
-        timestamp: new Date().toLocaleTimeString(),
-        utcTimestamp: new Date().toISOString(),
-        type: 'BUY',
-        ticker: 'BTC',
-        amount: 0.045,
-        price: 77350.0,
-        totalUsd: 3480.75,
-        balanceBefore: 96715.0,
-        balanceAfter: 93234.25,
-        realizedPnl: 0,
-        realizedPnlPct: 0,
-        notes: 'Initial Autopilot position opened on Bitget BTC/USDT spot',
-      },
-      {
-        id: 'seed-ledger-2',
-        timestamp: new Date().toLocaleTimeString(),
-        utcTimestamp: new Date().toISOString(),
-        type: 'BUY',
-        ticker: 'NVDAon',
-        amount: 18.0,
-        price: 182.5,
-        totalUsd: 3285.0,
-        balanceBefore: 100000.0,
-        balanceAfter: 96715.0,
-        realizedPnl: 0,
-        realizedPnlPct: 0,
-        notes: 'Initial Autopilot position opened on NVDA Tokenized Equity',
-      },
-    ];
+    return INITIAL_LEDGER;
   });
 
   const [autoExitPct, setAutoExitPct] = useState<number>(() => {
@@ -318,8 +303,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const remoteState = data.state;
         if (Array.isArray(remoteState.ledger) && remoteState.ledger.length > 0) {
           setLedger((prev) => {
-            const hasOnlyInitialSeeds = prev.length <= 2 && prev.every((t) => t.id.startsWith('seed-ledger'));
-            if (hasOnlyInitialSeeds || prev.length === 0) {
+            if (!prev || prev.length < 50) {
               return remoteState.ledger;
             }
             // Merge deduplicating by ID, maintaining newest first

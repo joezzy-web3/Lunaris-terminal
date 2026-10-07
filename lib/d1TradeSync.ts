@@ -4,7 +4,7 @@
  * Bridges the audit engine to Cloudflare D1 SQL database.
  */
 import { executeD1Query, D1TradeRow } from './cloudflareD1.ts';
-import { getProgressiveState } from '../api/audit/engine.ts';
+import { getProgressiveState } from '../api/_lib/engine.ts';
 
 export function rowToPaperTrade(r: D1TradeRow) {
   const entryPrice = r.entry_price || r.price;

@@ -1,7 +1,7 @@
 // api/audit/trades.ts
 // Vercel Serverless Function: Authoritative trade reader backed by Cloudflare D1
-import { queryD1 } from './d1';
-import { getProgressiveState } from './engine';
+import { queryD1 } from '../_lib/d1';
+import { getProgressiveState } from '../_lib/engine';
 
 export const config = {
   maxDuration: 10,
@@ -50,7 +50,10 @@ export default async function handler(req: any, res: any) {
   }
 
   const now = Date.now();
-  const limit = Math.min(100, Math.max(1, parseInt(req.query?.limit as string || '50', 10)));
+  const isAll = req.query?.all === 'true' || req.query?.limit === 'all';
+  const limit = isAll
+    ? 250
+    : Math.min(100, Math.max(1, parseInt((req.query?.limit as string) || '50', 10)));
 
   try {
     const rows = await queryD1('SELECT * FROM trades ORDER BY seq DESC LIMIT ?', [limit]);

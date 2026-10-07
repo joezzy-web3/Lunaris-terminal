@@ -1,7 +1,7 @@
 // api/audit/summary.ts
 // Vercel Serverless Function: Authoritative audit summary backed by Cloudflare D1
-import { getProgressiveState, computeMetrics } from './engine';
-import { queryD1, saveTradeToD1 } from './d1';
+import { getProgressiveState, computeMetrics } from '../_lib/engine';
+import { queryD1, saveTradeToD1 } from '../_lib/d1';
 
 export const config = {
   maxDuration: 10,

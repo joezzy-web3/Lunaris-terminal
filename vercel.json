@@ -2,6 +2,7 @@
   "buildCommand": "npm run build:client",
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/api/audit/all-trades", "destination": "/api/audit/trades?all=true" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

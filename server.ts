@@ -18,7 +18,7 @@ import { validatePriceTick, getRejectedTicksLog } from './lib/priceSanityGuard';
 import { getBitgetTakerFeeRate, estimateL2OrderbookSlippage, finalizeTradeClose } from './lib/tradeMath';
 import { runIncrementalReconciliation } from './scripts/reconcileAuditTrades';
 import { evaluateTradeRisk, TradeProposal } from './lib/riskVeto';
-import { saveTradeToD1, queryD1 } from './api/audit/d1.ts';
+import { saveTradeToD1, queryD1 } from './api/_lib/d1.ts';
 
 dotenv.config();
 

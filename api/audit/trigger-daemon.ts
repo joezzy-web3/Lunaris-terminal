@@ -1,7 +1,7 @@
 // api/audit/trigger-daemon.ts
 // Vercel Serverless Function: Trigger/retrieve latest authoritative trade backed by Cloudflare D1
-import { getProgressiveState } from './engine';
-import { saveTradeToD1 } from './d1';
+import { getProgressiveState } from '../_lib/engine';
+import { saveTradeToD1 } from '../_lib/d1';
 
 export const config = {
   maxDuration: 10,

@@ -1,7 +1,7 @@
 // api/audit/export-json.ts
 // Vercel Serverless Function: Download full audit trail as JSON file
 import { createRequire } from 'module';
-import { getProgressiveState, computeMetrics } from './engine';
+import { getProgressiveState, computeMetrics } from '../_lib/engine';
 
 const require = createRequire(import.meta.url);
 const AUDIT_TRADES_JSON = require('../../data/seed_audit_trades.json');

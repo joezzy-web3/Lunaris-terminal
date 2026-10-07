@@ -1,6 +1,6 @@
 // api/autopilot/trade.ts
 // Vercel Serverless Function: Record an Autopilot trade to Cloudflare D1
-import { queryD1, getD1Config } from '../audit/d1';
+import { queryD1, getD1Config } from '../_lib/d1';
 
 export const config = {
   maxDuration: 10,
