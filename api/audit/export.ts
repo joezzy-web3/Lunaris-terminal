@@ -1,6 +1,7 @@
-// api/audit/export-csv.ts
-// Vercel Serverless Function: Download full audit trail as CSV
+// api/audit/export.ts
+// Vercel Serverless Function: Download full audit trail as CSV or JSON
 import { createRequire } from 'module';
+import { getProgressiveState, computeMetrics } from '../_lib/engine';
 
 const require = createRequire(import.meta.url);
 const AUDIT_TRADES_JSON = require('../../data/seed_audit_trades.json');
@@ -11,10 +12,47 @@ export const config = {
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const format = String(req.query?.format || (req.url?.includes('json') ? 'json' : 'csv')).toLowerCase();
+  const trades = (AUDIT_TRADES_JSON as any[]) || [];
+
+  if (format === 'json') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="lunaris_bitget_s2_trade_audit.json"');
+
+    const now = Date.now();
+    const state = getProgressiveState(now);
+    const latestTrades = state.recentTrades || [];
+    const existingIds = new Set(trades.map(t => t.id));
+    const newTrades = latestTrades.filter(t => !existingIds.has(t.id));
+    const allTrades = [...trades, ...newTrades];
+    const metrics = computeMetrics(state.totalTrades, state.currentBalance, state.latestTrade);
+
+    const payload = {
+      hackathon: 'Bitget AI Base Camp Hackathon S2',
+      track: 'Track 2 - Agentic Trading (Agent Trading)',
+      databaseEngine: 'Cloudflare D1 Distributed Edge SQL',
+      startingCapitalUsd: 100000.0,
+      currency: 'USD',
+      baselineSpecification: 'Bitget S2 $100,000.00 USD Genesis Capital Pool',
+      totalRecords: state.totalTrades,
+      settledBalance: state.currentBalance,
+      exportTimestamp: new Date().toISOString(),
+      metrics,
+      auditLog: allTrades,
+    };
+
+    return res.status(200).send(JSON.stringify(payload, null, 2));
+  }
+
+  // Default: CSV export
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="lunaris_bitget_s2_trade_audit.csv"');
-
-  const trades = AUDIT_TRADES_JSON as any[];
 
   const headers = [
     'Trade ID',

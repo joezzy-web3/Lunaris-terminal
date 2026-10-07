@@ -3,6 +3,9 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/audit/all-trades", "destination": "/api/audit/trades?all=true" },
+    { "source": "/api/audit/export-csv", "destination": "/api/audit/export?format=csv" },
+    { "source": "/api/audit/export-json", "destination": "/api/audit/export?format=json" },
+    { "source": "/api/market/pulse/ai-refresh", "destination": "/api/gemini/pulse-ai" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
