@@ -65,6 +65,10 @@
     "/audit_state/{docId}": {
       "entity": "GlobalLedgerState",
       "description": "Quota-safe single document sync for live trade replication across all judge sessions"
+    },
+    "/test_audit_trades/{tradeId}": {
+      "entity": "AuditTrade",
+      "description": "Quarantined test and debug trade records"
     }
   }
 }

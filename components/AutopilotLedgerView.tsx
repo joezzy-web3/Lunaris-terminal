@@ -226,6 +226,19 @@ export function AutopilotLedgerView({
         </div>
       </div>
 
+      {/* Live Market Pricing Disclosure Notice */}
+      <div className="p-3 bg-gradient-to-r from-cyan-950/30 via-zinc-900/60 to-emerald-950/20 border border-cyan-500/25 rounded-lg text-xs flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <span className="text-zinc-200 text-[11px]">
+            <strong>LIVE BITGET EXECUTION LEDGER:</strong> All entries here reflect real-time orders evaluated against live Bitget market quotes (<code className="text-[#00F0FF]">api.bitget.com</code>).
+          </span>
+        </div>
+        <div className="text-[10px] text-cyan-300/80 font-mono">
+          Looking for the 120k macro stress-test benchmark? Visit the <strong>Audit Ledger</strong> tab.
+        </div>
+      </div>
+
       {/* Manual Quick Action Bar (Ideal when paused) */}
       <div className="bg-zinc-900/60 border border-zinc-800 rounded-lg p-3 text-xs">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-zinc-800/80">

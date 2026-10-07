@@ -16,6 +16,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Quarantined test audit trades collection
+    match /test_audit_trades/{tradeId} {
+      allow read, write: if true;
+    }
+
     // Default catch-all
     match /{document=**} {
       allow read, write: if false;

@@ -826,6 +826,9 @@ export default function App() {
                     if (ticker) setCouncilSelectedTicker(ticker);
                     setCockpitModule('CHART');
                   }}
+                  onNavigateToAutopilot={() => {
+                    setCockpitModule('AUTOPILOT');
+                  }}
                 />
               </div>
             )}
@@ -952,6 +955,9 @@ export default function App() {
                 if (ticker) setCouncilSelectedTicker(ticker);
                 navigateToTab('TERMINAL');
                 setCockpitModule('CHART');
+              }}
+              onNavigateToAutopilot={() => {
+                navigateToTab('AUTOPILOT');
               }}
             />
           </div>

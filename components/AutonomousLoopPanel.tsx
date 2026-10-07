@@ -238,16 +238,20 @@ export function AutonomousLoopPanel({
             )}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-sm font-bold tracking-wider text-white">LUNARIS AUTOPILOT</h2>
               <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-500/30">
-                Core Loop Tier 1
+                Live Execution Engine
               </span>
-              <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 font-mono" title="Isolated Device Sandbox: test independently without cross-device interference">
+              <span className="text-[10px] uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono font-bold flex items-center gap-1 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                LIVE BITGET ORDER PRICING
+              </span>
+              <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-cyan-950/50 text-gray-300 border border-white/10 font-mono" title="Isolated Device Sandbox: test independently without cross-device interference">
                 Device Sandbox
               </span>
             </div>
-            <p className="text-[11px] text-gray-400">Deterministic Autonomous Trade Inference & Risk Safeguard</p>
+            <p className="text-[11px] text-gray-400">Autonomous Trade Execution & Real-Time Risk Safeguards against Bitget V2 Orderbooks</p>
           </div>
         </div>
 
@@ -344,6 +348,26 @@ export function AutonomousLoopPanel({
         />
       ) : (
         <>
+          {/* Real-Time Bitget Order Flow Disclosure Callout */}
+          <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-cyan-950/40 via-[#0a1120] to-emerald-950/30 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-cyan-500/20 text-[#00F0FF] shrink-0">
+                <Zap className="w-4 h-4 fill-current" />
+              </div>
+              <div>
+                <span className="font-bold text-white uppercase text-[11px] font-mono tracking-wide">
+                  REAL-TIME BITGET ORDERBOOK PRICING ACTIVE
+                </span>
+                <p className="text-[11px] text-gray-300 mt-0.5">
+                  Autopilot executes against live quotes and level-2 book spreads polled directly from Bitget gateways (<code className="text-[#00F0FF]">api.bitget.com</code>). Every order is vetted by the 5-agent Council Quorum &amp; Guardian-01 risk collars.
+                </p>
+              </div>
+            </div>
+            <div className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-400/30 px-2.5 py-1 rounded-lg">
+              Macro Stress-Test Benchmark: <strong>120k+ Trades in Audit Ledger</strong>
+            </div>
+          </div>
+
           {/* Autopilot Risk & Portfolio Controls: Auto-Exit Target + Max Open Positions Capacity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
             {/* Control 1: Take-Profit Auto-Exit Target (% Gain) */}

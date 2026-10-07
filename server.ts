@@ -18,26 +18,9 @@ import { validatePriceTick, getRejectedTicksLog } from './lib/priceSanityGuard';
 import { getBitgetTakerFeeRate, estimateL2OrderbookSlippage, finalizeTradeClose } from './lib/tradeMath';
 import { runIncrementalReconciliation } from './scripts/reconcileAuditTrades';
 import { evaluateTradeRisk, TradeProposal } from './lib/riskVeto';
-import { saveTradeToD1 } from './api/audit/d1.ts';
-import { initializeApp as initFirebaseApp, getApps as getFirebaseApps } from 'firebase/app';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
-import firebaseConfig from './firebase-applet-config.json';
+import { saveTradeToD1, queryD1 } from './api/audit/d1.ts';
 
 dotenv.config();
-
-// Lazy initialization of Firebase Firestore to prevent unhandled startup failure
-let serverDb: any = null;
-function getServerDb() {
-  if (!serverDb) {
-    try {
-      const serverFirebaseApp = getFirebaseApps().length > 0 ? getFirebaseApps()[0] : initFirebaseApp(firebaseConfig);
-      serverDb = getFirestore(serverFirebaseApp, firebaseConfig.firestoreDatabaseId || '(default)');
-    } catch (err) {
-      console.warn('Firebase Firestore initialization deferred:', err);
-    }
-  }
-  return serverDb;
-}
 
 const app = express();
 const PORT = 3000;
@@ -819,17 +802,11 @@ function saveAuditTrades(trades: any[]) {
     cachedAuditMetrics = calculateAuditMetrics(reconciled);
     scheduleAuditFileWrite(reconciled.length > 0 ? reconciled : SEED_PAPER_TRADES);
 
-    // Push newest trade to Firestore cloud database only if within quota
-    if (reconciled.length > 0 && !getFirestoreQuotaStatus().quotaExceeded) {
+    // Push newest trade to Cloudflare D1 SQL database
+    if (reconciled.length > 0) {
       const latest = reconciled[reconciled.length - 1];
-      const db = getServerDb();
-      if (latest && latest.id && db && !isTestTradeRecord(latest)) {
-        const d = doc(db, 'audit_trades', latest.id);
-        const cleaned: Record<string, any> = {};
-        for (const [k, v] of Object.entries(latest)) {
-          if (v !== undefined) cleaned[k] = v;
-        }
-        setDoc(d, cleaned, { merge: true }).catch(() => {});
+      if (latest && latest.id && !isTestTradeRecord(latest)) {
+        saveTradeToD1(latest).catch(() => {});
       }
     }
   } catch (err) {
@@ -1094,6 +1071,11 @@ function saveAutopilotState(state: Partial<ServerAutopilotState>) {
     };
     cachedAutopilotState = updated;
     atomicWriteJsonSync(AUTOPILOT_FILE_PATH, updated);
+    // Asynchronously sync to Cloudflare D1
+    queryD1(
+      "INSERT OR REPLACE INTO audit_meta (key, val) VALUES ('autopilot_state_json', ?)",
+      [JSON.stringify(updated)]
+    ).catch(() => {});
     return updated;
   } catch (err) {
     console.error('Error writing autopilot state:', err);
@@ -1615,24 +1597,7 @@ function executeServerAgenticTrade(requestedInstrument?: string, requestedDirect
   lastServerAgenticTradeTime = Date.now();
   lastServerAgenticTrade = normalized;
 
-  // Sync to single document audit_state/global_live_ledger for cross-judge replication
-  if (serverDb) {
-    try {
-      const recentSlice = reconciled.slice(-30);
-      const ledgerPayload = {
-        latestTrades: recentSlice,
-        latestTrade: normalized,
-        totalCount: reconciled.length,
-        currentBalance: normalized.accountBalance,
-        lastUpdated: new Date().toISOString(),
-      };
-      setDoc(doc(serverDb, 'audit_state', 'global_live_ledger'), ledgerPayload, { merge: true }).catch((err: any) => {
-        // Non-blocking log
-      });
-    } catch {}
-  }
-
-  // Dual persistence: Write immediately to Cloudflare D1 SQL database
+  // Cloud persistence: Write immediately to Cloudflare D1 SQL database
   try {
     saveTradeToD1(normalized).catch(() => {});
   } catch {}
@@ -1830,17 +1795,12 @@ app.post('/api/audit/trade', (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid trade payload' });
     }
 
-    // Ingestion filter: Quarantine test/debug trades to separate test collection
+    // Ingestion filter: Quarantine test/debug trades
     if (isTestTradeRecord(trade)) {
-      const db = getServerDb();
-      if (db && trade.id) {
-        const d = doc(db, 'test_audit_trades', String(trade.id));
-        setDoc(d, trade, { merge: true }).catch(() => {});
-      }
       return res.status(200).json({
         success: true,
         quarantined: true,
-        message: 'Test or debug trade routed to isolated test_audit_trades collection',
+        message: 'Test or debug trade routed to isolated quarantine',
       });
     }
 
@@ -2023,6 +1983,30 @@ app.post('/api/autopilot/state', (req, res) => {
 
     const updated = saveAutopilotState(safeUpdate);
     res.json({ success: true, state: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/autopilot/trade - Authoritative persistence for live Autopilot trades to local state & Cloudflare D1
+app.post('/api/autopilot/trade', (req, res) => {
+  try {
+    const trade = req.body?.trade;
+    if (!trade || !trade.id) {
+      return res.status(400).json({ success: false, error: 'Invalid trade' });
+    }
+    const current = getAutopilotState();
+    const ledger = Array.isArray(current.ledger) ? [...current.ledger] : [];
+    if (!ledger.some((t: any) => t.id === trade.id)) {
+      ledger.unshift(trade);
+      if (ledger.length > 500) ledger.length = 500;
+    }
+    const safeUpdate: Partial<ServerAutopilotState> = { ledger };
+    if (typeof trade.balanceAfter === 'number' && Number.isFinite(trade.balanceAfter)) {
+      safeUpdate.cashBalance = trade.balanceAfter;
+    }
+    const updated = saveAutopilotState(safeUpdate);
+    res.json({ success: true, ledgerCount: updated.ledger?.length || 0 });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

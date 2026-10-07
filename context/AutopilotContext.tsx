@@ -95,6 +95,15 @@ interface AutopilotContextType {
 
 const AUTOPILOT_STORAGE_KEY = 'LUNARIS_AUTOPILOT_SANDBOX_STATE_V3';
 
+function persistAutopilotTrade(trade: AutopilotLedgerEntry) {
+  if (typeof window === 'undefined' || !trade || !trade.id) return;
+  fetch('/api/autopilot/trade', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ trade }),
+  }).catch(() => {});
+}
+
 function getDeviceSessionId(): string {
   if (typeof window === 'undefined') return 'judge-device-local';
   try {
@@ -299,6 +308,52 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [isExecuting, isTurbo, autoExitPct, maxOpenPositions, cashBalance, positions, ledger]);
 
+  // Hydrate persistent Autopilot ledger from Cloudflare D1 / server so judges never see an empty ledger or reset to zero
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/autopilot/state')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!isMounted || !data?.state) return;
+        const remoteState = data.state;
+        if (Array.isArray(remoteState.ledger) && remoteState.ledger.length > 0) {
+          setLedger((prev) => {
+            const hasOnlyInitialSeeds = prev.length <= 2 && prev.every((t) => t.id.startsWith('seed-ledger'));
+            if (hasOnlyInitialSeeds || prev.length === 0) {
+              return remoteState.ledger;
+            }
+            // Merge deduplicating by ID, maintaining newest first
+            const localIds = new Set(prev.map((t) => t.id));
+            const additions = remoteState.ledger.filter((t: AutopilotLedgerEntry) => !localIds.has(t.id));
+            return [...prev, ...additions].slice(0, 500);
+          });
+        }
+        if (typeof remoteState.cashBalance === 'number' && Number.isFinite(remoteState.cashBalance)) {
+          setCashBalance((prev) => {
+            if (prev === INITIAL_CASH) {
+              cashBalanceRef.current = remoteState.cashBalance;
+              return remoteState.cashBalance;
+            }
+            return prev;
+          });
+        }
+        if (remoteState.positions && typeof remoteState.positions === 'object' && Object.keys(remoteState.positions).length > 0) {
+          setPositions((prev) => {
+            if (prev === INITIAL_POSITIONS || Object.keys(prev).length === 0) {
+              positionsRef.current = remoteState.positions;
+              return remoteState.positions;
+            }
+            return prev;
+          });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const monitoredTickers = ['BTC', 'ETH', 'SOL', 'NVDA', 'TSLA', 'MSTR', 'COIN', 'AAPL'];
 
   const calculateTotalValue = useCallback((
@@ -388,6 +443,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           };
 
           setLedger((prev) => [tpLedger, ...prev.slice(0, 299)]);
+          persistAutopilotTrade(tpLedger);
           setLogs((prev) => [
             {
               id: `log-tp-${Date.now()}-${ticker}`,
@@ -429,6 +485,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           };
 
           setLedger((prev) => [slLedger, ...prev.slice(0, 299)]);
+          persistAutopilotTrade(slLedger);
           playRiskVetoTone();
           continue;
         }
@@ -485,6 +542,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               notes: `Autonomous Entry: Deployed $${actualCost.toLocaleString()} into ${units.toFixed(4)} ${chosenTicker} at $${entryPrice.toLocaleString()}.`,
             };
             setLedger((prev) => [buyLedger, ...prev.slice(0, 299)]);
+            persistAutopilotTrade(buyLedger);
             setLogs((prev) => [
               {
                 id: `log-buy-${Date.now()}-${chosenTicker}`,
@@ -607,6 +665,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         notes: `Manual Cockpit Buy: Allocated $${actualCost.toLocaleString()} into ${units.toFixed(4)} ${normTicker} at $${validPrice.toLocaleString()}.`,
       };
       setLedger((prev) => [buyLedger, ...prev.slice(0, 299)]);
+      persistAutopilotTrade(buyLedger);
       playTradeApprovedChime();
     }
 
@@ -680,6 +739,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
 
       setLedger((prev) => [manualLedger, ...prev.slice(0, 299)]);
+      persistAutopilotTrade(manualLedger);
       if (pnl >= 0) {
         playTradeApprovedChime();
       } else {
@@ -822,6 +882,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           notes: `Manual Cockpit Buy: Allocated $${actualCost.toLocaleString()} into ${units.toFixed(4)} ${sym} at $${quote.toLocaleString()}.`,
         };
         setLedger((prev) => [manualEntry, ...prev.slice(0, 299)]);
+        persistAutopilotTrade(manualEntry);
         playTradeApprovedChime();
       }
     } else {
@@ -849,7 +910,7 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const pnlPct = cost > 0 ? parseFloat((((livePrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2)) : 0;
       totalProceeds += proceeds;
 
-      newLedgerEntries.push({
+      const entry: AutopilotLedgerEntry = {
         id: `cashout-all-${Date.now()}-${pos.ticker}`,
         timestamp: new Date().toLocaleTimeString(),
         utcTimestamp: new Date().toISOString(),
@@ -863,7 +924,9 @@ export const AutopilotProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         realizedPnl: pnl,
         realizedPnlPct: pnlPct,
         notes: `Cashout All Executed: Closed ${pos.ticker} at $${livePrice.toLocaleString()} (${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%). Full proceeds credited to Available Cash.`,
-      });
+      };
+      newLedgerEntries.push(entry);
+      persistAutopilotTrade(entry);
     }
 
     const nextCash = parseFloat((prevCash + totalProceeds).toFixed(2));
