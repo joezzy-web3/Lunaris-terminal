@@ -583,9 +583,13 @@ export const DailyPnlCalendar: React.FC<DailyPnlCalendarProps> = ({
 
         <div className="bg-[#121422] p-2.5 rounded-xl border border-white/5">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider">Worst Day</p>
-          <p className="text-sm font-bold text-rose-400 mt-0.5">
+          <p
+            className={`text-sm font-bold mt-0.5 ${
+              monthlyStats.worstDay && monthlyStats.worstDay.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+            }`}
+          >
             {monthlyStats.worstDay
-              ? `-$${Math.abs(monthlyStats.worstDay.pnl).toLocaleString()} (${monthlyStats.worstDay.date.slice(5)})`
+              ? `${monthlyStats.worstDay.pnl >= 0 ? '+' : '-'}$${Math.abs(monthlyStats.worstDay.pnl).toLocaleString()} (${monthlyStats.worstDay.date.slice(5)})`
               : '—'}
           </p>
         </div>

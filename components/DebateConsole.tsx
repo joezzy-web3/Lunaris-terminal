@@ -137,7 +137,22 @@ export function DebateConsole({
   const [forceOverAllocation, setForceOverAllocation] = useState<boolean>(false);
   const [handoffSuccess, setHandoffSuccess] = useState<boolean>(false);
   const [soundActive, setSoundActive] = useState<boolean>(getTerminalSoundState());
-  const [councilViewMode, setCouncilViewMode] = useState<'MATRIX' | 'COURTROOM'>('MATRIX');
+  const [councilViewMode, setCouncilViewMode] = useState<'MATRIX' | 'COURTROOM'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('LUNARIS_COUNCIL_VIEW_MODE');
+      if (stored === 'COURTROOM' || stored === 'MATRIX') return stored;
+    }
+    return 'MATRIX';
+  });
+
+  const handleSetCouncilViewMode = (mode: 'MATRIX' | 'COURTROOM') => {
+    setCouncilViewMode(mode);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('LUNARIS_COUNCIL_VIEW_MODE', mode);
+      } catch {}
+    }
+  };
 
   // Real-time AI / Gemini telemetry metadata
   const [groundingInfo, setGroundingInfo] = useState<GroundingInfo | null>(null);
@@ -351,16 +366,80 @@ export function DebateConsole({
       const optimalSize = forceOverAllocation ? 32 : (v.optimalSizePct ?? 4.5);
       const winRate = forceOverAllocation ? 38 : (v.winRatePct ?? 72);
 
-      // Parse stopLoss / takeProfit values
-      const stopLossPct = typeof v.stopLoss === 'string' && v.stopLoss.includes('%')
-        ? Math.abs(parseFloat(v.stopLoss.replace(/[^0-9.-]/g, '')) || 4.2)
-        : 4.2;
-      const takeProfitPct = typeof v.takeProfit === 'string' && v.takeProfit.includes('%')
-        ? Math.abs(parseFloat(v.takeProfit.replace(/[^0-9.-]/g, '')) || 11.5)
-        : 11.5;
+      // Determine dynamic takeProfit / stopLoss based on volatility profile if not provided
+      const isCryptoAsset = ['BTC', 'ETH', 'SOL', 'SUI', 'DOGE', 'AVAX', 'XRP', 'BNB'].includes(symbol);
+      const isHighBeta = isCryptoAsset || ['TSLA', 'NVDA', 'PLTR', 'ARM', 'COIN'].includes(symbol);
+      const defaultTP = isHighBeta ? 11.5 : 6.8;
+      const defaultSL = isHighBeta ? 4.2 : 2.5;
 
-      const stopLossPrice = Number((finalPrice * (1 - stopLossPct / 100)).toFixed(2));
-      const targetPrice = Number((finalPrice * (1 + takeProfitPct / 100)).toFixed(2));
+      // Determine executionType and targetEntryPrice FIRST so all percentages & dollar targets anchor to it!
+      const executionType = v.executionType || 'MARKET_ORDER';
+      let targetEntryPrice = finalPrice;
+      if (executionType === 'MARKET_ORDER') {
+        targetEntryPrice = finalPrice;
+      } else {
+        const rawTarget = Number(v.targetEntryPrice);
+        if (Number.isFinite(rawTarget) && rawTarget > 0) {
+          const targetDev = Math.abs(rawTarget - finalPrice) / finalPrice;
+          if (targetDev <= 0.08) {
+            targetEntryPrice = Number(rawTarget.toFixed(2));
+          } else {
+            targetEntryPrice = executionType === 'LIMIT_PULLBACK' || rawTarget < finalPrice
+              ? Number((finalPrice * 0.985).toFixed(2))
+              : Number((finalPrice * 1.015).toFixed(2));
+          }
+        } else {
+          targetEntryPrice = executionType === 'LIMIT_PULLBACK'
+            ? Number((finalPrice * 0.985).toFixed(2))
+            : finalPrice;
+        }
+      }
+
+      // Smart parsing of takeProfit and stopLoss (percentage string, dollar target, or numeric)
+      let takeProfitPct = defaultTP;
+      if (typeof v.takeProfit === 'string') {
+        if (v.takeProfit.includes('%')) {
+          takeProfitPct = Math.abs(parseFloat(v.takeProfit.replace(/[^0-9.-]/g, '')) || defaultTP);
+        } else {
+          const parsedDollar = parseFloat(v.takeProfit.replace(/[^0-9.-]/g, ''));
+          if (Number.isFinite(parsedDollar) && parsedDollar > 0 && targetEntryPrice > 0) {
+            takeProfitPct = Number((Math.abs((parsedDollar - targetEntryPrice) / targetEntryPrice) * 100).toFixed(1));
+          }
+        }
+      } else if (typeof v.takeProfitPct === 'number' && v.takeProfitPct > 0) {
+        takeProfitPct = v.takeProfitPct;
+      } else if (typeof v.takeProfit === 'number' && v.takeProfit > 0 && targetEntryPrice > 0) {
+        takeProfitPct = Number((Math.abs((v.takeProfit - targetEntryPrice) / targetEntryPrice) * 100).toFixed(1));
+      }
+
+      let stopLossPct = defaultSL;
+      if (typeof v.stopLoss === 'string') {
+        if (v.stopLoss.includes('%')) {
+          stopLossPct = Math.abs(parseFloat(v.stopLoss.replace(/[^0-9.-]/g, '')) || defaultSL);
+        } else {
+          const parsedDollar = parseFloat(v.stopLoss.replace(/[^0-9.-]/g, ''));
+          if (Number.isFinite(parsedDollar) && parsedDollar > 0 && targetEntryPrice > 0) {
+            stopLossPct = Number((Math.abs((targetEntryPrice - parsedDollar) / targetEntryPrice) * 100).toFixed(1));
+          }
+        }
+      } else if (typeof v.stopLossPct === 'number' && v.stopLossPct > 0) {
+        stopLossPct = v.stopLossPct;
+      } else if (typeof v.stopLoss === 'number' && v.stopLoss > 0 && targetEntryPrice > 0) {
+        stopLossPct = Number((Math.abs((targetEntryPrice - v.stopLoss) / targetEntryPrice) * 100).toFixed(1));
+      }
+
+      // Safeguard reasonable bounds: TP >= 3.0%, SL >= 1.5%
+      takeProfitPct = Math.max(3.0, Number(takeProfitPct.toFixed(1)));
+      stopLossPct = Math.max(1.5, Number(stopLossPct.toFixed(1)));
+
+      // Mathematically anchor targetPrice and stopLossPrice strictly to targetEntryPrice!
+      const isShort = action === 'SELL';
+      const stopLossPrice = isShort
+        ? Number((targetEntryPrice * (1 + stopLossPct / 100)).toFixed(2))
+        : Number((targetEntryPrice * (1 - stopLossPct / 100)).toFixed(2));
+      const targetPrice = isShort
+        ? Number((targetEntryPrice * (1 - takeProfitPct / 100)).toFixed(2))
+        : Number((targetEntryPrice * (1 + takeProfitPct / 100)).toFixed(2));
 
       setLivePriceData({
         price: finalPrice,
@@ -485,26 +564,6 @@ export function DebateConsole({
 
       const riskMitigationClause = v.riskMitigationClause || 
         `NEXUS-RED Trap Audit: Orderbook depth verified. Limit order execution enforced with slippage bound to 0.05%. Max VaR bounded at -${stopLossPct}% NAV.`;
-
-      const executionType = v.executionType || 'MARKET_ORDER';
-      let targetEntryPrice = finalPrice;
-      if (executionType === 'MARKET_ORDER') {
-        targetEntryPrice = finalPrice;
-      } else {
-        const rawTarget = Number(v.targetEntryPrice);
-        if (Number.isFinite(rawTarget) && rawTarget > 0) {
-          const targetDev = Math.abs(rawTarget - finalPrice) / finalPrice;
-          if (targetDev <= 0.08) {
-            targetEntryPrice = Number(rawTarget.toFixed(2));
-          } else {
-            targetEntryPrice = executionType === 'LIMIT_PULLBACK' || rawTarget < finalPrice
-              ? Number((finalPrice * 0.985).toFixed(2))
-              : Number((finalPrice * 1.015).toFixed(2));
-          }
-        } else {
-          targetEntryPrice = finalPrice;
-        }
-      }
 
       activeVerdict = {
         ticker: symbol,
@@ -710,7 +769,7 @@ export function DebateConsole({
           <button
             onClick={() => {
               playCyberClick();
-              setCouncilViewMode('MATRIX');
+              handleSetCouncilViewMode('MATRIX');
             }}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               councilViewMode === 'MATRIX'
@@ -726,7 +785,7 @@ export function DebateConsole({
           <button
             onClick={() => {
               playCyberClick();
-              setCouncilViewMode('COURTROOM');
+              handleSetCouncilViewMode('COURTROOM');
             }}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               councilViewMode === 'COURTROOM'
@@ -752,7 +811,7 @@ export function DebateConsole({
           <button
             onClick={() => {
               playCyberClick();
-              setCouncilViewMode('COURTROOM');
+              handleSetCouncilViewMode('COURTROOM');
             }}
             className="flex items-center gap-1.5 text-xs text-zinc-300 bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1 rounded-lg font-mono transition-all cursor-pointer"
             title="Open animated courtroom trial with Gavel slam & cross-examination"
@@ -1190,12 +1249,16 @@ export function DebateConsole({
                       : `Market Entry @ Current: $${verdict.currentPrice.toLocaleString()}`}
                   </span>
                 </div>
-                <div className="text-[10px] text-zinc-400 flex items-center gap-2 mt-0.5">
+                <div className="text-[10px] text-zinc-400 flex items-center gap-2 mt-0.5 flex-wrap">
                   <span>Live Market: <strong className="text-zinc-200 font-mono">${verdict.currentPrice.toLocaleString()}</strong></span>
                   <span>•</span>
-                  <span>Target Entry: <strong className="text-white font-mono">${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}</strong></span>
+                  <span>Target Entry: <strong className="text-amber-300 font-mono">${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}</strong></span>
                   <span>•</span>
-                  <span>3/3 Agents Aligned with Guardian-01 Approval • Ratified at {verdict.timestamp}</span>
+                  <span>Target Exit (TP): <strong className="text-emerald-300 font-mono">${verdict.targetPrice.toLocaleString()} (+{verdict.takeProfitPct}%)</strong></span>
+                  <span>•</span>
+                  <span>Stop-Loss (SL): <strong className="text-rose-300 font-mono">${verdict.stopLossPrice.toLocaleString()} (-{verdict.stopLossPct}%)</strong></span>
+                  <span>•</span>
+                  <span>Ratified at {verdict.timestamp}</span>
                 </div>
               </div>
             </div>
@@ -1264,23 +1327,27 @@ export function DebateConsole({
             {/* 4. Profit Target */}
             <div className="p-2.5 bg-black/60 rounded border border-white/10 text-center">
               <div className="text-[10px] text-zinc-400 uppercase flex items-center justify-center gap-1">
-                <TrendingUp className="w-3 h-3 text-emerald-400" /> Target Gain
+                <TrendingUp className="w-3 h-3 text-emerald-400" /> Target Exit (TP)
               </div>
               <div className="text-base font-black text-emerald-400 mt-0.5">
                 +{verdict.takeProfitPct}%
               </div>
-              <div className="text-[9px] text-zinc-500">${verdict.targetPrice.toLocaleString()}</div>
+              <div className="text-[10px] text-emerald-300 font-mono font-bold mt-0.5">
+                Exit: ${verdict.targetPrice.toLocaleString()}
+              </div>
             </div>
 
             {/* 5. Hard Stop-Loss */}
             <div className="p-2.5 bg-black/60 rounded border border-white/10 text-center">
               <div className="text-[10px] text-zinc-400 uppercase flex items-center justify-center gap-1">
-                <ShieldAlert className="w-3 h-3 text-rose-400" /> Stop-Loss
+                <ShieldAlert className="w-3 h-3 text-rose-400" /> Stop-Loss Exit (SL)
               </div>
               <div className="text-base font-black text-rose-400 mt-0.5">
                 -{verdict.stopLossPct}%
               </div>
-              <div className="text-[9px] text-zinc-500">${verdict.stopLossPrice.toLocaleString()}</div>
+              <div className="text-[10px] text-rose-300 font-mono font-bold mt-0.5">
+                Stop: ${verdict.stopLossPrice.toLocaleString()}
+              </div>
             </div>
 
             {/* 6. Portfolio VaR */}

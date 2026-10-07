@@ -129,12 +129,29 @@ export function generateCouncilDebate(
   // Dynamic parameters calibrated for this asset
   const baseWinRate = Math.round(76 + Math.random() * 8); // 76% - 84%
   const optimalSize = isVetoTest ? 32 : Math.round(11 + Math.random() * 4); // 11% - 15%
-  const takeProfitPct = Number((11.5 + Math.random() * 5).toFixed(1)); // +11.5% - +16.5%
-  const stopLossPct = Number((3.8 + Math.random() * 1.8).toFixed(1)); // -3.8% - -5.6%
+  
+  // Dynamic volatility targets based on asset class
+  const isHighVol = isCrypto || ['TSLA', 'NVDA', 'PLTR', 'ARM', 'COIN'].includes(ticker);
+  const takeProfitPct = isHighVol
+    ? Number((9.5 + Math.random() * 5.5).toFixed(1)) // +9.5% to +15.0%
+    : Number((5.5 + Math.random() * 3.5).toFixed(1)); // +5.5% to +9.0%
+  const stopLossPct = isHighVol
+    ? Number((3.6 + Math.random() * 1.6).toFixed(1)) // -3.6% to -5.2%
+    : Number((2.0 + Math.random() * 1.2).toFixed(1)); // -2.0% to -3.2%
+
   const riskReward = Number((takeProfitPct / stopLossPct).toFixed(2));
   const maxVaR = Number(((optimalSize * stopLossPct) / 100).toFixed(2)); // NAV impact
-  const targetPrice = Number((price * (1 + takeProfitPct / 100)).toFixed(price > 500 ? 2 : price > 1 ? 2 : 4));
-  const stopLossPrice = Number((price * (1 - stopLossPct / 100)).toFixed(price > 500 ? 2 : price > 1 ? 2 : 4));
+
+  // Calculate target entry price (pullback for extended momentum, otherwise market)
+  const isExtended = Math.random() > 0.45;
+  const executionType: 'MARKET_ORDER' | 'LIMIT_PULLBACK' = isExtended ? 'LIMIT_PULLBACK' : 'MARKET_ORDER';
+  const targetEntryPrice = isExtended
+    ? Number((price * 0.985).toFixed(price > 500 ? 2 : price > 1 ? 2 : 4))
+    : price;
+
+  // Mathematically anchor targetPrice and stopLossPrice strictly to targetEntryPrice
+  const targetPrice = Number((targetEntryPrice * (1 + takeProfitPct / 100)).toFixed(price > 500 ? 2 : price > 1 ? 2 : 4));
+  const stopLossPrice = Number((targetEntryPrice * (1 - stopLossPct / 100)).toFixed(price > 500 ? 2 : price > 1 ? 2 : 4));
 
   const now = new Date();
   const timeStr = (offsetSec: number) => {
@@ -357,8 +374,8 @@ export function generateCouncilDebate(
     assetClass: isCrypto ? 'CX' : 'EQ',
     currentPrice: price,
     action: 'BUY',
-    executionType: 'MARKET_ORDER',
-    targetEntryPrice: price,
+    executionType,
+    targetEntryPrice,
     optimalSizePct: optimalSize,
     winRatePct: baseWinRate,
     riskRewardRatio: riskReward,

@@ -1,43 +1,28 @@
 // components/CyberCourtroomView.tsx
-// High-Octane "Cyber-Tribunal: Bitget High Court of Trading Alpha"
-// Live Animated Multi-Agent Courtroom Cross-Examination & Gavel Slam
-// Calm, eye-resting dark aesthetic matching the official Council theme
+// LUNARIS TERMINAL — High Court of Trading Alpha
+// Realistic Multi-Agent Courtroom Presentation Layer
+// Driven dynamically by Quorum Matrix arguments & Deterministic Risk Veto Engine
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   Gavel,
-  ShieldAlert,
-  Flame,
-  Globe2,
-  Skull,
-  Shield,
-  AlertTriangle,
-  Volume2,
-  VolumeX,
   ChevronRight,
-  FileText,
-  Layers,
-  Scale,
   Zap,
-  Play,
+  FileText,
   RotateCcw,
+  Layers,
 } from 'lucide-react';
-import {
-  ConsensusVerdict,
-  DebateTurn,
-  COUNCIL_PERSONAS,
-  AgentPersonaId,
-} from '@/lib/councilDebateEngine';
-import { ReHuddlePanel } from './ReHuddlePanel';
+import { ConsensusVerdict, AgentPersonaId } from '@/lib/councilDebateEngine';
 import { TradeProposal } from '@/lib/riskVeto';
 import {
   playCyberClick,
-  playCourtObjectionSting,
-  playGavelImpactSound,
-  playGavelRiserSound,
   playTradeApprovedChime,
   playRiskVetoTone,
 } from '@/lib/soundSynth';
+import { CourtStage } from './court/CourtStage';
+import { CourtControls } from './court/CourtControls';
+import { ReHuddlePanel } from './ReHuddlePanel';
+import { useCourtTimeline } from './court/useCourtTimeline';
 
 interface CyberCourtroomViewProps {
   verdict: ConsensusVerdict | null;
@@ -58,8 +43,8 @@ export const CyberCourtroomView: React.FC<CyberCourtroomViewProps> = ({
   verdict,
   ticker,
   isDebating,
-  syncedVisibleTurnsCount,
-  isTypingNextTurn,
+  syncedVisibleTurnsCount = 0,
+  isTypingNextTurn = false,
   typingSpeaker,
   onConveneNewTrial,
   onSendToAutopilot,
@@ -68,771 +53,300 @@ export const CyberCourtroomView: React.FC<CyberCourtroomViewProps> = ({
   onToggleSound,
   onApplyAmendedVerdict,
 }) => {
-  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
-  const [isLocalReplaying, setIsLocalReplaying] = useState<boolean>(false);
-  const [objectingSpeakerId, setObjectingSpeakerId] = useState<AgentPersonaId | null>(null);
-  const [isGavelStriking, setIsGavelStriking] = useState<boolean>(false);
-  const [isScreenShaking, setIsScreenShaking] = useState<boolean>(false);
-  const [showVerdictStamp, setShowVerdictStamp] = useState<boolean>(false);
-  const [showSparks, setShowSparks] = useState<boolean>(false);
-  const [selectedExhibit, setSelectedExhibit] = useState<'NONE' | 'ORDERBOOK' | 'FUNDING'>('NONE');
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [speed, setSpeed] = useState<1 | 2>(1);
+  const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
 
-  const replayTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const prevDebatingRef = useRef<boolean>(isDebating);
-  const lastProcessedTurnCountRef = useRef<number>(-1);
-
-  // Trigger Objection specifically on the speaking agent card
-  const triggerObjection = (speaker: AgentPersonaId) => {
-    setObjectingSpeakerId(speaker);
-    if (soundActive) {
-      playCourtObjectionSting();
-    }
-    setTimeout(() => {
-      setObjectingSpeakerId(null);
-    }, 2200);
-  };
-
-  // Slam the Gavel with shockwave, sound, and screen shake
-  const slamGavel = () => {
-    setIsGavelStriking(true);
-    if (soundActive) {
-      playGavelRiserSound();
-    }
-
-    setTimeout(() => {
-      setIsScreenShaking(true);
-      setShowSparks(true);
-      setShowVerdictStamp(true);
-      if (soundActive) {
-        playGavelImpactSound();
-      }
-
-      setTimeout(() => {
-        setIsGavelStriking(false);
-        setIsScreenShaking(false);
-        setShowSparks(false);
-      }, 500);
-    }, 190);
-  };
-
-  // Synchronize courtroom state directly with master quorum turns during active deliberation
-  useEffect(() => {
-    if (isDebating) {
-      setIsLocalReplaying(false);
-      if (replayTimerRef.current) {
-        clearTimeout(replayTimerRef.current);
-      }
-      setShowVerdictStamp(false);
-
-      const count = syncedVisibleTurnsCount ?? 0;
-      setCurrentStepIndex(count);
-
-      // Trigger targeted objection if a new turn lands with skeptic/veto stance
-      if (count > 0 && count !== lastProcessedTurnCountRef.current && verdict?.turns) {
-        lastProcessedTurnCountRef.current = count;
-        const currentTurn = verdict.turns[count - 1];
-        if (
-          currentTurn &&
-          (currentTurn.speakerId === 'GUARDIAN' ||
-            currentTurn.speakerId === 'NEXUS_RED' ||
-            currentTurn.stanceType === 'SKEPTIC' ||
-            currentTurn.stanceType === 'VETO')
-        ) {
-          triggerObjection(currentTurn.speakerId);
-        }
-      }
-    } else {
-      lastProcessedTurnCountRef.current = -1;
-    }
-  }, [isDebating, syncedVisibleTurnsCount, verdict]);
-
-  // Handle transition when deliberation completes: strike gavel and reveal decree
-  useEffect(() => {
-    if (prevDebatingRef.current && !isDebating && verdict) {
-      // Deliberation just finished in real-time quorum
-      setCurrentStepIndex(verdict.turns.length);
-      setTimeout(() => {
-        slamGavel();
-      }, 300);
-    } else if (!isDebating && verdict && !showVerdictStamp && !isLocalReplaying) {
-      // If mounting or switching tabs after deliberation is already done
-      setCurrentStepIndex(verdict.turns.length);
-      setShowVerdictStamp(true);
-    }
-    prevDebatingRef.current = isDebating;
-  }, [isDebating, verdict, showVerdictStamp, isLocalReplaying]);
-
-  // Clean up replay timer on unmount
-  useEffect(() => {
-    return () => {
-      if (replayTimerRef.current) {
-        clearTimeout(replayTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Dedicated local replay function
-  const handleStartLocalReplay = () => {
-    if (!verdict) return;
-    playCyberClick();
-    setIsLocalReplaying(true);
-    setShowVerdictStamp(false);
-    setCurrentStepIndex(0);
-
-    let step = 0;
-    const runReplayStep = () => {
-      step++;
-      setCurrentStepIndex(step);
-
-      const currentTurn = verdict.turns[step - 1];
-      if (
-        currentTurn &&
-        (currentTurn.speakerId === 'GUARDIAN' ||
-          currentTurn.speakerId === 'NEXUS_RED' ||
-          currentTurn.stanceType === 'SKEPTIC' ||
-          currentTurn.stanceType === 'VETO')
-      ) {
-        triggerObjection(currentTurn.speakerId);
-      }
-
-      if (step < verdict.turns.length) {
-        replayTimerRef.current = setTimeout(runReplayStep, 2000);
-      } else {
-        setTimeout(() => {
-          slamGavel();
-          setIsLocalReplaying(false);
-        }, 500);
-      }
-    };
-
-    replayTimerRef.current = setTimeout(runReplayStep, 1000);
-  };
-
-  const quantTurn = verdict?.turns.find((t) => t.speakerId === 'QUANT') || verdict?.turns[0];
-  const guardianTurn = verdict?.turns.find((t) => t.speakerId === 'GUARDIAN') || verdict?.turns[1];
-  const nexusTurn = verdict?.turns.find((t) => t.speakerId === 'NEXUS_RED') || verdict?.turns[2];
-  const macroTurn = verdict?.turns.find((t) => t.speakerId === 'MACRO') || verdict?.turns[3];
-
-  const activeTurn: DebateTurn | null =
-    verdict && verdict.turns[Math.min(Math.max(0, currentStepIndex - 1), verdict.turns.length - 1)]
-      ? verdict.turns[Math.min(Math.max(0, currentStepIndex - 1), verdict.turns.length - 1)]
-      : null;
-
-  const activeSpeakerId: AgentPersonaId = isDebating
-    ? isTypingNextTurn && typingSpeaker
-      ? typingSpeaker
-      : activeTurn
-      ? activeTurn.speakerId
-      : typingSpeaker || 'QUANT'
-    : activeTurn
-    ? activeTurn.speakerId
-    : 'QUANT';
-
-  const isTrialFinished = (!isDebating && !isLocalReplaying && verdict && (showVerdictStamp || currentStepIndex >= verdict.turns.length)) || false;
+  // High-performance timeline hook controlling camera, characters, bubbles, and gavel in lockstep
+  const timeline = useCourtTimeline({
+    verdict,
+    ticker,
+    isDebating,
+    syncedVisibleTurnsCount,
+    isTypingNextTurn,
+    typingSpeaker,
+    soundActive,
+    speed,
+    isPlaying,
+  });
 
   return (
-    <div
-      id="cyber-courtroom-root"
-      className={`relative w-full rounded-xl border border-white/10 bg-[#08090d] p-4 sm:p-5 select-none font-mono text-zinc-200 transition-all ${
-        isScreenShaking ? 'animate-court-shake ring-1 ring-amber-400/40' : ''
-      }`}
-    >
-      {/* TOP COURTROOM NAVIGATION & COMMAND DECK */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3 mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span className="text-xs font-bold text-white tracking-wider font-mono">
-              THE CYBER-TRIBUNAL
-            </span>
-          </div>
-          <span className="text-[10px] bg-white/5 text-zinc-400 px-2 py-0.5 rounded border border-white/10 font-mono">
-            Council High Court of Trading Alpha
+    <div className="space-y-4">
+      {/* Top Header & Breadcrumb Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0a0c10] border border-white/10 px-4 py-3 rounded-xl font-mono text-xs">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-magenta-400 animate-pulse" />
+          <span className="font-bold text-white uppercase tracking-wider">
+            LUNARIS HIGH COURT OF TRADING ALPHA
           </span>
-          <span className="hidden sm:inline text-[10px] bg-white/5 text-[#00F0FF] border border-[#00F0FF]/30 px-2 py-0.5 rounded font-mono">
-            CASE #{ticker}-2026-Q3
+          <span className="text-zinc-500">//</span>
+          <span className="text-cyan-400 font-semibold">{ticker}</span>
+          <span className="text-zinc-500">//</span>
+          <span className="text-zinc-400 font-mono text-[11px] bg-white/5 px-2 py-0.5 rounded border border-white/10">
+            {timeline.currentPhaseName}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Sound Toggle */}
           <button
             onClick={() => {
               playCyberClick();
-              onToggleSound();
+              timeline.restartTimeline();
+              onConveneNewTrial(ticker);
             }}
-            title={soundActive ? 'Court Audio: Active' : 'Court Audio: Muted'}
-            className={`px-2.5 py-1.5 rounded-lg border text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
-              soundActive
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-                : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
-            }`}
+            disabled={isDebating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-colors cursor-pointer disabled:opacity-50"
           >
-            {soundActive ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-            <span className="text-[10px] hidden sm:inline">{soundActive ? 'Audio ON' : 'Muted'}</span>
+            <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Re-Convene Trial</span>
           </button>
 
-          {/* Replay Trial */}
-          {isTrialFinished && (
-            <button
-              onClick={handleStartLocalReplay}
-              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs border border-white/10 transition-colors cursor-pointer"
-              title="Replay trial cross-examination"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="text-[10px]">Replay</span>
-            </button>
-          )}
-
-          {/* Manual Gavel Slam Trigger */}
           <button
-            onClick={() => {
-              playCyberClick();
-              slamGavel();
-            }}
-            className="flex items-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-bold px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer"
-            title="Slam the Magistrate Gavel to deliver immediate verdict"
+            onClick={onReturnToMatrix}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-black font-bold hover:bg-zinc-200 transition-colors cursor-pointer shadow-sm"
           >
-            <Gavel className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-[10px]">SLAM GAVEL</span>
-          </button>
-
-          {/* Return to Matrix Mode */}
-          <button
-            onClick={() => {
-              playCyberClick();
-              onReturnToMatrix();
-            }}
-            className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white px-3 py-1.5 rounded-lg text-xs border border-white/10 transition-colors cursor-pointer"
-            title="Return to the classic Quorum Matrix table"
-          >
-            <Layers className="w-3.5 h-3.5 text-[#00F0FF]" />
-            <span className="text-[10px]">Quorum Matrix</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Return to Matrix</span>
           </button>
         </div>
       </div>
 
-      {/* Real-time sync status indicator when active debate is in progress */}
-      {isDebating && (
-        <div className="mb-4 p-2.5 rounded-lg bg-cyan-950/40 border border-cyan-500/40 text-cyan-200 text-xs flex items-center justify-between font-mono">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span>
-              {verdict
-                ? `LIVE QUORUM MIRROR ACTIVE // TURN ${currentStepIndex} OF ${verdict.turns.length}: ${activeSpeakerId} TESTIFYING UNDER OATH`
-                : `CONVENING CHAMBER // GATHERING REAL-TIME MARKET EVIDENCE FOR $${ticker}...`}
+      {/* Main Animated Courtroom Stage */}
+      <CourtStage
+        ticker={ticker}
+        currentPrice={verdict?.currentPrice}
+        targetEntryPrice={verdict?.targetEntryPrice || verdict?.currentPrice}
+        targetExitPrice={verdict?.targetPrice}
+        stopLossPrice={verdict?.stopLossPrice}
+        takeProfitPct={verdict?.takeProfitPct}
+        stopLossPct={verdict?.stopLossPct}
+        tradeAction={verdict?.action || 'BUY'}
+        sizePct={verdict?.optimalSizePct || 12}
+        executionType={verdict?.executionType}
+        leverageText={`requested: 5x leverage (${verdict?.optimalSizePct || 12}% NAV)`}
+        caption={timeline.caption}
+        customEyeStates={timeline.eyeStates}
+        headOffsets={timeline.headOffsets}
+        rootOffsets={timeline.rootOffsets}
+        cameraZoom={timeline.cameraZoom}
+        cameraFocus={timeline.cameraFocus}
+        cameraShake={timeline.cameraShake}
+        gavelAngle={timeline.gavelAngle}
+        gavelRingOpacity={timeline.gavelRingOpacity}
+        gavelRingScale={timeline.gavelRingScale}
+        caseFileStamp={timeline.caseFileStamp}
+        caseFileStampScale={timeline.caseFileStampScale}
+        caseFileStampOpacity={timeline.caseFileStampOpacity}
+        activeBubbles={timeline.activeBubbles}
+        voteBadges={timeline.voteBadges}
+        isScreenDisputed={timeline.isScreenDisputed}
+        flashColor={timeline.flashColor}
+        flashOpacity={timeline.flashOpacity}
+        showDebugPanel={false}
+      />
+
+      {/* Playback & Phase Control Bar */}
+      <CourtControls
+        isPlaying={isPlaying}
+        onTogglePlay={() => setIsPlaying((p) => !p)}
+        onReplay={() => {
+          playCyberClick();
+          timeline.restartTimeline();
+        }}
+        onSkipToVerdict={() => {
+          playCyberClick();
+          timeline.skipToVerdict();
+        }}
+        speed={speed}
+        onToggleSpeed={() => setSpeed((s) => (s === 1 ? 2 : 1))}
+        isTranscriptOpen={isTranscriptOpen}
+        onToggleTranscript={() => setIsTranscriptOpen((v) => !v)}
+        soundActive={soundActive}
+        onToggleSound={onToggleSound}
+        currentPhaseName={timeline.currentPhaseName}
+        isDebating={isDebating}
+      />
+
+      {/* Full Transcript Drawer (Expandable) */}
+      {isTranscriptOpen && verdict && (
+        <div className="bg-[#0b0d14] border border-white/15 rounded-xl p-5 space-y-4 font-mono animate-fadeIn">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-cyan-400" />
+              <h3 className="font-bold text-white text-sm uppercase tracking-wider">
+                Courtroom Certified Transcript — Case #{ticker}-3570
+              </h3>
+            </div>
+            <button
+              onClick={() => setIsTranscriptOpen(false)}
+              className="text-xs text-zinc-400 hover:text-white cursor-pointer px-2 py-1 rounded bg-white/5"
+            >
+              Close Drawer [✕]
+            </button>
+          </div>
+
+          {/* Turns Log */}
+          <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+            {verdict.turns.map((turn, idx) => (
+              <div
+                key={idx}
+                className="p-3 rounded-lg bg-black/40 border border-white/8 space-y-1.5 text-xs"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-white">{turn.speakerId}</span>
+                  <span className="text-[10px] text-zinc-400 px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                    {turn.stanceLabel}
+                  </span>
+                </div>
+                <p className="text-zinc-300 font-sans leading-relaxed text-sm">{turn.speech}</p>
+                <div className="flex items-center gap-3 text-[10px] text-zinc-500 pt-1">
+                  <span>Timestamp: {turn.timestamp}</span>
+                  <span>Stance: {turn.stanceType}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Gemini Synthesis */}
+          <div className="p-3.5 rounded-lg bg-white/5 border border-white/10 space-y-1">
+            <div className="text-xs font-bold text-white uppercase tracking-wider">
+              Gemini High Arbiter Synthesis & Rationale
+            </div>
+            <p className="text-zinc-300 text-xs font-sans leading-relaxed">
+              {verdict.synthesizedReasoning}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Standby Card when in RECESS */}
+      {timeline.currentPhaseName === 'RECESS' && !isDebating && (
+        <div className="bg-[#08090d] border border-white/10 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-zinc-500" />
+            <span className="text-zinc-400">
+              HIGH COURT IN RECESS // The council is at rest. Convene trial to deliberate on <strong className="text-white">{ticker}</strong>.
             </span>
           </div>
-          <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-            IN LOCKSTEP WITH QUORUM
+          <button
+            onClick={() => {
+              playCyberClick();
+              timeline.restartTimeline();
+              onConveneNewTrial(ticker);
+            }}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white text-black font-bold hover:bg-zinc-200 transition-colors cursor-pointer text-xs"
+          >
+            <Gavel className="w-3.5 h-3.5" />
+            <span>Open High Court Trial</span>
+          </button>
+        </div>
+      )}
+
+      {/* Live Deliberation Pulse Banner while In-Session */}
+      {isDebating && (
+        <div className="bg-[#08090d] border border-white/10 rounded-xl p-3 flex items-center justify-between gap-3 font-mono text-xs animate-pulse">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span className="text-zinc-300">
+              HIGH COURT IN SESSION // Mirroring Quorum Matrix arguments & risk verification in lockstep...
+            </span>
+          </div>
+          <span className="text-[11px] text-cyan-400 bg-cyan-950/40 border border-cyan-800/40 px-2 py-0.5 rounded font-bold">
+            PHASE: {timeline.currentPhaseName}
           </span>
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* 1. THE HIGH BENCH: GUARDIAN-01 (CHIEF RISK ARBITER)       */}
-      {/* ========================================================= */}
-      <div
-        className={`relative bg-[#0c0e14] border rounded-xl p-4 mb-4 text-center flex flex-col items-center justify-center transition-all duration-300 ${
-          objectingSpeakerId === 'GUARDIAN'
-            ? 'border-rose-500/80 ring-2 ring-rose-500/50 shadow-[0_0_25px_rgba(244,63,94,0.25)]'
-            : activeSpeakerId === 'GUARDIAN'
-            ? 'border-amber-400/70 ring-1 ring-amber-400/40 shadow-[0_0_20px_rgba(251,191,36,0.2)]'
-            : 'border-white/10'
-        }`}
-      >
-        {/* Localized Objection Callout right on top of Guardian-01 */}
-        {objectingSpeakerId === 'GUARDIAN' && (
-          <div className="absolute -top-3.5 z-40 animate-objection-slam flex items-center gap-1.5 bg-rose-600 text-white font-extrabold text-[11px] sm:text-xs px-3 py-1 rounded-full uppercase tracking-wider shadow-lg border border-white/80 font-mono">
-            <AlertTriangle className="w-3.5 h-3.5 text-yellow-300 animate-bounce" />
-            <span>OBJECTION, MY LORD! // {COUNCIL_PERSONAS.GUARDIAN.name} INTERVENES</span>
-          </div>
-        )}
-
-        {/* Bench Header */}
-        <div className="flex items-center gap-2 mb-1 text-zinc-300">
-          <Shield className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-[11px] font-bold tracking-wider uppercase font-mono text-zinc-200">
-            CHIEF RISK MAGISTRATE BENCH // {COUNCIL_PERSONAS.GUARDIAN.name}
-          </span>
-          <Scale className="w-3.5 h-3.5 text-zinc-400" />
-        </div>
-        <p className="text-[10px] text-zinc-500 font-mono mb-2">
-          {COUNCIL_PERSONAS.GUARDIAN.role} • Presiding over $100,000.00 USD Capital Pool
-        </p>
-
-        {/* Sleek, Realistic Titanium & Obsidian Magistrate Gavel */}
-        <div className="relative w-44 h-24 flex items-center justify-center my-0.5">
-          {/* Shockwave Particle Ring */}
-          {showSparks && (
-            <div className="absolute w-24 h-24 rounded-full border border-amber-400/80 animate-shockwave-ring pointer-events-none" />
-          )}
-
-          {/* Precision Matte Sound Block Pedestal */}
-          <div className="absolute bottom-2 w-32 h-4 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 border border-zinc-700/60 rounded-md shadow-md flex items-center justify-center">
-            <div className="w-24 h-0.5 bg-amber-400/30 rounded-full" />
-          </div>
-
-          {/* Elegant Precision-Engineered Gavel */}
-          <div
-            onClick={slamGavel}
-            className={`cursor-pointer transition-transform duration-150 relative ${
-              isGavelStriking ? 'animate-gavel-strike' : 'hover:scale-105'
-            }`}
-            title="Click to strike the Magistrate Gavel!"
-          >
-            <svg
-              className="w-24 h-24 filter drop-shadow-md"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <linearGradient id="gavelWood" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#2c2d35" />
-                  <stop offset="50%" stopColor="#1a1b22" />
-                  <stop offset="100%" stopColor="#0e0f14" />
-                </linearGradient>
-                <linearGradient id="gavelMetal" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#d4d4d8" />
-                  <stop offset="50%" stopColor="#a1a1aa" />
-                  <stop offset="100%" stopColor="#52525b" />
-                </linearGradient>
-                <linearGradient id="gavelGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#fef08a" />
-                  <stop offset="50%" stopColor="#eab308" />
-                  <stop offset="100%" stopColor="#a16207" />
-                </linearGradient>
-              </defs>
-
-              {/* Slender Handle */}
-              <rect
-                x="45"
-                y="22"
-                width="6"
-                height="54"
-                rx="3"
-                transform="rotate(38 45 22)"
-                fill="url(#gavelWood)"
-                stroke="#3f3f46"
-                strokeWidth="1.2"
-              />
-              {/* Handle Grip Inlay */}
-              <rect
-                x="43.5"
-                y="52"
-                width="7"
-                height="18"
-                rx="2"
-                transform="rotate(38 45 22)"
-                fill="url(#gavelMetal)"
-                opacity="0.85"
-              />
-
-              {/* Gavel Head Body */}
-              <rect
-                x="18"
-                y="18"
-                width="38"
-                height="16"
-                rx="3"
-                transform="rotate(38 18 18)"
-                fill="url(#gavelWood)"
-                stroke="#52525b"
-                strokeWidth="1.5"
-              />
-
-              {/* Dual Titanium Rings */}
-              <rect
-                x="22"
-                y="17"
-                width="3.5"
-                height="18"
-                rx="1"
-                transform="rotate(38 18 18)"
-                fill="url(#gavelGold)"
-              />
-              <rect
-                x="46"
-                y="17"
-                width="3.5"
-                height="18"
-                rx="1"
-                transform="rotate(38 18 18)"
-                fill="url(#gavelGold)"
-              />
-
-              {/* Striking Faces */}
-              <rect
-                x="16"
-                y="19"
-                width="3"
-                height="14"
-                rx="1"
-                transform="rotate(38 18 18)"
-                fill="url(#gavelMetal)"
-              />
-              <rect
-                x="55"
-                y="19"
-                width="3"
-                height="14"
-                rx="1"
-                transform="rotate(38 18 18)"
-                fill="url(#gavelMetal)"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Chief Magistrate Speech & Rationale */}
-        <p className="text-xs text-zinc-300 font-sans italic max-w-lg mt-1">
-          "{isTrialFinished
-            ? (verdict?.synthesizedReasoning || 'Deliberation concluded. Consensus sealed under council oath. Transmitting execution decree to Autopilot.')
-            : guardianTurn?.speech
-            ? guardianTurn.speech
-            : 'Order in the court. The 4 Council personas will present telemetry under oath. No capital leaves this pool unhedged.'}"
-        </p>
-      </div>
-
-      {/* ========================================================= */}
-      {/* 2. THE 3 PODIUMS: QUANT-OMEGA, NEXUS-RED & ATLAS-MACRO    */}
-      {/* ========================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-        {/* PODIUM 1: THE PROSECUTION (Quant-Omega) */}
-        <div
-          className={`relative rounded-xl p-3.5 border transition-all duration-300 flex flex-col justify-between ${
-            objectingSpeakerId === 'QUANT'
-              ? 'bg-[#180f12] border-rose-500/80 ring-2 ring-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.3)]'
-              : activeSpeakerId === 'QUANT'
-              ? 'bg-[#0f141d] border-[#00F0FF]/40 ring-1 ring-[#00F0FF]/30'
-              : 'bg-[#0b0c12] border-white/10 opacity-75'
-          }`}
-        >
-          {/* Localized Objection Callout right on top of Quant-Omega */}
-          {objectingSpeakerId === 'QUANT' && (
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-40 animate-objection-slam flex items-center gap-1.5 bg-rose-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-lg border border-white/80 whitespace-nowrap font-mono">
-              <AlertTriangle className="w-3 h-3 text-yellow-300 animate-bounce" />
-              <span>OBJECTION! // {COUNCIL_PERSONAS.QUANT.name}</span>
-            </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-white/5 border border-white/15 flex items-center justify-center text-white">
-                  <Flame className="w-3 h-3 text-zinc-200 fill-zinc-200" />
-                </div>
-                <div>
-                  <span className="text-[11px] font-bold text-white block leading-tight">
-                    {COUNCIL_PERSONAS.QUANT.name}
-                  </span>
-                  <span className="text-[9px] text-zinc-500">The Prosecution // Momentum Lead</span>
-                </div>
-              </div>
-              {activeSpeakerId === 'QUANT' && (
-                <span className="text-[9px] bg-white text-black font-bold px-1.5 py-0.2 rounded font-mono">
-                  SPEAKING
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <div className="bg-black/40 border border-white/5 rounded-lg p-2.5 text-zinc-300 leading-relaxed font-sans">
-                <p className="font-mono text-[9px] text-zinc-400 font-bold uppercase mb-1">
-                  &gt; Trade Indictment &amp; Momentum Case:
-                </p>
-                "{quantTurn ? quantTurn.speech : 'Technical momentum breakout identified. Moving to allocate capital.'}"
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-2.5 border-t border-white/10 mt-2.5 flex items-center justify-between text-[10px] font-mono">
-            <span className="text-zinc-500">Proposed Action:</span>
-            <span className="text-emerald-400 font-bold">
-              {verdict ? `${verdict.action} ${verdict.ticker}` : 'PENDING'}
-            </span>
-          </div>
-        </div>
-
-        {/* PODIUM 2: THE INQUISITOR & CROSS-EXAMINER (NEXUS-RED) */}
-        <div
-          className={`relative rounded-xl p-3.5 border transition-all duration-300 flex flex-col justify-between ${
-            objectingSpeakerId === 'NEXUS_RED'
-              ? 'bg-[#180f12] border-rose-500/90 ring-2 ring-rose-500/60 shadow-[0_0_20px_rgba(244,63,94,0.35)]'
-              : activeSpeakerId === 'NEXUS_RED'
-              ? 'bg-[#180f12] border-rose-500/40 ring-1 ring-rose-500/30'
-              : 'bg-[#0b0c12] border-white/10 opacity-75'
-          }`}
-        >
-          {/* Localized Objection Callout right on top of NEXUS-RED */}
-          {objectingSpeakerId === 'NEXUS_RED' && (
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-40 animate-objection-slam flex items-center gap-1.5 bg-rose-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-lg border border-white/80 whitespace-nowrap font-mono">
-              <AlertTriangle className="w-3 h-3 text-yellow-300 animate-bounce" />
-              <span>OBJECTION, MY LORD! // {COUNCIL_PERSONAS.NEXUS_RED.name}</span>
-            </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-rose-950/40 border border-rose-500/30 flex items-center justify-center text-rose-400">
-                  <Skull className="w-3 h-3 text-rose-400" />
-                </div>
-                <div>
-                  <span className="text-[11px] font-bold text-rose-300 block leading-tight">
-                    {COUNCIL_PERSONAS.NEXUS_RED.name}
-                  </span>
-                  <span className="text-[9px] text-zinc-500">Red Team Inquisitor // Chaos Arbiter</span>
-                </div>
-              </div>
-              {activeSpeakerId === 'NEXUS_RED' && (
-                <span className="text-[9px] bg-rose-500 text-white font-bold px-1.5 py-0.2 rounded font-mono">
-                  OBJECTING
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <div className="bg-black/40 border border-rose-500/20 rounded-lg p-2.5 text-zinc-300 leading-relaxed font-sans">
-                <p className="font-mono text-[9px] text-rose-400 font-bold uppercase mb-1">
-                  &gt; Adversarial Cross-Examination:
-                </p>
-                "{nexusTurn ? nexusTurn.speech : 'OBJECTION, MY LORD! Orderbook displays spoofing liquidity and tail risk threatening our capital.'}"
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-2.5 border-t border-white/10 mt-2.5 flex items-center justify-between text-[10px] font-mono">
-            <span className="text-zinc-500">Defense Stance:</span>
-            <span className="text-rose-400 font-bold">
-              {nexusTurn ? nexusTurn.stanceLabel : 'VETO ARMED'}
-            </span>
-          </div>
-        </div>
-
-        {/* PODIUM 3: FORENSIC WITNESS (Atlas-Macro) */}
-        <div
-          className={`relative rounded-xl p-3.5 border transition-all duration-300 flex flex-col justify-between ${
-            objectingSpeakerId === 'MACRO'
-              ? 'bg-[#180f12] border-rose-500/80 ring-2 ring-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.3)]'
-              : activeSpeakerId === 'MACRO'
-              ? 'bg-[#141416] border-zinc-500/40 ring-1 ring-white/20'
-              : 'bg-[#0b0c12] border-white/10 opacity-75'
-          }`}
-        >
-          {/* Localized Objection Callout right on top of Atlas-Macro */}
-          {objectingSpeakerId === 'MACRO' && (
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-40 animate-objection-slam flex items-center gap-1.5 bg-rose-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-lg border border-white/80 whitespace-nowrap font-mono">
-              <AlertTriangle className="w-3 h-3 text-yellow-300 animate-bounce" />
-              <span>OBJECTION! // {COUNCIL_PERSONAS.MACRO.name}</span>
-            </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-white/5 border border-white/15 flex items-center justify-center text-white">
-                  <Globe2 className="w-3 h-3 text-zinc-300" />
-                </div>
-                <div>
-                  <span className="text-[11px] font-bold text-white block leading-tight">
-                    {COUNCIL_PERSONAS.MACRO.name}
-                  </span>
-                  <span className="text-[9px] text-zinc-500">Forensic Witness // Macro Lead</span>
-                </div>
-              </div>
-              {activeSpeakerId === 'MACRO' && (
-                <span className="text-[9px] bg-zinc-300 text-black font-bold px-1.5 py-0.2 rounded font-mono">
-                  TESTIFYING
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <div className="bg-black/40 border border-white/5 rounded-lg p-2.5 text-zinc-300 leading-relaxed font-sans">
-                <p className="font-mono text-[9px] text-zinc-400 font-bold uppercase mb-1">
-                  &gt; Macroeconomic &amp; Funding Telemetry:
-                </p>
-                "{macroTurn ? macroTurn.speech : 'Reviewing global liquidity context and Bitget funding rates.'}"
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-2.5 border-t border-white/10 mt-2.5 flex items-center justify-between text-[10px] font-mono">
-            <span className="text-zinc-500">Evidence Record:</span>
-            <span className="text-zinc-300 font-bold">Exhibit Sworn</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================= */}
-      {/* 3. EVIDENCE DOCKET: ORDERBOOK & FUNDING EXHIBITS          */}
-      {/* ========================================================= */}
-      <div className="bg-[#0b0c12] border border-white/10 rounded-xl p-3 mb-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileText className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider font-mono">
-              EVIDENCE DOCKET // TELEMETRY EXHIBITS
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setSelectedExhibit(selectedExhibit === 'ORDERBOOK' ? 'NONE' : 'ORDERBOOK')}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer ${
-                selectedExhibit === 'ORDERBOOK'
-                  ? 'bg-white/10 border-white text-white'
-                  : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
-              }`}
-            >
-              Exhibit A: L2 Depth
-            </button>
-            <button
-              onClick={() => setSelectedExhibit(selectedExhibit === 'FUNDING' ? 'NONE' : 'FUNDING')}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer ${
-                selectedExhibit === 'FUNDING'
-                  ? 'bg-white/10 border-white text-white'
-                  : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
-              }`}
-            >
-              Exhibit B: Funding &amp; OI
-            </button>
-          </div>
-        </div>
-
-        {/* Expanded Exhibit Preview */}
-        {selectedExhibit === 'ORDERBOOK' && (
-          <div className="bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs space-y-1.5">
-            <span className="text-[10px] text-zinc-400 font-bold block uppercase">
-              Exhibit A // Bitget Live Orderbook Depth:
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-              <div className="bg-white/5 p-2 rounded border border-white/5">
-                <span className="text-zinc-500 block text-[9px]">Supporting Bid Shelf:</span>
-                <span className="text-emerald-400 font-bold">$14.2M (Absorption Active)</span>
-              </div>
-              <div className="bg-white/5 p-2 rounded border border-white/5">
-                <span className="text-zinc-500 block text-[9px]">Resistance Ask Wall:</span>
-                <span className="text-rose-400 font-bold">$8.6M (Suspected Trap)</span>
-              </div>
-            </div>
-            <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
-              NEXUS-RED entered this exhibit to establish that aggressive market buying into this wall risks immediate adverse slippage.
-            </p>
-          </div>
-        )}
-
-        {selectedExhibit === 'FUNDING' && (
-          <div className="bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs space-y-1.5">
-            <span className="text-[10px] text-zinc-400 font-bold block uppercase">
-              Exhibit B // Bitget Perpetual Funding &amp; Open Interest:
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-              <div className="bg-white/5 p-2 rounded border border-white/5">
-                <span className="text-zinc-500 block text-[9px]">8h Funding Rate:</span>
-                <span className="text-zinc-200 font-bold">+0.0042% (Normal)</span>
-              </div>
-              <div className="bg-white/5 p-2 rounded border border-white/5">
-                <span className="text-zinc-500 block text-[9px]">Open Interest Delta:</span>
-                <span className="text-emerald-400 font-bold">+$45M (Institutional Inflows)</span>
-              </div>
-            </div>
-            <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
-              Atlas-Macro testified that funding spreads remain healthy, supporting a disciplined position rather than an over-leveraged breakout.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* ========================================================= */}
-      {/* 4. FINAL VERDICT DECREE SEAL & AUTOPILOT DISPATCH         */}
-      {/* ========================================================= */}
-      {showVerdictStamp && verdict && (
-        <div className="bg-[#0c0e14] border border-white/15 rounded-xl p-4 space-y-3.5">
-          {/* Holographic Verdict Stamp */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-white/10 pb-3">
-            <div className="space-y-1 text-center sm:text-left">
-              <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
-                <Gavel className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest font-mono">
-                  RATIFIED COUNCIL DECREE
-                </span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                  verdict.executionType === 'LIMIT_PULLBACK'
-                    ? 'bg-amber-950/60 text-amber-300 border-amber-500/40'
-                    : verdict.executionType === 'BREAKOUT_STOP'
-                    ? 'bg-blue-950/60 text-blue-300 border-blue-500/40'
-                    : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
-                }`}>
-                  {verdict.executionType === 'LIMIT_PULLBACK'
-                    ? `Limit Retest @ $${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}`
-                    : verdict.executionType === 'BREAKOUT_STOP'
-                    ? `Breakout Stop @ $${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}`
-                    : `Market Fill @ Current: $${verdict.currentPrice.toLocaleString()}`}
-                </span>
-              </div>
-              <h3 className="text-base sm:text-lg font-bold text-white">
-                {verdict.action === 'BUY'
-                  ? `EXECUTION APPROVED: LONG ${verdict.ticker}`
-                  : verdict.action === 'SELL'
-                  ? `EXECUTION APPROVED: SHORT ${verdict.ticker}`
-                  : `ORDER DISMISSED: HOLD CASH`}
-              </h3>
-              <div className="text-[11px] font-mono text-zinc-300 flex items-center gap-3">
-                <span>Current Market: <strong className="text-emerald-400">${verdict.currentPrice.toLocaleString()}</strong></span>
-                <span>•</span>
-                <span>Execution Target: <strong className="text-white">${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}</strong></span>
-              </div>
-              <p className="text-xs text-zinc-400 font-sans leading-relaxed">
-                {verdict.synthesizedReasoning ||
-                  `The Chief Magistrate has synthesized the objection of NEXUS-RED with the breakout claim of Quant-Omega. Execution authorized under strict conditional risk sizing.`}
-              </p>
-            </div>
-
-            {/* Official Stamp */}
-            <div className="animate-stamp-impact shrink-0 border-2 border-zinc-300 bg-white/5 text-zinc-200 font-bold px-3 py-1.5 rounded-lg text-center uppercase tracking-widest text-[10px] rotate-[-2deg] font-mono">
-              <span className="block text-zinc-400 text-[9px]">COUNCIL SEAL</span>
-              <span className="text-white font-extrabold text-xs">
-                {verdict.action !== 'HOLD' ? 'CONDITIONAL PASSED' : 'VETO SUSTAINED'}
+      {/* Active Verdict Decree & Re-Huddle Chamber (displayed once verdict is ratified) */}
+      {verdict && !isDebating && timeline.currentPhaseName === 'VERDICT' && (
+        <div className="bg-[#08090d] border border-white/10 rounded-xl p-4 space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <div>
+              <span className="text-[10px] text-zinc-500 uppercase tracking-widest block">
+                TRIBUNAL FINAL RULING
               </span>
+              <div className="flex items-center gap-2 flex-wrap mt-1">
+                <span
+                  className={`text-lg font-black ${
+                    verdict.action === 'BUY'
+                      ? 'text-emerald-400'
+                      : verdict.action === 'SELL'
+                      ? 'text-rose-400'
+                      : 'text-amber-400'
+                  }`}
+                >
+                  {verdict.action} {verdict.ticker}
+                </span>
+
+                <span className="text-xs px-2.5 py-0.5 rounded font-mono font-bold bg-amber-950/50 text-amber-300 border border-amber-500/30">
+                  Target Entry: ${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()} {verdict.executionType === 'LIMIT_PULLBACK' ? '[Limit Retest]' : '[Market]'}
+                </span>
+
+                <span className="text-xs px-2.5 py-0.5 rounded font-mono font-bold bg-emerald-950/50 text-emerald-300 border border-emerald-500/30">
+                  Target Exit (TP): ${verdict.targetPrice.toLocaleString()} (+{verdict.takeProfitPct}%)
+                </span>
+
+                <span className="text-xs px-2.5 py-0.5 rounded font-mono font-bold bg-rose-950/50 text-rose-300 border border-rose-500/30">
+                  Stop-Loss (SL): ${verdict.stopLossPrice.toLocaleString()} (-{verdict.stopLossPct}%)
+                </span>
+
+                <span className="text-zinc-400 text-xs font-normal">
+                  (Confidence: {verdict.confidence}%, Consensus: {verdict.consensusAlignmentPct}%)
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Settled Trade Parameters */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+          {/* Council Parameters Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
             <div className="bg-black/50 border border-white/5 p-2 rounded-lg">
-              <span className="text-zinc-500 block text-[9px] uppercase">Council Sizing</span>
-              <span className="text-white font-bold">{verdict.optimalSizePct}% of NAV</span>
+              <span className="text-zinc-500 block text-[9px] uppercase">Target Entry</span>
+              <span className="text-amber-300 font-bold font-mono">${(verdict.targetEntryPrice || verdict.currentPrice).toLocaleString()}</span>
+              <span className="text-[9px] text-zinc-400 block">{verdict.executionType === 'LIMIT_PULLBACK' ? 'Limit Retest' : 'Market Order'}</span>
             </div>
             <div className="bg-black/50 border border-white/5 p-2 rounded-lg">
-              <span className="text-zinc-500 block text-[9px] uppercase">Stop Loss</span>
-              <span className="text-rose-400 font-bold">-${verdict.stopLossPct}%</span>
+              <span className="text-zinc-500 block text-[9px] uppercase">Target Exit (TP)</span>
+              <span className="text-emerald-400 font-bold font-mono">+{verdict.takeProfitPct}%</span>
+              <span className="text-[9px] text-emerald-300/80 font-mono block">${verdict.targetPrice.toLocaleString()}</span>
             </div>
             <div className="bg-black/50 border border-white/5 p-2 rounded-lg">
-              <span className="text-zinc-500 block text-[9px] uppercase">Take Profit</span>
-              <span className="text-emerald-400 font-bold">+${verdict.takeProfitPct}%</span>
+              <span className="text-zinc-500 block text-[9px] uppercase">Stop Loss (SL)</span>
+              <span className="text-rose-400 font-bold font-mono">-{verdict.stopLossPct}%</span>
+              <span className="text-[9px] text-rose-300/80 font-mono block">${verdict.stopLossPrice.toLocaleString()}</span>
             </div>
             <div className="bg-black/50 border border-white/5 p-2 rounded-lg">
-              <span className="text-zinc-500 block text-[9px] uppercase">Win Rate</span>
-              <span className="text-[#00F0FF] font-bold">{verdict.winRatePct}%</span>
+              <span className="text-zinc-500 block text-[9px] uppercase">Risk / Reward</span>
+              <span className="text-white font-bold">{verdict.riskRewardRatio} : 1</span>
+              <span className="text-[9px] text-zinc-500 block">Asymmetric Ratio</span>
+            </div>
+            <div className="bg-black/50 border border-white/5 p-2 rounded-lg">
+              <span className="text-zinc-500 block text-[9px] uppercase">Agreed Sizing</span>
+              <span className="text-white font-bold">{verdict.optimalSizePct}% NAV</span>
+              <span className="text-[9px] text-zinc-500 block">Safe Risk Cap</span>
+            </div>
+            <div className="bg-black/50 border border-white/5 p-2 rounded-lg">
+              <span className="text-zinc-500 block text-[9px] uppercase">Win Probability</span>
+              <span className="text-cyan-400 font-bold">{verdict.winRatePct}%</span>
+              <span className="text-[9px] text-zinc-500 block">Monte Carlo Target</span>
             </div>
           </div>
 
-          {/* Council Re-Huddle & Cross-Examination Chamber */}
-          <ReHuddlePanel
-            verdict={verdict}
-            onApplyAmendedVerdict={onApplyAmendedVerdict}
-          />
+          {/* Re-Huddle Cross Examination Panel */}
+          {onApplyAmendedVerdict && (
+            <ReHuddlePanel
+              verdict={verdict}
+              onApplyAmendedVerdict={onApplyAmendedVerdict}
+            />
+          )}
 
-          {/* Action Execution Footer: DISPATCH TO AUTOPILOT */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          {/* Execution Footer */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <button
               onClick={() => {
                 playCyberClick();
                 onReturnToMatrix();
               }}
-              className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 font-mono transition-colors cursor-pointer"
+              className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
             >
               <ChevronRight className="w-3.5 h-3.5" />
               <span>Inspect Raw Quorum Matrix Data</span>
@@ -846,20 +360,9 @@ export const CyberCourtroomView: React.FC<CyberCourtroomViewProps> = ({
                 } else {
                   playRiskVetoTone();
                 }
-                onSendToAutopilot({
-                  id: `TRIBUNAL_${Date.now()}`,
-                  timestamp: new Date().toISOString(),
-                  symbol: verdict.ticker,
-                  action: verdict.action,
-                  quantity: 1,
-                  confidence: verdict.confidence,
-                  source: 'STRAT_MOMENTUM',
-                  reasoning: `Council Courtroom Decree: ${verdict.action} ${verdict.ticker} ratified after multi-agent cross-examination.`,
-                  status: 'PENDING_APPROVAL',
-                  riskScore: 3,
-                });
+                onSendToAutopilot(verdict.tradeProposal);
               }}
-              className="flex items-center gap-2 bg-white hover:bg-zinc-200 text-black font-extrabold px-4 py-2 rounded-lg text-xs shadow-sm transition-all cursor-pointer font-mono"
+              className="flex items-center gap-2 bg-white hover:bg-zinc-200 text-black font-extrabold px-4 py-2 rounded-lg text-xs shadow-sm transition-all cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5 fill-black" />
               <span>DISPATCH DECREE TO AUTOPILOT</span>

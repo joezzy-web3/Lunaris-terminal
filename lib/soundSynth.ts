@@ -329,3 +329,126 @@ export function toggleTradingFloorAmbience(): boolean {
 export function getTradingFloorAmbienceState(): boolean {
   return ambientFloorEnabled;
 }
+
+/** Wooden gavel knock / tap on sound block */
+export function playWoodenGavelKnock(firm = false) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    // Wood strike fundamental
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(firm ? 460 : 380, now);
+    osc.frequency.exponentialRampToValueAtTime(120, now + (firm ? 0.09 : 0.06));
+
+    gain.gain.setValueAtTime(firm ? 0.35 : 0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + (firm ? 0.12 : 0.08));
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + (firm ? 0.12 : 0.08));
+
+    // Secondary wooden block resonance
+    const blockOsc = ctx.createOscillator();
+    const blockGain = ctx.createGain();
+    blockOsc.type = 'sine';
+    blockOsc.frequency.setValueAtTime(190, now);
+    blockOsc.frequency.exponentialRampToValueAtTime(60, now + 0.14);
+    blockGain.gain.setValueAtTime(firm ? 0.25 : 0.15, now);
+    blockGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    blockOsc.connect(blockGain);
+    blockGain.connect(ctx.destination);
+    blockOsc.start(now);
+    blockOsc.stop(now + 0.14);
+  } catch {
+    // Graceful fallback
+  }
+}
+
+/** Low quiet courtroom murmur during deliberation */
+export function playCourtroomMurmur() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    // Layered soft low-pass noise filter simulating distant hushed murmur
+    [130, 160, 210].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq + Math.random() * 20, now);
+      osc.frequency.linearRampToValueAtTime(freq - 10 + Math.random() * 20, now + 0.6);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.02, now + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6 + i * 0.1);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.7);
+    });
+  } catch {
+    // Graceful fallback
+  }
+}
+
+/** Short stab for an objection */
+export function playObjectionStab() {
+  playCourtObjectionSting();
+}
+
+/** Deep heartbeat thump for the risk check zoom */
+export function playHeartbeatSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    // Lub-dub pair
+    [0, 0.12].forEach((offset, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(idx === 0 ? 68 : 55, now + offset);
+      osc.frequency.exponentialRampToValueAtTime(28, now + offset + 0.16);
+
+      gain.gain.setValueAtTime(idx === 0 ? 0.22 : 0.16, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.18);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.18);
+    });
+  } catch {
+    // Graceful fallback
+  }
+}
+
+/** Soft crystalline chime when the SHA-256 seal is stamped */
+export function playSealChimeSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    [1046.5, 1318.51, 1567.98, 2093.0].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.05);
+
+      gain.gain.setValueAtTime(0.04, now + i * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.05 + 0.45);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.05);
+      osc.stop(now + i * 0.05 + 0.45);
+    });
+  } catch {
+    // Graceful fallback
+  }
+}
